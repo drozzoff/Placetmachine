@@ -71,7 +71,7 @@ class Communicator(object):
 		send_delay: float, default Communicator._BUFFER_MAXSIZE
 			The time delay before each data transfer to a child process (sometimes needed for stability)
 		"""
-		self.process = pexpect.spawn(process_name, timeout = None, encoding = 'utf-8')
+		self.process = pexpect.spawnu(process_name, timeout = None, encoding = 'utf-8')
 		
 		self.debug_mode = kwargs.get('debug_mode', False)
 	
@@ -83,9 +83,6 @@ class Communicator(object):
 			self.save_logs()
 
 		self.add_send_delay(kwargs.get('send_delay', self._DELAY_BEFORE_SEND))
-
-		self.out_buffer = Queue(maxsize = self._BUFFER_MAXSIZE)
-		self.__spawn_out_stream()
 	
 	def logging(func):
 		"""Log the functions running"""
@@ -238,20 +235,8 @@ class Communicator(object):
 		str
 			The line of the data received from the child process.
 		"""
-		start, res = time.time(), self._readline()
-
-		exec_time = 0.0 
-		while res is None:
-			exec_time = time.time() - start
-			if exec_time > timeout:			
-				raise Exception("No data found!")
-			res = self._readline()
-
-		#21.06.2022	- the thread is running constantly
-		# self._kill_out_thread()
-		# if self.debug_mode:
-		# 	print("\t" + res, end = "")
-		return res
+		
+		return self.process.readline()
 
 	@logging
 	def readlines(self, N_lines, timeout = _BASE_TIMEOUT) -> list:
@@ -270,65 +255,10 @@ class Communicator(object):
 		list
 			The list of the lines received from the child process.
 		"""
-		start, res = time.time(), []
+		res = []
 		for i in range(N_lines):	
-			tmp = self._readline()
-			while tmp is None:
-				if time.time() - start > timeout: 
-					raise Exception("readlines() - No data found!")
-
-				tmp = self._readline()
-			res.append(tmp)
+			res.append(self.readline())
 		return res
-
-	@logging
-	def __spawn_out_stream(self):
-		"""
-		Start a thread for an online reading of the output from the child process.
-
-		An old if/else routine handling the init/kill of the created thread
-		In practice there is no benefit from killing the reader each time
-		the command is executed. The computational time is higher. Also
-		occasionally, the thread could stuck, ignoring timeout which
-		produces readline() Exception.
-		"""
-		# if hasattr(self, '_t'):
-		# 	#Thread exist in the memory
-		# 	if self._t.isAlive():
-		# 		#Thread is running
-		# 		if self._thread_exit_flag:
-		# 			#If it is running
-		# 			#->	 not doing anything
-		# 			return
-		# 		else:
-		# 			#If the flag to end the process is False and the thread is running
-		# 			#->	waiting for the thread to finish
-		# 			self._t.join(self._BASE_TIMEOUT)
-		# 			self._thread_exit_flag = True
-		# 	else:
-		# 		#Thread finished running
-		# 		#->	reseting the flag
-		# 		self._thread_exit_flag = True
-		# else:
-		# 	#Thread does not exist in the memory
-		# 	#->	creating the flag
-		# 	self._thread_exit_flag = True
-		self.__thread_exit_flag = True
-		
-		def reader():
-			while self.__thread_exit_flag:
-				line = self.process.readline()
-				if line is not None:
-					self.out_buffer.put(line)
-				else:
-					pass
-		self._t = Thread(target = reader)
-		self._t.daemon = True
-		self._t.start()
-
-	def __kill_out_thread(self):
-		"""Kill the ouput reading process."""
-		self.__thread_exit_flag = False
 
 	def save_debug_info(self, filename = "debug_data.pkl"):
 		"""
