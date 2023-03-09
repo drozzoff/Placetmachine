@@ -1,19 +1,12 @@
 import pexpect
 import time
-from threading import Thread
 import pandas as pd
 from functools import wraps
-
-try:
-    from queue import Queue, Empty
-except ImportError:
-    from Queue import Queue, Empty  # python 2.x
 
 class Communicator(object):
 	"""
 	A class used to interact with the process spawned with Pexpect
 	
-	It also creates a deamon process for reading the child's output
 	...
 
 	Attributes
@@ -22,8 +15,6 @@ class Communicator(object):
 		The child process spawned with pexpect
 	debug_mode: bool, default False
 		If True, running in debug mode
-	out_buffer: Queue
-		The queue with the data read from process terminal
 
 	Methods
 	-------
@@ -39,8 +30,6 @@ class Communicator(object):
 		Same to readline, but no return
 	writeline(command, skipline = True, timeout = _BASE_TIMEOUT)
 		Write the line to a child process
-	writelines(commands)
-		Write the lines to a child process
 	close()
 		Finish the runnning processes and terminate the child process
 	save_debug_info(filename = "debug_data.pkl")
@@ -55,7 +44,7 @@ class Communicator(object):
 
 	def __init__(self, process_name, **kwargs):
 		"""
-		21.06.2022	- spawning the reader thread on init
+		29.11.2022	- New version of the communicator without the daemon running in the background
 
 		Parameters
 		----------
@@ -71,19 +60,29 @@ class Communicator(object):
 		send_delay: float, default Communicator._BUFFER_MAXSIZE
 			The time delay before each data transfer to a child process (sometimes needed for stability)
 		"""
-		self.process = pexpect.spawnu(process_name, timeout = None, encoding = 'utf-8')
-		
-		self.debug_mode = kwargs.get('debug_mode', False)
-	
+		self._process_name, self.debug_mode, self._save_logs, self._send_delay = process_name, kwargs.get('debug_mode', False), kwargs.get("save_logs", True), kwargs.get('send_delay', self._DELAY_BEFORE_SEND)	
+
+		self.__init()
+
+	def __init(self):
+		self.process = pexpect.spawnu(self._process_name, timeout = None, encoding = 'utf-8')
+
 		if self.debug_mode:
 			print("Debug mode is on. Running the process " + process_name + " with parameters " + str(kwargs))
 			self.debug_data = pd.DataFrame(columns = ['function', 'arguments', 'run_time', "res"])
 
-		if kwargs.get("save_logs", True):
+		if self._save_logs:
 			self.save_logs()
 
-		self.add_send_delay(kwargs.get('send_delay', self._DELAY_BEFORE_SEND))
-	
+		self.add_send_delay(self._send_delay)
+
+	def _restart(self):
+		"""Restart the child process"""
+		if self.isalive():
+			self.close()
+
+		self.__init()
+
 	def logging(func):
 		"""Log the functions running"""
 		@wraps(func)
@@ -118,50 +117,36 @@ class Communicator(object):
 		
 		Parameters
 		----------
-		command
-
-		skipline
-
-		timeout
+		command: str
+			Command to execute
+		skipline: bool, default True
+			If True, reads the command that was sent to a child process from child's process output
+			This flag depends on the default running mode of pexpect. By default it outputs to stdout what was just send to stdin
+		timeout: float, default _BASE_TIMEOUT
+			Timeout of the reader before raising the exception.
+			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 
 		Returns
 		-------
 		str
+			The command that was sent to a child process
 		"""
 		self.process.write(command)
-#		if self.debug_mode:
-#			print("Running: " + command, end = "")
+
 		if skipline: self.skipline(timeout)
 		return command
 
-	def writelines(self, commands):
-		"""
-		Send the lines to a child process
-		
-		Paramaters
-		----------
-		commands
-		"""
-		for command in commands:
-			self.writeline(command)
+	def isalive(self):
+		return self.process.isalive()
 
 	def __terminate(self):
-		""" """
-		if self.process.isalive():
+		"""Terminate the child process"""
+		if self.isalive():
 			self.process.terminate()
 
 	def close(self):
-		"""Close all the associated thread running"""
-		self.__kill_out_thread()
+		"""Close all the associated threads running"""
 		self.__terminate()
-
-	def _readline(self):
-		"""Get the line if available in out_buffer, otherwise None"""
-		try:
-			res = self.out_buffer.get() 
-		except Empty:
-			res = None
-		return res
 
 	@logging
 	def skipline(self, timeout = _BASE_TIMEOUT):
@@ -172,6 +157,7 @@ class Communicator(object):
 		----------
 		timeout: float, default Communicator._BASE_TIMEOUT
 			Timeout of the reader before raising the exception.
+			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 		"""
 		self.readline(timeout)
 	
@@ -193,7 +179,7 @@ class Communicator(object):
 			return res[len(base):]
 		return wrapper
 
-	def __placet_error_seeker(func):
+	def __error_seeker(func):
 		"""
 		Wrapper for readline().
 
@@ -205,17 +191,17 @@ class Communicator(object):
 		@wraps(func)
 		def wrapper(self, timeout = None):
 			res = func(self, timeout) if timeout is not None else func(self)
-
+			
 			if "error".casefold() in list(map(lambda x: x.casefold(), res.split())):
-				raise Exception("Placet exited with an error message:\n" + res)
+				raise Exception("Process exited with an error message:\n" + res)
 			if "warning".casefold() in list(map(lambda x: x.casefold(), res.split())):
-				raise Exception("Placet encountered a warning:\n" + res)
+				raise Exception("Process encountered a warning:\n" + res)
 			return res
 		return wrapper
 
 	@logging
 	@__remove_special_symbol
-	@__placet_error_seeker
+	@__error_seeker
 	def readline(self, timeout = _BASE_TIMEOUT) -> str:
 		"""
 		Read the line from the child process.
@@ -224,11 +210,7 @@ class Communicator(object):
 		----------
 		timeout: float, default Communicator._BASE_TIMEOUT
 			Timeout of the reader before raising the exception.
-
-		Raises
-		------
-		Exception
-			if no data is read after the timeout has passed.
+			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 
 		Returns
 		-------
@@ -249,6 +231,7 @@ class Communicator(object):
 			Number of lines to read.
 		timeout: float, default Communicator._BASE_TIMEOUT
 			Timeout of the reader before raising the exception.
+			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 
 		Returns
 		-------
@@ -257,7 +240,7 @@ class Communicator(object):
 		"""
 		res = []
 		for i in range(N_lines):	
-			res.append(self.readline())
+			res.append(self.readline(timeout))
 		return res
 
 	def save_debug_info(self, filename = "debug_data.pkl"):
@@ -271,6 +254,12 @@ class Communicator(object):
 		"""
 		if self.debug_mode:
 			self.debug_data.to_pickle(filename)
+
+	def __repr__(self):
+		return f"Communicator('{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay})"
+
+	def __str__(self):
+		return f"Communicator(process_name = '{self._process_name}', is_alive = {self.isalive()})"
 
 def test():
 	test = Communicator("./madx")

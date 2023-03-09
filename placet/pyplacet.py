@@ -3,12 +3,7 @@ from .communicator import Communicator
 import time
 from functools import wraps
 
-try:
-    from queue import Queue, Empty
-except ImportError:
-    from Queue import Queue, Empty  # python 2.x
-
-class Placetpy(Communicator):
+class Placetpy(Communicator):	
 	"""
 	A class used to interact with Placet process running in background
 
@@ -23,13 +18,34 @@ class Placetpy(Communicator):
 	_INTRO_LINES = 19
 	def __init__(self, name = "placet", **kwargs):
 		"""
+		Parameters
+		----------
+		name: string default placet
+			The name of the process to start. Should be the command starting Placet interactive shell
 
+		Additional parameters
+		---------------------
+		show_intro: bool default True
+			If True, prints the welcome message of Placet at the start
+		//**//Accepts all the additional parameters that Communicator accepts (Check Communicator) //**//
+		
 		"""
 		super(Placetpy, self).__init__(name, **kwargs)
+		self._show_intro = kwargs.get("show_intro", True)
 
+		self.__read_intro()
+
+	def __read_intro(self):
 		#skipping the program intro
 		for i in range(self._INTRO_LINES):
-			self.readline()
+			tmp = self.readline()
+			if self._show_intro:
+				print(tmp, end = "")
+
+	def restart(self):
+		"""Restart the child process"""
+		self._restart()
+		self.__read_intro()
 
 	def logging(func):
 		"""Logging decorator used, when debug mode is on"""
@@ -70,6 +86,12 @@ class Placetpy(Communicator):
 		for x in range(command.additional_lineskip):
 			self.skipline(**opt)
 	
+	def __repr__(self):
+		return f"Placetpy('{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
+
+	def __str__(self):
+		return f"Placetpy(process_name = '{self._process_name}', is_alive = {self.isalive()})"
+
 class PlacetCommand():
 	"""
 	A class to to classify the Placet commands
@@ -174,10 +196,11 @@ class PlacetCommand():
 		else:
 			raise ValueError("Command " + keyword + " does not exist!")
 
+	def __repr__(self):
+		return f"PlacetCommand({repr(self.command)}, timeout = {self.timeout}, type = '{self.type}', additional_lineskip = {self.additional_lineskip})"	
+	
 	def __str__(self):
-		return str(self.__dict__)
-
-	__repr__ = __str__
+		return f"PlacetCommand(command = {repr(self.command)})"
 
 
 def test():

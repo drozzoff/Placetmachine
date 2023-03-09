@@ -1,6 +1,8 @@
 import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from pandas import DataFrame
+
 
 from .quadrupole import Quadrupole
 from .cavity import Cavity
@@ -19,6 +21,7 @@ def _to_str(x):
 		return '-1'
 	else:
 		return str(x)
+
 def timing(func):
 
 	def wrapper(*args, **kwargs):
@@ -91,6 +94,24 @@ class PlacetLattice():
 			Name of the beamline.
 		"""
 		self.name, self.lattice, self.girders = name, [], {}
+
+	def __repr__(self):
+		return f"PlacetLattice('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
+
+	def __str__(self):
+		_data_to_show = ['name', 'type', 'girder', 's', 'x', 'xp', 'y', 'yp']
+		_settings_data = ['name', 's', 'x', 'xp', 'y', 'yp']
+		data_dict = {key: [None] * len(self.lattice) for key in _data_to_show}
+		for i in range(len(self.lattice)):
+			for key in _settings_data:
+				data_dict[key][i] = self.lattice[i].settings[key]
+			data_dict['type'][i] = self.lattice[i].type
+			data_dict['girder'][i] = self.lattice[i].girder
+
+		res_table = DataFrame(data_dict)
+#		res_table.name = self.name
+		
+		return f"PlacetLattice(name = '{self.name}', structure = \n{str(res_table)})"
 
 	def _verify_supported_elem_types(self, types):
 		if types is None:
@@ -220,7 +241,11 @@ class PlacetLattice():
 		return list(filter(lambda element: element.girder == girder_index, self.lattice))
 
 	def get_girder(self, girder_index) -> list:
-		"""Get the list of the elements on the girder"""
+		"""
+		Get the list of the elements on the girder
+		
+		Girders numbering starts from 1
+		"""
 		return self.girders[girder_index]
 
 	def _get_quads_strengths(self) -> list:
@@ -385,10 +410,16 @@ class PlacetLattice():
 
 		Additional parameters
 		---------------------
+		offsets_only: bool, default False
+			If True, only draws the elements that are mislaigned
+		length_scale: float, default 1.0
+			Scale the lengths of the elements accordingly
+			Sometimes needed to better see the elements
 		filename: str, optional
 			If given, saves the plot to the given path
 		"""
-		_height = 50
+		_DEFAULT_HEIGHT = 5
+		offsets_only, length_scale = extra_params.get("offsets_only", False), extra_params.get("length_scale", 1.0)
 		def _get_absolute_orbit(plane = 'y'):
 			bpms = list(filter(lambda element: element.type == "Bpm", self.lattice))
 			s = list(map(lambda x: x.settings['s'], bpms))
@@ -396,38 +427,53 @@ class PlacetLattice():
 				return s, list(map(lambda x: x.settings['x'] + x.settings['reading_x'], bpms))
 			if plane == 'y':
 				return s, list(map(lambda x: x.settings['y'] + x.settings['reading_y'], bpms))
-
+		counter = 0
 		with plt.style.context(['science', 'ieee']):
 			fig = plt.figure()
 			ax = fig.add_subplot(111)
 			
 			s, orbit = _get_absolute_orbit(plane)
 
-			plt.plot(s, orbit, '-', linewidth = 0.5)
+			#reference line
+			plt.plot(s, [0.0] * len(s), linewidth = 0.2, linestyle = "solid", color = "black")
+			plt.plot(s, orbit, '-', linewidth = 0.5, linestyle = "solid", color = "red")
+
 			for element in self.lattice:
-				center = 0.0
 				if plane == 'x':
 					center = element.settings['x']
-				if plane == 'y':
+				elif plane == 'y':
 					center = element.settings['y']
+				else:
+					raise ValueError('"plane" accepts only "x" or "y", received - ' + str(plane))
+				if center == 0.0 and offsets_only:
+					continue
 
-				if element.type == "Quadrupole":
-					ax.add_patch(patches.Rectangle((element.settings['s'] - element.settings['length'], -_height + center), element.settings['length'], 2 * _height, linewidth = 1e-6, edgecolor = "red", facecolor = "red"))
-				if element.type == "Bpm":
-					ax.add_patch(patches.Rectangle((element.settings['s'] - element.settings['length'], -0.75 * _height + center), element.settings['length'], 2 * .75 * _height, linewidth = 1e-6, edgecolor = "green", facecolor = "green"))
-				if element.type == "Cavity":
-					ax.add_patch(patches.Rectangle((element.settings['s'] - element.settings['length'], -0.5 * _height + center), element.settings['length'], 2 * 0.5 * _height, linewidth = 1e-6, edgecolor = "grey", facecolor = "grey"))
+				s, length = element.settings['s'], element.settings['length'] * length_scale
+				_classification = {
+					'Quadrupole': {"length_scale": 2.0, "color": "blue"},
+					'Bpm': {"length_scale": .75, "color": "green"},
+					'Cavity': {"length_scale": .5, "color": "grey"}
+				}
+				if element.type in ['Quadrupole', 'Bpm', 'Cavity']:
+					_height = _DEFAULT_HEIGHT * _classification[element.type]["length_scale"]
+					ax.add_patch(patches.Rectangle((s - length, -_height + center), length, 2 * _height, linewidth = 1e-6, edgecolor = _classification[element.type]["color"], facecolor = _classification[element.type]["color"]))
+					
 
-			plt.ylim(-100, 100)
-			plt.xlim(600, 630)
+
+			plt.ylim(-300, 300)
+			plt.xlim(0, 200)
+			plt.xlabel("s [m]")
+			plt.ylabel(plane + r" [$\mu$m]")
 			if 'filename' in extra_params:
 				plt.savefig(extra_params.get('filename'))
 			plt.show()
 
-	def __str__(self):
-		return str(self.__dict__)
+#	def __repr__(self):
 
-	__repr__ = __str__
+#		return f"Cavity({self.settings}, {self.girder}, {self.index}, '{self.type}')"
+
+#	def __str__(self):
+#		return f"Cavity({json.dumps(self.settings, indent = 4)})"
 
 
 def parse_line(data, girder_index = None, index = None):
