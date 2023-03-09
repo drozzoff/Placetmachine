@@ -111,6 +111,12 @@ class Placet(Placetpy):
 
 	_exec_params = PlacetCommand.optional_parameters
 
+	def __repr__(self):
+		return f"Placet(debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
+
+	def __str__(self):
+		return f"Placet(is_alive = {self.isalive()})"
+
 	def logging(func):
 
 		@wraps(func)
@@ -722,7 +728,6 @@ class Placet(Placetpy):
 		"""
 		Run 'BeamlineNew' command in Placet TCL
 			
-
 		Additional parameters
 		---------------------
 		//**//Inherits the parameters from Placet._exec_params. As per 14.11.2022 they are listed below//*//
@@ -734,11 +739,23 @@ class Placet(Placetpy):
 		self.run_command(self.__construct_command("BeamlineNew", [], **command_details))
 
 	def BeamlineSet(self, **command_details):
-		'''
-			Corresponds to 'BeamlineSet' command in Placet TCL
+		"""
+		Run	'BeamlineSet' command in Placet TCL
 
-			//**// Update description
-		'''
+		Fixes the beamline. This command is used to do some initial calculations. It must be called once but only once in a run.
+		//**//Description taken from Placet manual//*//
+		
+		Additional parameters
+		---------------------
+		name: str
+			Name of the beamline to create
+		//**//Inherits the parameters from Placet._exec_params. As per 14.11.2022 they are listed below//*//
+		timeout: float
+			The amount of time dedicated to executing the command, before raising the Exception.
+		additional_lineskip: int
+			The amount of the lines in the output to skip after executing the command
+
+		"""
 		assert 'name' in command_details, "name is not given"
 
 		self.run_command(self.__construct_command("BeamlineSet", ['name'], **command_details))

@@ -1,5 +1,7 @@
 from numpy import radians
 
+import json
+
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
@@ -38,10 +40,11 @@ class Cavity():
 				self.settings[x] = float(self.settings[x])
 		self.girder, self.index, self.type, self._cached_data = girder, index, "Cavity", None
 
-	def __str__(self):
-		return str(self.__dict__)
+	def __repr__(self):
+		return f"Cavity({self.settings}, {self.girder}, {self.index}, '{self.type}')"
 
-	__repr__ = __str__
+	def __str__(self):
+		return f"Cavity({json.dumps(self.settings, indent = 4)})"
 
 	def to_placet(self) -> str:
 		res = "Cavity"

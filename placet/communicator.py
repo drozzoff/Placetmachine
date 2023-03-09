@@ -1,13 +1,7 @@
 import pexpect
 import time
-from threading import Thread
 import pandas as pd
 from functools import wraps
-
-try:
-    from queue import Queue, Empty
-except ImportError:
-    from Queue import Queue, Empty  # python 2.x
 
 class Communicator(object):
 	"""
@@ -66,19 +60,29 @@ class Communicator(object):
 		send_delay: float, default Communicator._BUFFER_MAXSIZE
 			The time delay before each data transfer to a child process (sometimes needed for stability)
 		"""
-		self.process = pexpect.spawnu(process_name, timeout = None, encoding = 'utf-8')
-		
-		self.debug_mode = kwargs.get('debug_mode', False)
-	
+		self._process_name, self.debug_mode, self._save_logs, self._send_delay = process_name, kwargs.get('debug_mode', False), kwargs.get("save_logs", True), kwargs.get('send_delay', self._DELAY_BEFORE_SEND)	
+
+		self.__init()
+
+	def __init(self):
+		self.process = pexpect.spawnu(self._process_name, timeout = None, encoding = 'utf-8')
+
 		if self.debug_mode:
 			print("Debug mode is on. Running the process " + process_name + " with parameters " + str(kwargs))
 			self.debug_data = pd.DataFrame(columns = ['function', 'arguments', 'run_time', "res"])
 
-		if kwargs.get("save_logs", True):
+		if self._save_logs:
 			self.save_logs()
 
-		self.add_send_delay(kwargs.get('send_delay', self._DELAY_BEFORE_SEND))
-	
+		self.add_send_delay(self._send_delay)
+
+	def _restart(self):
+		"""Restart the child process"""
+		if self.isalive():
+			self.close()
+
+		self.__init()
+
 	def logging(func):
 		"""Log the functions running"""
 		@wraps(func)
@@ -132,9 +136,12 @@ class Communicator(object):
 		if skipline: self.skipline(timeout)
 		return command
 
+	def isalive(self):
+		return self.process.isalive()
+
 	def __terminate(self):
 		"""Terminate the child process"""
-		if self.process.isalive():
+		if self.isalive():
 			self.process.terminate()
 
 	def close(self):
@@ -247,6 +254,12 @@ class Communicator(object):
 		"""
 		if self.debug_mode:
 			self.debug_data.to_pickle(filename)
+
+	def __repr__(self):
+		return f"Communicator('{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay})"
+
+	def __str__(self):
+		return f"Communicator(process_name = '{self._process_name}', is_alive = {self.isalive()})"
 
 def test():
 	test = Communicator("./madx")

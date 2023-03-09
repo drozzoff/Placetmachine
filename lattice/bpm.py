@@ -1,3 +1,5 @@
+import json
+
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
@@ -26,16 +28,17 @@ class Bpm():
 	"reading_y", "transmitted_charge", "scale_x", "scale_y", "store_bunches", "hcorrector_step_size", "vcorrector_step_size"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
 
-	def __init__(self, in_parameters, girder = None, index = None):
+	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Bpm"):
 		self.settings = _extract_dict(self.parameters, in_parameters)
 		for x in self._float_params:
 			self.settings[x] = float(self.settings[x])
-		self.girder, self.index, self.type, self._cached_data = girder, index, "Bpm", None
+		self.girder, self.index, self.type, self._cached_data = girder, index, elem_type, None
+
+	def __repr__(self):
+		return f"Bpm({self.settings}, {self.girder}, {self.index}, '{self.type}')"
 
 	def __str__(self):
-		return str(self.__dict__)
-
-	__repr__ = __str__
+		return f"Bpm({json.dumps(self.settings, indent = 4)})"
 	
 	def to_placet(self) -> str:
 		res = "Bpm"

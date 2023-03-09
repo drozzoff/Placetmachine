@@ -215,10 +215,17 @@ class Machine():
 		self.placet.source("wake_calc.tcl")
 		self.placet.source("make_beam.tcl")	#is optional
 		self.placet.declare_proc(self.empty)
+		self.beamline = None
 
 		#I/O setup
 		self.console = Console()
 		self.setup_data_folder()
+
+	def __repr__(self):
+		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)}"
+
+	def __str__(self):
+		return f"Machine(placet = {str(self.placet)}, beamline = {str(self.beamline)})"
 
 	def setup_data_folder(self):
 		"""Set the temporary folder in tmp/ folder"""
@@ -335,6 +342,8 @@ class Machine():
 			phase
 			frac_lambda
 			scale
+		
+		To be updated!
 
 		Default cavity structure use
 		"""
