@@ -3,6 +3,9 @@ import time
 import pandas as pd
 from functools import wraps
 
+from threading import Thread
+from queue import Queue, Empty
+
 class Communicator(object):
 	"""
 	A class used to interact with the process spawned with Pexpect
@@ -62,6 +65,8 @@ class Communicator(object):
 		"""
 		self._process_name, self.debug_mode, self._save_logs, self._send_delay = process_name, kwargs.get('debug_mode', False), kwargs.get("save_logs", True), kwargs.get('send_delay', self._DELAY_BEFORE_SEND)	
 
+		self.out_buffer = Queue(maxsize = self._BUFFER_MAXSIZE)
+
 		self.__init()
 
 	def __init(self):
@@ -76,10 +81,15 @@ class Communicator(object):
 
 		self.add_send_delay(self._send_delay)
 
+		self.__spawn_out_stream()
+
 	def _restart(self):
 		"""Restart the child process"""
 		if self.isalive():
 			self.close()
+
+		with self.out_buffer.mutex:
+			self.out_buffer.queue.clear()
 
 		self.__init()
 
@@ -109,6 +119,30 @@ class Communicator(object):
 		"""
 		self.process.logfile_send = open("log_send.txt", "w")
 		self.process.logfile_read = open("log_read.txt", "w")
+
+	@logging
+	def __spawn_out_stream(self):
+		"""
+		Start a thread for an online reading of the output from the child process.
+		"""
+		self._thread_exit_flag = True
+		
+		def reader():
+			while self._thread_exit_flag:
+				line = self.process.readline()
+				if line is not None:
+					self.out_buffer.put(line)
+				else:
+					pass
+		self._t = Thread(target = reader)
+		self._t.daemon = True
+		self._t.start()
+
+	def __stop_out_thread(self):
+		"""
+		Stop a thread reading the output from the child process
+		"""
+		self._thread_exit_flag = False
 
 	@logging
 	def writeline(self, command, skipline = True, timeout = _BASE_TIMEOUT) -> str:
@@ -199,6 +233,14 @@ class Communicator(object):
 			return res
 		return wrapper
 
+	def _readline(self):
+		"""Get the line if available in out_buffer, otherwise None"""
+		try:
+			res = self.out_buffer.get() 
+		except Empty:
+			res = None
+		return res
+
 	@logging
 	@__remove_special_symbol
 	@__error_seeker
@@ -206,19 +248,29 @@ class Communicator(object):
 		"""
 		Read the line from the child process.
 
+		----------
+		When, no data is read - 
+
 		Parameters
 		----------
 		timeout: float, default Communicator._BASE_TIMEOUT
 			Timeout of the reader before raising the exception.
-			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 
 		Returns
 		-------
 		str
 			The line of the data received from the child process.
 		"""
-		
-		return self.process.readline()
+		start, res = time.time(), self._readline()
+
+		exec_time = 0.0
+		while res is None:
+			exec_time = time.time() - start
+			if exec_time > timeout:			
+				raise Exception("No data found!")
+			res = self._readline()
+
+		return res
 
 	@logging
 	def readlines(self, N_lines, timeout = _BASE_TIMEOUT) -> list:
