@@ -59,7 +59,22 @@ class Placetpy(Communicator):
 				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
 				print(exec_summ)
 			return res
-		return wrapper
+		
+		@wraps(func)
+		def wrapper_2(self, *args, **kwargs):
+			if self.debug_mode:
+				exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
+				print(exec_summ)
+				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
+#				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
+
+			res = func(self, *args, **kwargs)
+			
+			return res
+		
+		return wrapper_2
+
+
 
 	@logging
 	def run_command(self, command, skipline = True):
@@ -78,13 +93,13 @@ class Placetpy(Communicator):
 		"""
 		assert isinstance(command, PlacetCommand), "command must be of the type 'PlacetCommand'"
 		
-		opt = {}
+		opt = {'no_expect': command.no_expect}
 		if command.timeout is not None:
 			opt['timeout'] = command.timeout
 
 		self.writeline(command.command, skipline, **opt)
 		for x in range(command.additional_lineskip):
-			self.skipline(**opt)
+			self.skipline()
 	
 	def __repr__(self):
 		return f"Placetpy('{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
@@ -119,7 +134,7 @@ class PlacetCommand():
 	"ElementSetAttributes", "TclCall", "TwissMain"]
 
 	#options that affect the execution/parsing of the commands
-	optional_parameters = ['timeout', 'additional_lineskip']
+	optional_parameters = ['timeout', 'additional_lineskip', 'no_expect']
 
 	def __init__(self, command, **kwargs):
 		"""
@@ -139,11 +154,15 @@ class PlacetCommand():
 			The number of lines of the Placet output to skip after writing the command
 
 			Each command type has its additional_lineskip associated with it. The value passed here will overwrite it.
+
+		no_expect: bool default False
+			If True, expect command for the command prompt is not invoked before doing 'write'. Should be used carefully.
 		"""
 		self.command = command	
 		self.timeout = kwargs.get('timeout', None)
 		self.type = kwargs.get("type") if "type" in kwargs else self._get_command_type(command) 
 		self.additional_lineskip = kwargs.get("additional_lineskip") if "additional_lineskip" in kwargs else self._additional_lineskip(self.type)
+		self.no_expect = kwargs.get('no_expect', False)
 
 	def _additional_lineskip(self, command_type):
 		"""
@@ -197,7 +216,7 @@ class PlacetCommand():
 			raise ValueError("Command " + keyword + " does not exist!")
 
 	def __repr__(self):
-		return f"PlacetCommand({repr(self.command)}, timeout = {self.timeout}, type = '{self.type}', additional_lineskip = {self.additional_lineskip})"	
+		return f"PlacetCommand({repr(self.command)}, timeout = {self.timeout}, type = '{self.type}', additional_lineskip = {self.additional_lineskip}, no_expect = {self.no_expect})"	
 	
 	def __str__(self):
 		return f"PlacetCommand(command = {repr(self.command)})"

@@ -1534,8 +1534,8 @@ class Placet(Placetpy):
 
 		"""
 		self.run_command(PlacetCommand("proc " + command_details.get("name", proc.__name__)  + " {} {\n", type = "custom", additional_lineskip = 0, timeout = 1))
-		proc(**dict(command_details, additional_lineskip = 0))
-		self.run_command(PlacetCommand("}\n", type = "custom", additional_lineskip = 0))
+		proc(**dict(command_details, additional_lineskip = 0, no_expect = True))
+		self.run_command(PlacetCommand("}\n", type = "custom", additional_lineskip = 0, no_expect = True))
 
 	"""extra commands"""
 	def _custom_command(self, command, **command_details):
