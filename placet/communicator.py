@@ -68,7 +68,7 @@ class Communicator(object):
 		self.process = pexpect.spawnu(self._process_name, timeout = None, encoding = 'utf-8')
 
 		if self.debug_mode:
-			print("Debug mode is on. Running the process " + process_name + " with parameters " + str(kwargs))
+			print(f"Debug mode is on. Running the process {self._process_name}, debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}")
 			self.debug_data = pd.DataFrame(columns = ['function', 'arguments', 'run_time', "res"])
 
 		if self._save_logs:
@@ -93,9 +93,21 @@ class Communicator(object):
 			if self.debug_mode:
 				exec_summ = dict(function = func.__name__, arguments = [args, kwargs], run_time = run_time, res = res)
 				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-				print("\t" + str(exec_summ))
+				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
 			return res
-		return wrapper
+
+		@wraps(func)
+		def wrapper_2(self, *args, **kwargs):
+			if self.debug_mode:
+				exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
+				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
+				print("\t" + str(exec_summ))
+
+			res = func(self, *args, **kwargs)
+			
+			return res
+		
+		return wrapper_2
 
 	def add_send_delay(self, time = _DELAY_BEFORE_SEND):
 		"""Add the time delay before each data transfer"""
@@ -111,10 +123,15 @@ class Communicator(object):
 		self.process.logfile_read = open("log_read.txt", "w")
 
 	@logging
-	def writeline(self, command, skipline = True, timeout = _BASE_TIMEOUT) -> str:
+	def writeline(self, command, skipline = True, timeout = _BASE_TIMEOUT, **kwargs) -> str:
 		"""
 		Send the line to a child process
 		
+		[10.03.2023] - Added the expect to search for a prompt given in _TERMINAL_SPECIAL_SYMBOL before invoking `self.process.write()`.
+						Doing so, we make sure that we do not try to write while the process is still busy with the previous command.
+						We set the default timeout of Communicator._BASE_TIMEOUT.
+						Ideally, this should fix the issue, when we run the commands that do not produce any output in the terminal.
+
 		Parameters
 		----------
 		command: str
@@ -125,12 +142,24 @@ class Communicator(object):
 		timeout: float, default _BASE_TIMEOUT
 			Timeout of the reader before raising the exception.
 			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
+		
+		Additional parameters
+		---------------------
+		no_expect: bool default False
+			If True, the expect command is not invoked.
+
+			Is needed in rare occasions when the command consists of multiple lines (Eg. function definition)
 
 		Returns
 		-------
 		str
 			The command that was sent to a child process
 		"""
+		if not kwargs.get('no_expect', False):
+			self.process.expect(self._TERMINAL_SPECIAL_SYMBOL, timeout = self._BASE_TIMEOUT)
+
+		self.flush()
+
 		self.process.write(command)
 
 		if skipline: self.skipline(timeout)
@@ -242,6 +271,10 @@ class Communicator(object):
 		for i in range(N_lines):	
 			res.append(self.readline(timeout))
 		return res
+
+	def flush(self):
+		"""Flush the child process buffer"""
+		self.process.flush()
 
 	def save_debug_info(self, filename = "debug_data.pkl"):
 		"""
