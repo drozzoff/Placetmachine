@@ -129,6 +129,8 @@ class Machine():
 		An object storing the beamline info
 	beams_invoked: list(string)
 		An object storing the names of the beams that were created
+	beamlines_invoked: list(string)
+		An object storing the names of the beamlines that were created
 	callback_struct_: tuple(func, dict)
 		The function that is currently used as callback for the tracking along with its parameters
 	_data_folder_: str
@@ -215,7 +217,7 @@ class Machine():
 		self.placet.source("wake_calc.tcl")
 		self.placet.source("make_beam.tcl")	#is optional
 		self.placet.declare_proc(self.empty)
-		self.beamline, self.beams_invoked = None, []
+		self.beamline, self.beams_invoked, self.beamlines_invoked = None, [], []
 
 		#I/O setup
 		self.console = Console()
@@ -328,6 +330,7 @@ class Machine():
 			The created beamline.
 		"""
 		lattice_name = extra_params.get("name", "default")
+		assert not lattice_name in self.beamlines_invoked, f"Beamline with the name '{lattice_name}' already exists."
 		self.placet.BeamlineNew()
 		self.placet.source(lattice, additional_lineskip = 0)
 		if extra_params.get("callback", True):
@@ -339,6 +342,7 @@ class Machine():
 		#parsing the lattice with Beamline
 		self.beamline = Beamline(lattice_name)
 		self.beamline.read_from_file(lattice)
+		self.beamlines_invoked.append(lattice_name)
 		return self.beamline
 
 	@term_logging
@@ -362,7 +366,7 @@ class Machine():
 			Eg. eval_track_results() evaluates the macroparticles coordinates. To do so, 'callback' procedure is required.
 		"""
 		assert isinstance(lattice, Beamline), f"'lattice' - expected 'Beamline', got{type(lattice)}"
-		
+		assert not lattice.name in self.beamlines_invoked, f"Beamline with the name '{lattice.name}' already exists."
 		self.placet.BeamlineNew()
 		lattice.to_placet(self._data_folder_ + "/lattice_for_placet.tcl")
 		self.placet.source(self._data_folder_ + "/lattice_for_placet.tcl", additional_lineskip = 0)
@@ -373,6 +377,7 @@ class Machine():
 
 		self.placet.BeamlineSet(name = lattice.name)
 		self.beamline = lattice
+		self.beamlines_invoked.append(lattice.name)
 		return self.beamline
 
 	def cavities_setup(self, **command_details):
@@ -609,7 +614,7 @@ class Machine():
 		str
 			The beam name
 		"""
-		
+
 		assert not beam_name in self.beams_invoked, f"Beam with the name '{beam_name}' already exists!"
 		_options_list = ['charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'sigma_z', 'n_total']
 		for value in _options_list:
@@ -704,7 +709,7 @@ class Machine():
 		"""Decorator used to add the Beamline name used in the tracking/correction"""
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
-			res_dataframe - func(self, *args, **kwargs)
+			res_dataframe = func(self, *args, **kwargs)
 			res_dataframe['beamline'] = self.beamline.name
 			return res_dataframe
 		return wrapper
@@ -948,26 +953,10 @@ class Machine():
 
 		Additional parameters
 		---------------------
-		alignment_file: str, optional
-			The file containing the current beamline misalignments
-		create_opt_beams: bool, default True
-			If True, creates the optional beams for DFS
-		n_slices: int, default 11
-			number of the slices in the beam
-		n_macroparticles: int, default 5
-			number of the mactoparticles in a slice
 		bpms_realign: bool, True
 			If True, updates the reference orbit (bpm reading) by invoking a new callback procedure with 'BpmRealign' in it
 
-		//**//Accepts all the parameters that TestMeasuredCorrection accepts (Check Placet.TestMeasuredCorrection) except
-			beam0, beam1, cbeam1, machines, emitt_file)! 
-			The additional beams are generated once per Machines instance as follow
-
-				>>> beam1 = self.make_beam_slice_energy_gradient("test_beam", n_slices, n_macroparticles, 0.95, 0.9, int(random.random() * 1e5), False, n_total = 500)
-				>>> cbeam0 = self.make_beam_slice_energy_gradient("test_beam_2", 1, 1, 1.0, 1.0, int(random.random() * 1e5), False, n_total = 500)
-				>>> cbeam1 = self.make_beam_slice_energy_gradient("test_beam_3", 1, 1, 0.95, 0.9, int(random.random() * 1e5), False, n_total = 500)
-			machines is set to 1
-			emitt_file is set to "temp/emitt_dfs.dat" by default (crashes otherwise)
+		//**//Accepts all the parameters that TestMeasuredCorrection accepts (Check Placet.TestMeasuredCorrection) //**//
 
 		Returns
 		-------
@@ -977,17 +966,8 @@ class Machine():
 			The comlumns of the resulting DataFrame:
 			['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty']
 		"""
-		n_slices, n_macroparticles = extra_params.get('n_slices', 11), extra_params.get('n_macroparticles', 5)
-		if extra_params.get('create_opt_beams', True):
-			beam1 = self.make_beam_slice_energy_gradient("test_beam", n_slices, n_macroparticles, 0.95, 0.9, int(random.random() * 1e5), False, n_total = 500)
-			cbeam0 = self.make_beam_slice_energy_gradient("test_beam_2", 1, 1, 1.0, 1.0, int(random.random() * 1e5), False, n_total = 500)
-			cbeam1 = self.make_beam_slice_energy_gradient("test_beam_3", 1, 1, 0.95, 0.9, int(random.random() * 1e5), False, n_total = 500)
-
 		dfs_default_options = {
 			'beam0': beam,
-			'beam1': "test_beam",
-			'cbeam0': "test_beam_2",
-			'cbeam1': "test_beam_3",
 			'survey': survey,
 			'machines': 1,
 			'timeout': 1000,

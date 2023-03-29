@@ -669,7 +669,7 @@ class Placet(Placetpy):
 			track_tmp = pd.DataFrame({
 				'correction': "DFS",
 #				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None,
-				'beam': command_details.get('beam'),
+				'beam': command_details.get('beam0'),
 				'survey': command_details.get('survey', None),
 				'positions_file': command_details.get("errors_file", None), 
 				'emittx': None, 
