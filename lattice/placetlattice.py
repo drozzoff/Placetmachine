@@ -31,9 +31,11 @@ def timing(func):
 
 	return wrapper
 
-class PlacetLattice():
+class Beamline():
 	"""
-	A class used to store the Placet lattice
+	A class used to store the lattice
+
+	Fully compatible with Placet and can be imported.
 	
 	Attributes
 	----------
@@ -96,7 +98,7 @@ class PlacetLattice():
 		self.name, self.lattice, self.girders = name, [], {}
 
 	def __repr__(self):
-		return f"PlacetLattice('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
+		return f"Beamline('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
 
 	def __str__(self):
 		_data_to_show = ['name', 'type', 'girder', 's', 'x', 'xp', 'y', 'yp']
@@ -111,7 +113,7 @@ class PlacetLattice():
 		res_table = DataFrame(data_dict)
 #		res_table.name = self.name
 		
-		return f"PlacetLattice(name = '{self.name}', structure = \n{str(res_table)})"
+		return f"Beamline(name = '{self.name}', structure = \n{str(res_table)})"
 
 	def _verify_supported_elem_types(self, types):
 		if types is None:
@@ -510,28 +512,28 @@ def test_init():
 			print(res)
 
 def test_write():
-	ml = PlacetLattice("ml")
+	ml = Beamline("ml")
 	ml.read_from_file("tmp.dat")
 	print(ml)
 	ml.save(filename = "temp/beamline_tmp.json")
 
 def test_read():
-	ml = PlacetLattice("ml")
+	ml = Beamline("ml")
 	ml.read("temp/beamline_tmp.json")
 	ml.to_placet("temp/lattice_tmp.tcl")
 
 def convert_to_json(filename_in, filename_out):
-	ml = PlacetLattice()
+	ml = Beamline()
 	ml.read_from_file(filename_in)
 	ml.save(filename = filename_out)
 
 def read_from_json():
-	ml = PlacetLattice()
+	ml = Beamline()
 	ml.read("Lattices/drive_beam_ml.json")
 	ml.to_placet("lattice_tmp.tcl")
 
 def errors_reading():
-	ml = PlacetLattice("ml")
+	ml = Beamline("ml")
 	ml.read_from_file("Lattices/1000_db_ml.tcl")
 	ml.read_misalignments("temp/positions.dat", cav_bpm = True, cav_grad_phas = True)
 	ml.save_misalignments("temp/positions_2.dat", cav_bpm = True, cav_grad_phas = True)

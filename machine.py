@@ -1,5 +1,5 @@
 from .placet.placetwrap import Placet
-from .lattice.placetlattice import PlacetLattice
+from .lattice.placetlattice import Beamline
 from .util import Knob, CoordTransformation
 
 import json
@@ -110,10 +110,10 @@ class Machine():
 	"""
 	A class used for controling the beamline in Placet
 
-	Uses placet_wrap.Placet interface to Placet and lattice_parse.PlacetLattice for controling the beamline.
+	Uses placet_wrap.Placet interface to Placet and lattice_parse.Beamline for controling the beamline.
 
 	Changes the logic of using the Placet for beam tracking. By default, the number of the machines is set to 1.
-	Each Machine instance corresponds to 1 actual beamline. The beamline is described with PlacetLattice.
+	Each Machine instance corresponds to 1 actual beamline. The beamline is described with Beamline.
 	All the corrections are applied to the current machines with the current offsets by default. Though, one can
 	overwrite that with the typical survey functions, which violates the logic of this class.
 	
@@ -125,10 +125,10 @@ class Machine():
 		A Placet object, used for communicating with the Placet process running in the background
 	console: rich.console.Console
 		An object used for the fancy terminal output
-	beamline: lattice_parse.PlacetLattice, optional
+	beamline: lattice_parse.Beamline, optional
 		An object storing the beamline info
-	beam_parameters: dict
-		Dict storing the key info, neede for the Placet running. Primarily used for the beam creation
+	beams_invoked: list(string)
+		An object storing the names of the beams that were created
 	callback_struct_: tuple(func, dict)
 		The function that is currently used as callback for the tracking along with its parameters
 	_data_folder_: str
@@ -136,7 +136,7 @@ class Machine():
 
 	Methods
 	-------
-	create_beamline(lattice, **extra_params) -> lattice_wrap.PlacetLattice
+	create_beamline(lattice, **extra_params) -> lattice_wrap.Beamline
 		Create the beamline.
 	cavities_setup(**extra_params)
 		Set up the cavities of the ML.
@@ -215,7 +215,7 @@ class Machine():
 		self.placet.source("wake_calc.tcl")
 		self.placet.source("make_beam.tcl")	#is optional
 		self.placet.declare_proc(self.empty)
-		self.beamline = None
+		self.beamline, self.beams_invoked = None, []
 
 		#I/O setup
 		self.console = Console()
@@ -253,6 +253,10 @@ class Machine():
 
 			if func_name in ["RF_align"]:
 				return ["Performing the RF alignment", "RF alignment done"]
+
+			if func_name in ["import_beamline"]:
+				return ["Importing a beamline", "Beamline imported"]
+			return ["", ""]
 
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
@@ -292,11 +296,11 @@ class Machine():
 		self.callback_struct_ = (func, extra_params)
 
 	@term_logging
-	def create_beamline(self, lattice, **extra_params) -> PlacetLattice:
+	def create_beamline(self, lattice, **extra_params) -> Beamline:
 		"""
-		Create the beamline
+		Create the beamline in Placet.
 		
-		[19.07.2022] Returns the PlacetLattice object instead of the typical beamline name return of BeamlineSet 
+		[19.07.2022] Returns the Beamline object instead of the typical beamline name return of BeamlineSet 
 		
 		[26.09.2022] The callback procedure has a fixed name in Placet - "callback". The procedure can no longer be created here.
 					By default sets the callback function to Machine.empty() to avoid errors when forgotten to declare
@@ -311,26 +315,64 @@ class Machine():
 		---------------------
 		name: str, default "default"
 			The name of the beamline.
+			When the lattice is given as a filename with Placet lattice, used to create the Beamline object and setup the lattice in Placet.
+			When the lattice is given as a Beamline object is ignored! The 'Beamline.name' is used the setup the lattice in Placet
+
 		callback: bool, default True
 			If True creates the callback procedure in Placet by calling
-				self.placet.TclCall(script = "callback")
+				Placet.TclCall(script = "callback")
 
 		Returns
 		-------
-		PlacetLattice
+		Beamline
 			The created beamline.
 		"""
+		lattice_name = extra_params.get("name", "default")
 		self.placet.BeamlineNew()
 		self.placet.source(lattice, additional_lineskip = 0)
 		if extra_params.get("callback", True):
 			self.placet.TclCall(script = "callback")
 			self.set_callback(self.empty)
 
-		self.placet.BeamlineSet(name = extra_params.get("name", "default"))
+		self.placet.BeamlineSet(name = lattice_name)
 		
-		#parsing the lattice with PlacetLattice
-		self.beamline = PlacetLattice(extra_params.get("name", "default"))
+		#parsing the lattice with Beamline
+		self.beamline = Beamline(lattice_name)
 		self.beamline.read_from_file(lattice)
+		return self.beamline
+
+	@term_logging
+	def import_beamline(self, lattice, **extra_params) -> Beamline:
+		"""
+		Import the Beamline in Placet.
+
+		Parameters
+		----------
+		lattice: Beamline
+			The Beamline to import
+
+		Additional parameters
+		---------------------
+
+		callback: bool, default True
+			If True creates the callback procedure in Placet by calling
+				Placet.TclCall(script = "callback")
+			
+			!!Should be handed carefully! Some functions expect 'callback' procedure to exist. 
+			Eg. eval_track_results() evaluates the macroparticles coordinates. To do so, 'callback' procedure is required.
+		"""
+		assert isinstance(lattice, Beamline), f"'lattice' - expected 'Beamline', got{type(lattice)}"
+		
+		self.placet.BeamlineNew()
+		lattice.to_placet(self._data_folder_ + "/lattice_for_placet.tcl")
+		self.placet.source(self._data_folder_ + "/lattice_for_placet.tcl", additional_lineskip = 0)
+		
+		if extra_params.get("callback", True):
+			self.placet.TclCall(script = "callback")
+			self.set_callback(self.empty)
+
+		self.placet.BeamlineSet(name = lattice.name)
+		self.beamline = lattice
 		return self.beamline
 
 	def cavities_setup(self, **command_details):
@@ -356,9 +398,26 @@ class Machine():
 		self.frac_lambda = self.placet.set("frac_lambda", command_details.get('frac_lambda', 0.25))
 		self.scale = self.placet.set("scale", command_details.get('scale', 1.0))
 
+	def survey_errors_set(self, **extra_params):
+		"""
+		Set the survey default errors for the machine.
+		
+		Overwrites the Placet.SurveyErrorSet and sets the values not provided by the user to zero by default.
+		Original Placet.SurveyErrorSet only overwrites the values provided by the user, rest remain unchanged.
+
+		Additional parameters
+		---------------------
+		//**// All the parameters Placet.SurveyErrorSet accepts//**//
+		"""
+		errors_dict = {}
+		for error in self.placet.survey_erorrs:
+			errors_dict[error] = extra_params.get(error, 0.0)
+		self.placet.SurveyErrorSet(**errors_dict)
+
 	def assign_errors(self, survey = None, **extra_params):
 		"""
-		Assign the errors to the beamline.
+		Assign the alignment errors to the beamline. 
+		Uses given survey and the given static errors to misalign the beamline.
 
 		Parameters
 		----------
@@ -379,10 +438,10 @@ class Machine():
 			When "from_file" survey is used
 		//**// Also accepts all the parameters of Placet.InterGirderMove //*//
 		"""
-		assert survey in (self.surveys + [None]), "Survey is not recongnized"
+		assert survey in (self.surveys + [None]), "Survey is not recognized"
 
 		if survey == "default_clic":
-			self.placet.SurveyErrorSet(**extra_params.get('static_errors', {}))
+			self.survey_errors_set(**extra_params.get('static_errors', {}))
 			self.placet.RandomReset(seed = extra_params.get('errors_seed', int(random.random() * 1e5)))
 			self.default_clic(**dict(extra_params))
 			self._update_lattice_misalignments(cav_bpm = 1, cav_grad_phas = 1)
@@ -406,7 +465,8 @@ class Machine():
 		
 		Practically could pass the whole beam_setup to the function. Keep the same structure as in Placet
 		Optional parameters (if not given, checks self.beam_parameters. If self.beam_parameters does not have them throws an Exception)
-
+		
+		[29.04.2023] Outdated. To be checked!
 		Parameters
 		----------
 		beam_name: str
@@ -496,13 +556,13 @@ class Machine():
 		return beam_name
 
 	@term_logging
-	def make_beam_slice_energy_gradient(self, beam_name, n_slice, n_macroparticles, eng, grad, beam_seed = 1234, main_beam = True, **extra_params) -> str:
+	def make_beam_slice_energy_gradient(self, beam_name, n_slice, n_macroparticles, eng, grad, beam_seed = 1234, **extra_params) -> str:
 		"""
 		Generate the sliced beam
 		
 		Similar to 'make_beam_slice_energy_gradient' in Placet TCL but rewritten in Python
 		.......
-		Optional parameters (if not given, checks self.beam_parameters. If self.beam_parameters does not have them throws an Exception)
+		One has to provide all the additional parameters otherwise the beam creation will fail.
 
 		Parameters
 		----------
@@ -518,8 +578,6 @@ class Machine():
 			Accelerating gradient offset
 		beam_seed: int, default 1234
 			The seed number of the random number distribution
-		main_beam: bool, default True
-			If True, the created beam is the primar beam for the tracking
 		
 		Additional parameters
 		---------------------
@@ -551,44 +609,37 @@ class Machine():
 		str
 			The beam name
 		"""
-		if main_beam:
-			self.placet.beam_seed = self.placet.set("beam_seed", beam_seed)
 		
+		assert not beam_name in self.beams_invoked, f"Beam with the name '{beam_name}' already exists!"
 		_options_list = ['charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'sigma_z', 'n_total']
-		
-		parameters = {}
-
-		for option in _options_list:
-			if option in extra_params:
-				parameters[option] = extra_params.get(option)
-			elif option in self.beam_parameters:
-				parameters[option] = self.beam_parameters[option]
-			else:
-				raise Exception("Parameters " + option + " is not specified")
+		for value in _options_list:
+			if not value in extra_params:
+				raise Exception(f"The parameter '{value}' is missing!")
 
 		beam_setup = {
 			'bunches': 1,
 			'macroparticles': n_macroparticles,
-			'particles': parameters['n_total'],
-			'energyspread': 0.01 * parameters['e_spread'] * parameters['e_initial'],
+			'particles': extra_params.get('n_total'),
+			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
 			'ecut': 3.0,
-			'e0': eng * parameters['e_initial'],
-			'file': self.placet.wake_calc(self._data_folder_ + "/wake.dat", parameters['charge'], -3,  3, parameters['sigma_z'], n_slice),
+			'e0': eng * extra_params.get('e_initial'),
+			'file': self.placet.wake_calc(self._data_folder_ + "/wake.dat", extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
 			'chargelist': "{1.0}",
 			'charge': 1.0,
 			'phase': 0.0,
 			'overlapp': -390 * 0.3 / 1.3,	#no idea
 			'distance': 0.3 / 1.3,			#bunch distance, no idea what it is
-			'alpha_y': parameters['alpha_y'],
-			'beta_y': parameters['beta_y'],
-			'emitt_y': parameters['emitt_y'],
-			'alpha_x:': parameters['alpha_x'],
-			'beta_x': parameters['beta_x'],
-			'emitt_x': parameters['emitt_x']
+			'alpha_y': extra_params.get('alpha_y'),
+			'beta_y': extra_params.get('beta_y'),
+			'emitt_y': extra_params.get('emitt_y'),
+			'alpha_x:': extra_params.get('alpha_x'),
+			'beta_x': extra_params.get('beta_x'),
+			'emitt_x': extra_params.get('emitt_x')
 		}
 		self.placet.InjectorBeam(beam_name, **beam_setup)
 		
 		self.placet.SetRfGradientSingle(beam_name, 0, "{" + str(grad) +  " 0.0 0.0}")
+		self.beams_invoked.append(beam_name)
 
 		return beam_name
 
@@ -645,12 +696,21 @@ class Machine():
 			elif survey in Machine.surveys:
 				alignment = survey
 			else:
-				raise ValueError("Incorrect survey. Accepted values are" + str(Machine.surveys) + " or None")
-
+				raise ValueError(f"Incorrect survey. Accepted values are {Machine.surveys} or None")			
 			return func(self, beam, alignment, **kwargs)
 		return wrapper
 
+	def add_beamline_to_final_dataframe(func):
+		"""Decorator used to add the Beamline name used in the tracking/correction"""
+		@wraps(func)
+		def wrapper(self, *args, **kwargs):
+			res_dataframe - func(self, *args, **kwargs)
+			res_dataframe['beamline'] = self.beamline.name
+			return res_dataframe
+		return wrapper
+
 #	@term_logging
+	@add_beamline_to_final_dataframe
 	@verify_survey
 	def track(self, beam, survey = None, **extra_params) -> pd.DataFrame:
 		"""
@@ -665,9 +725,12 @@ class Machine():
 		survey: str, optional
 			The type of survey to be used. One has to define the procedure in Placet in order to use it.
 			
-			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file"
+			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file" (default)
 			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
 			
+			!!Mostly kept for compatibility, better not be used and have a default beaviour.
+			The misalignments could be added separately in Machine.asisgn_errors()
+
 		Returns
 		-------
 		DataFrame
@@ -799,6 +862,7 @@ class Machine():
 		return res	
 
 	@term_logging
+	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
 	def one_2_one(self, beam, survey = None, **extra_params) -> pd.DataFrame:
@@ -816,6 +880,9 @@ class Machine():
 			
 			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file"
 			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
+			
+			!!Mostly kept for compatibility, better not be used and have a default beaviour.
+			The misalignments could be added separately in Machine.asisgn_errors()
 		
 		Additional parameters
 		---------------------
@@ -832,6 +899,7 @@ class Machine():
 		return self.placet.TestSimpleCorrection(**dict(extra_params, beam = beam, machines = 1, survey = survey, timeout = 100))
 
 	@term_logging
+	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
 	def DFS(self, beam, survey = None, **extra_params) -> pd.DataFrame:
@@ -874,7 +942,10 @@ class Machine():
 			
 			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file"
 			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it		
-		
+			
+			!!Mostly kept for compatibility, better not be used and have a default beaviour.
+			The misalignments could be added separately in Machine.asisgn_errors()
+
 		Additional parameters
 		---------------------
 		alignment_file: str, optional
@@ -1195,7 +1266,7 @@ class Machine():
 		"""
 		Scan the knob
 
-		After the scan, the optimal knob value is saved in the memory in PlacetLattice.beamline. 
+		After the scan, the optimal knob value is saved in the memory in Beamline.beamline. 
 		To update it in Placet, one has to call machine._update_lattice_misalignments()
 		
 		Parameters
@@ -1271,7 +1342,7 @@ class Machine():
 		Add the errors to the cavities phase and gradient
 
 		Original function used Placet.ElementSetAttributes() to update cavs parameters, but is very slow
-		[23/11/2022] Modified to use with PlacetLattice
+		[23/11/2022] Modified to use with Beamline
 		....
 
 		Parameters
@@ -1521,7 +1592,7 @@ class Machine():
 		Synchronize the misalignments in self.beamline with Placet
 
 		1)Writes the lattice's misalignments stored in Placet to a file
-		2)Proceeds it with PlacetLattice.read_misalignments() to update the values in Python
+		2)Proceeds it with Beamline.read_misalignments() to update the values in Python
 
 		Writes the misalignments to 'position_tmp.dat' file
 
