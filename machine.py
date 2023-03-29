@@ -319,10 +319,11 @@ class Machine():
 			The name of the beamline.
 			When the lattice is given as a filename with Placet lattice, used to create the Beamline object and setup the lattice in Placet.
 			When the lattice is given as a Beamline object is ignored! The 'Beamline.name' is used the setup the lattice in Placet
-
 		callback: bool, default True
 			If True creates the callback procedure in Placet by calling
 				Placet.TclCall(script = "callback")
+		cavities_setup: dict
+			The dictionary containing the parameters for 'Machine.cavities_setup()'
 
 		Returns
 		-------
@@ -343,6 +344,8 @@ class Machine():
 		self.beamline = Beamline(lattice_name)
 		self.beamline.read_from_file(lattice)
 		self.beamlines_invoked.append(lattice_name)
+
+		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
 	@term_logging
@@ -380,28 +383,53 @@ class Machine():
 		self.beamlines_invoked.append(lattice.name)
 		return self.beamline
 
-	def cavities_setup(self, **command_details):
+	def cavities_setup(self, **extra_params):
 		"""
 		Set the main cavities parameters
+		.........
+		It is required for the beam creation. Beams in Placet use the results from the command
+			% calc wake.dat
+		to have the values for the transverse (longitudinal?) wakes
 
-		Required paramaters:
-			cavity_structure		- dict; dictionary with the main cavity parameters (a, g, l, delta, delta_g)
-			phase
-			frac_lambda
-			scale
-		
-		To be updated!
+		One has to provide all the additional parameters. Having zeros as default could lead to
+		unexpected behaviour
 
-		Default cavity structure use
+		Additional parameters
+		---------------------
+		a: float
+			to check
+		g: float
+			to check
+		l: float
+			to check
+		delta: float
+			to check
+		delta_g: float
+			to check
+		phase: float
+			Cavities phase
+		frac_lambda: float
+			to check
+		scale: float
+			to check
 		"""
-		#cavity structure
-		self.cavity_structure = command_details.get('cavity_structure', None)
-
-		self.placet.set_list("structure", **self.cavity_structure)
-
-		self.phase = self.placet.set("phase", command_details.get('phase', 8.0))
-		self.frac_lambda = self.placet.set("frac_lambda", command_details.get('frac_lambda', 0.25))
-		self.scale = self.placet.set("scale", command_details.get('scale', 1.0))
+		_structure_list = ['a', 'g', 'l', 'delta', 'delta_g']
+		structure_dict = {}
+		for key in _structure_list:
+			if not key in extra_params:
+				self.console.log(f"[red] Warning! Machine.cavities_setup(): Parameter '{key}' is not given, using default value (0.0).")
+				structure_dict[key] = 0.0
+			else:
+				structure_dict[key] = extra_params.get(key)
+		for key in ['phase', 'frac_lambda', 'scale']:
+			if not key in extra_params:
+				self.console.log(f"[red] Warning! Machine.cavities_setup(): Parameter '{key}' is not given, using default value (0.0).")
+				
+		self.placet.set_list("structure", **structure_dict)
+		#some go separately
+		self.placet.set("phase", extra_params.get('phase', 0.0))
+		self.placet.set("frac_lambda", extra_params.get('frac_lambda', 0.0))
+		self.placet.set("scale", extra_params.get('scale', 0.0))
 
 	def survey_errors_set(self, **extra_params):
 		"""
@@ -614,7 +642,7 @@ class Machine():
 		str
 			The beam name
 		"""
-
+		assert self.beamlines_invoked != [], "Create a beamline first!"
 		assert not beam_name in self.beams_invoked, f"Beam with the name '{beam_name}' already exists!"
 		_options_list = ['charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'sigma_z', 'n_total']
 		for value in _options_list:
