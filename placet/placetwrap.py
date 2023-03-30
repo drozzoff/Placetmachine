@@ -111,6 +111,10 @@ class Placet(Placetpy):
 
 	_exec_params = PlacetCommand.optional_parameters
 
+	survey_erorrs = ['quadrupole_x', 'quadrupole_y', 'quadrupole_xp', 'quadrupole_yp', 'quadrupole_roll', 'cavity_x', 'cavity_realign_x', 'cavity_y', 'cavity_realign_y', 
+		'cavity_xp', 'cavity_yp', 'cavity_dipole_x', 'cavity_dipole_y', 'piece_x', 'piece_xp', 'piece_y', 'piece_yp', 'bpm_x', 'bpm_y', 'bpm_xp', 'bpm_yp', 'bpm_roll',
+		'sbend_x', 'sbend_y', 'sbend_xp', 'sbend_yp', 'sbend_roll']
+
 	def __repr__(self):
 		return f"Placet(debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
 
@@ -391,7 +395,7 @@ class Placet(Placetpy):
 			The tracking results after running TestNoCorrection
 
 			The columns of the resulting DataFrame:
-			['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty']
+			['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty']
 
 			The number of rows correspond to the number of the machines simulated
 
@@ -401,7 +405,7 @@ class Placet(Placetpy):
 		_options_list, _extra_time = ['machines', 'beam', 'survey', 'emitt_file', 'bpm_res', 'format'], 20.0
 
 		self.run_command(self.__construct_command("TestNoCorrection", _options_list, **command_details))
-		data_log = pd.DataFrame(columns = ['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty'])
+		data_log = pd.DataFrame(columns = ['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty'])
 
 		#Since execution of TestNoCorrection takes time, we increase the default timeout
 		timeout = command_details.get('timeout', _extra_time)
@@ -414,8 +418,8 @@ class Placet(Placetpy):
 			if i > 0: self.skipline(timeout)	#	mean values and errors
 			track_tmp = pd.DataFrame({
 				'correction': "No",
-				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None, 
-				'beam_seed': self.beam_seed if hasattr(self, 'beam_seed') else None, 
+#				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None, 
+				'beam': command_details.get('beam'), 
 				'survey': command_details.get('survey', None), 
 				'positions_file': command_details.get("errors_file", None), 
 				'emittx': emittx_tmp, 
@@ -481,21 +485,21 @@ class Placet(Placetpy):
 			The tracking results after running TestSimpleCorrection
 
 			The columns of the resulting DataFrame:
-			['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty']
+			['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty']
 
 			The number of rows correspond to the number of the machines simulated
 
 		"""
 		assert 'beam' in command_details, "beam is not given"
-		assert hasattr(self, 'beam_seed'), "Beam seed is not defined"
-		assert hasattr(self, 'errors_seed'), "Errors seed is not defined"
+#		assert hasattr(self, 'beam_seed'), "Beam seed is not defined"
+#		assert hasattr(self, 'errors_seed'), "Errors seed is not defined"
 
 		_extra_time, _options_list = 120.0, ['machines', 'start', 'end', 'interleave', 'binlength', 'binoverlap', 'jitter_x', 'jitter_y', 'bpm_resolution', 'beam', 'testbeam',
 		'survey', 'emitt_file', 'bin_list', 'bin_file_out', 'bin_file_in', 'correctors']
 
 		self.run_command(self.__construct_command("TestSimpleCorrection", _options_list, **command_details))
 
-		data_log = pd.DataFrame(columns = ['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty'])
+		data_log = pd.DataFrame(columns = ['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty'])
 
 		timeout = command_details.get('timeout', _extra_time)
 
@@ -503,8 +507,8 @@ class Placet(Placetpy):
 			
 			track_tmp = pd.DataFrame({
 				'correction': "1-2-1",
-				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None, 
-				'beam_seed': self.beam_seed if hasattr(self, 'beam_seed') else None, 
+#				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None, 
+				'beam': command_details.get('beam'), 
 				'survey': command_details.get('survey', None),
 				'positions_file': command_details.get("errors_file", None), 
 				'emittx': None, 
@@ -541,18 +545,20 @@ class Placet(Placetpy):
 		TO DO
 		-----
 			Add description
+
+		Not tested
 		'''
 
 		_options_list = ['machines', 'binlength', 'binoverlap', 'jitter_y', 'jitter_x', 'bpm_resolution', "rf_align", 'beam', 'survey', 'emitt_file', 'wgt0', 'wgt1', 'pwgt', 
 		'quad_set0', 'quad_set1', 'quad_set2', 'load_bins', 'save_bins']
 
 		self.run_command(self.__construct_command("TestFreeCorrection", _options_list, **command_details))
-		data_log = pd.DataFrame(columns = ['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty'])
+		data_log = pd.DataFrame(columns = ['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty'])
 		for i in range(command_details.get('machines', 1)):
 			track_tmp = pd.DataFrame({
 				'correction': "DFS",
-				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None,
-				'beam_seed': self.beam_seed if hasattr(self, 'beam_seed') else None,
+#				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None,
+				'beam': command_details.get('beam'),
 				'survey': command_details.get('survey', None),
 				'positions_file': command_details.get("errors_file", None),
 				'emittx': None,
@@ -655,15 +661,15 @@ class Placet(Placetpy):
 
 		self.run_command(self.__construct_command("TestMeasuredCorrection", _options_list, **command_details))
 
-		data_log = pd.DataFrame(columns = ['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty'])
+		data_log = pd.DataFrame(columns = ['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty'])
 
 		timeout = command_details.get('timeout', _extra_time)
 
 		for i in range(command_details.get('machines', 1)):
 			track_tmp = pd.DataFrame({
 				'correction': "DFS",
-				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None,
-				'beam_seed': self.beam_seed if hasattr(self, 'beam_seed') else None,
+#				'errors_seed': self.errors_seed if hasattr(self, 'errors_seed') else None,
+				'beam': command_details.get('beam0'),
 				'survey': command_details.get('survey', None),
 				'positions_file': command_details.get("errors_file", None), 
 				'emittx': None, 
@@ -672,11 +678,14 @@ class Placet(Placetpy):
 		self.skipline()	#sum of the simulations over several machines
 		return data_log
 
-	def TestRfAlignment(self, **command_details) -> pd.DataFrame:
+	def TestRfAlignment(self, **command_details) -> None:
 		"""
 		Run the 'TestRfAlignment' command in Placet TCL.
 
 		//**// Setting the number of the machines to 1 //**//
+		
+		...........
+		The command TestRfAlignment does not produce any output inside Placet.
 
 		Additional parameters
 		----------
@@ -716,13 +725,9 @@ class Placet(Placetpy):
 			Correction summary
 		"""
 		_extra_time, _options_list = 120, ['beam', 'testbeam', 'machines', 'binlength', 'wgt0', 'wgt1', 'pwgt', 'girder', 'bpm_resolution', 'survey', 'emitt_file']
-
 		self.run_command(self.__construct_command("TestRfAlignment", _options_list, **command_details))
 
-		data_log = pd.DataFrame(columns = ['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty'])
-		timeout = command_details.get('timeout', _extra_time)
-
-		return data_log
+		return None
 
 	def BeamlineNew(self, **command_details):
 		"""
@@ -756,7 +761,7 @@ class Placet(Placetpy):
 			The amount of the lines in the output to skip after executing the command
 
 		"""
-		assert 'name' in command_details, "name is not given"
+		assert 'name' in command_details, "'name' is not given"
 
 		self.run_command(self.__construct_command("BeamlineSet", ['name'], **command_details))
 		return command_details.get('name')
@@ -1053,13 +1058,80 @@ class Placet(Placetpy):
 		self.run_command(self.__construct_command("WriteGirderLength", _options_list, **command_details))
 
 	def SurveyErrorSet(self, **command_details):
-		'''
-			Corresponds to 'SurveyErrorSet' command in Placet TCL
+		"""
+		Run 'SurveyErrorSet' command in Placet TCL
+			
+		When the command is invoked - it simply overwrittes the values already in memory. That means if one calls it with 'cavity_y = 5.0' that means that
+		'cavity_y' property will be overwritten, others will be kept unchanged. 
+		
+		--------
+		/**/The descriptions taken from the Placet Manual/**/
 
-			it has a dozen of the optional paramaters
-		'''
+		Additional parameters
+		---------------------
+		quadrupole_x: float
+			Horizontal quadrupole position error [micro m]
+		quadrupole_y: float
+			Vertical quadrupole position error [micro m]
+		quadrupole_xp: float
+			Horizontal quadrupole angle error [micro radian]
+		quadrupole_yp: float
+			Vertical quadrupole angle error [micro radian]
+		quadrupole_roll: float
+			Quadrupole roll around longitudinal axis [micro radian]
+		cavity_x: float
+			Horizontal structure position error [micro m]
+		cavity_realign_x: float
+			Horizontal structure position error after realignment [micro m]
+		cavity_y: float
+			Vertical structure position error [micro m]
+		cavity_realign_y: float
+			Vertical structure position error after realignment [micro m]
+		cavity_xp: float
+			Horizontal structure angle error [micro radian]
+		cavity_yp: float
+			Vertical structure angle error [micro radian]
+		cavity_dipole_x: float
+			Horizontal dipole kick [rad*GeV]
+		cavity_dipole_y: float
+			Vertical dipole kick [rad*GeV]
+		piece_x: float
+			Horizontal structure piece error [micro m]
+		piece_xp: float
+			Horizontal structure piece angle error [micro radian]
+		piece_y: float
+			Vertical structure piece error [micro m]
+		piece_yp: float
+			Vertical structure piece angle error [micro radian]
+		bpm_x: float
+			Horizontal BPM position error [micro m]
+		bpm_y: float
+			Vertical BPM position error [micro m]
+		bpm_xp: float
+			Horizontal BPM angle error [micro radian]
+		bpm_yp: float
+			Vertical BPM angle error [micro radian]
+		bpm_roll: float
+			BPM roll around longitudinal axis [micro radian]
+		sbend_x: float
+			Horizontal sbend position error [micro m]
+		sbend_y: float
+			Vertical sbend position error [micro m]
+		sbend_xp: float
+			Horizontal sbend angle error [micro radian]
+		sbend_yp: float
+			Vertical sbend angle error [micro radian]
+		sbend_roll: float
+			Sbend roll around longitudinal axis [micro radian]
+			
+		//**//Inherits the parameters from Placet._exec_params. As per 14.11.2022 they are listed below//*//
+		timeout: float
+			The amount of time dedicated to executing the command, before raising the Exception.
+		additional_lineskip: int
+			The amount of the lines in the output to skip after executing the command
+		"""
 		_options_list = ['quadrupole_x', 'quadrupole_y', 'quadrupole_xp', 'quadrupole_yp', 'quadrupole_roll', 'cavity_x', 'cavity_realign_x', 'cavity_y', 'cavity_realign_y', 
-		'cavity_xp', 'cavity_yp', 'cavity_dipole_x', 'cavity_y', 'piece_x', 'piece_xp', 'piece_y', 'piece_yp', 'bpm_x', 'bpm_y', 'bpm_xp', 'bpm_yp', 'bpm_roll',
+		'cavity_xp', 'cavity_yp', 'cavity_dipole_x', 'cavity_dipole_y', 'piece_x', 'piece_xp', 'piece_y', 'piece_yp', 'bpm_x', 'bpm_y', 'bpm_xp', 'bpm_yp', 'bpm_roll',
 		'sbend_x', 'sbend_y', 'sbend_xp', 'sbend_yp', 'sbend_roll']
 
 		self.run_command(self.__construct_command("SurveyErrorSet", _options_list, **command_details))
@@ -1153,13 +1225,20 @@ class Placet(Placetpy):
 		self.run_command(self.__construct_command("InterGirderMove", _options_list, **command_details))
 
 	def RandomReset(self, **command_details):
-		'''
-			Corresponds to 'RandomReset' command in Placet TCL
-		'''
+		"""
+		Run the 'RandomReset' command in Placet TCL
+		
+		Resets the errors seed number in Placet
+
+		Additional parameters
+		---------------------
+		seed: int
+			The seed number to set
+		"""
 		_options_list = ['seed']
 
 		self.run_command(self.__construct_command("RandomReset", _options_list, **command_details))
-		self.errors_seed = command_details.get('seed')
+#		self.errors_seed = command_details.get('seed')
 
 	@execution_comfirmation
 	def InjectorBeam(self, beam_name, **command_details):
