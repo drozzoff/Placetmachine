@@ -3,7 +3,10 @@ from setuptools import setup, find_packages
 DEPENDENCIES = [
 	'pexpect==4.7.0',
 	'pandas==1.1.3',
-	''
+	'matplotlib==3.5.3',
+	'rich',
+	'scipy==1.3.1',
+	'numpy==1.21.6'
 ]
 
 setup(
@@ -15,8 +18,9 @@ setup(
 	python_requires = ">=3.7",
 	license = "MIT",
 	
-
-	classifiers=[
+	packages = ["placetmachine"],
+	install_requires = DEPENDENCIES,
+	classifiers = [
 		"Intended Audience :: Science/Research",
 		"License :: OSI Approved :: MIT License",
 		"Natural Language :: English",
@@ -28,7 +32,4 @@ setup(
 		"Programming Language :: Python :: 3.10",
 		"Topic :: Scientific/Engineering :: Physics",
 	],
-	packages = ["placetmachine"],
-	include_package_data=True,
-	install_requires = DEPENDENCIES,
 )
