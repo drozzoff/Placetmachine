@@ -18,7 +18,10 @@ setup(
 	python_requires = ">=3.7",
 	license = "MIT",
 	
-	packages = ["placetmachine"],
+	packages = ["placetmachine", "placetmachine.placet", "placetmachine.lattice"],
+	package_data = {
+		'placetmachine': ["placet_files/*"]
+	},
 	install_requires = DEPENDENCIES,
 	classifiers = [
 		"Intended Audience :: Science/Research",

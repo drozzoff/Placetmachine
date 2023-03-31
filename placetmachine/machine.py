@@ -371,6 +371,8 @@ class Machine():
 			
 			!!Should be handled carefully! Some functions expect 'callback' procedure to exist. 
 			Eg. eval_track_results() evaluates the macroparticles coordinates. To do so, 'callback' procedure is required.
+		cavities_setup: dict
+			The dictionary containing the parameters for 'Machine.cavities_setup()'
 		"""
 		if lattice.name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice.name}' already exists.")
@@ -386,6 +388,8 @@ class Machine():
 		self.placet.BeamlineSet(name = lattice.name)
 		self.beamline = lattice
 		self.beamlines_invoked.append(lattice.name)
+
+		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
 	def cavities_setup(self, **extra_params):
