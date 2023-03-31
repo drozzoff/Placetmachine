@@ -3,110 +3,6 @@ from .communicator import Communicator
 import time
 from functools import wraps
 
-class Placetpy(Communicator):	
-	"""
-	A class used to interact with Placet process running in background
-
-	Extends Communicator to run Placet and Placet commands
-	...
-	
-	Methods
-	-------
-	run_command(command, skipline = True)
-		Run the given command in Placet
-	"""
-	_INTRO_LINES = 19
-	def __init__(self, name = "placet", **kwargs):
-		"""
-		Parameters
-		----------
-		name: string default placet
-			The name of the process to start. Should be the command starting Placet interactive shell
-
-		Additional parameters
-		---------------------
-		show_intro: bool default True
-			If True, prints the welcome message of Placet at the start
-		//**//Accepts all the additional parameters that Communicator accepts (Check Communicator) //**//
-		
-		"""
-		super(Placetpy, self).__init__(name, **kwargs)
-		self._show_intro = kwargs.get("show_intro", True)
-
-		self.__read_intro()
-
-	def __read_intro(self):
-		#skipping the program intro
-		for i in range(self._INTRO_LINES):
-			tmp = self.readline()
-			if self._show_intro:
-				print(tmp, end = "")
-
-	def restart(self):
-		"""Restart the child process"""
-		self._restart()
-		self.__read_intro()
-
-	def logging(func):
-		"""Logging decorator used, when debug mode is on"""
-		@wraps(func)
-		def wrapper(self, *args, **kwargs):
-			start = time.time()
-			res = func(self, *args, **kwargs)
-			run_time = time.time() - start
-			if self.debug_mode:
-				exec_summ = dict(function = func.__name__, arguments = [args, kwargs], run_time = run_time, res = res)
-				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-				print(exec_summ)
-			return res
-		
-		@wraps(func)
-		def wrapper_2(self, *args, **kwargs):
-			if self.debug_mode:
-				exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
-				print(exec_summ)
-				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-#				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
-
-			res = func(self, *args, **kwargs)
-			
-			return res
-		
-		return wrapper_2
-
-
-
-	@logging
-	def run_command(self, command, skipline = True):
-		"""
-		Run the given command in Placet.
-
-		Does not return any value.
-
-		Parameters
-		----------
-		command: PlacetCommand
-			The command to pass to Placet.
-			Has to be of PlacetCommand type
-		skipline: bool, default True
-			If True invokes skipline() to read the written command from the buffer
-		"""
-		assert isinstance(command, PlacetCommand), "command must be of the type 'PlacetCommand'"
-		
-		opt = {'no_expect': command.no_expect}
-		if command.timeout is not None:
-			opt['timeout'] = command.timeout
-
-		self.writeline(command.command, skipline, **opt)
-		for x in range(command.additional_lineskip):
-			self.skipline()
-	
-	def __repr__(self):
-		return f"Placetpy('{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
-
-	def __str__(self):
-		return f"Placetpy(process_name = '{self._process_name}', is_alive = {self.isalive()})"
-
 class PlacetCommand():
 	"""
 	A class to to classify the Placet commands
@@ -220,6 +116,110 @@ class PlacetCommand():
 	
 	def __str__(self):
 		return f"PlacetCommand(command = {repr(self.command)})"
+
+class Placetpy(Communicator):	
+	"""
+	A class used to interact with Placet process running in background
+
+	Extends Communicator to run Placet and Placet commands
+	...
+	
+	Methods
+	-------
+	run_command(command, skipline = True)
+		Run the given command in Placet
+	"""
+	_INTRO_LINES = 19
+	def __init__(self, name = "placet", **kwargs):
+		"""
+		Parameters
+		----------
+		name: string default placet
+			The name of the process to start. Should be the command starting Placet interactive shell
+
+		Additional parameters
+		---------------------
+		show_intro: bool default True
+			If True, prints the welcome message of Placet at the start
+		//**//Accepts all the additional parameters that Communicator accepts (Check Communicator) //**//
+		
+		"""
+		super(Placetpy, self).__init__(name, **kwargs)
+		self._show_intro = kwargs.get("show_intro", True)
+
+		self.__read_intro()
+
+	def __read_intro(self):
+		#skipping the program intro
+		for i in range(self._INTRO_LINES):
+			tmp = self.readline()
+			if self._show_intro:
+				print(tmp, end = "")
+
+	def restart(self):
+		"""Restart the child process"""
+		self._restart()
+		self.__read_intro()
+
+	def logging(func):
+		"""Logging decorator used, when debug mode is on"""
+		@wraps(func)
+		def wrapper(self, *args, **kwargs):
+			start = time.time()
+			res = func(self, *args, **kwargs)
+			run_time = time.time() - start
+			if self.debug_mode:
+				exec_summ = dict(function = func.__name__, arguments = [args, kwargs], run_time = run_time, res = res)
+				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
+				print(exec_summ)
+			return res
+		
+		@wraps(func)
+		def wrapper_2(self, *args, **kwargs):
+			if self.debug_mode:
+				exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
+				print(exec_summ)
+				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
+#				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
+
+			res = func(self, *args, **kwargs)
+			
+			return res
+		
+		return wrapper_2
+
+
+
+	@logging
+	def run_command(self, command: PlacetCommand, skipline = True):
+		"""
+		Run the given command in Placet.
+
+		Does not return any value.
+
+		Parameters
+		----------
+		command: PlacetCommand
+			The command to pass to Placet.
+			Has to be of PlacetCommand type
+		skipline: bool, default True
+			If True invokes skipline() to read the written command from the buffer
+		"""
+		opt = {'no_expect': command.no_expect}
+		if command.timeout is not None:
+			opt['timeout'] = command.timeout
+
+		self.writeline(command.command, skipline, **opt)
+		for x in range(command.additional_lineskip):
+			self.skipline()
+	
+	def __repr__(self):
+		return f"Placetpy('{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
+
+	def __str__(self):
+		return f"Placetpy(process_name = '{self._process_name}', is_alive = {self.isalive()})"
+
+
 
 
 def test():

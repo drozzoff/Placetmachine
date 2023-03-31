@@ -2,6 +2,8 @@ from .placet.placetwrap import Placet
 from .lattice.placetlattice import Beamline
 from .util import Knob, CoordTransformation
 
+import os
+from typing import List, Callable
 import json
 import time
 import random
@@ -13,7 +15,6 @@ import copy
 import scipy as sp
 
 import numpy as np
-import warnings
 
 from rich.table import Table
 from rich.live import Live
@@ -44,7 +45,7 @@ def parabola_jac(x, a, b, c) -> np.array:
 
 	return J
 
-def parabola_fit(knob_range, observable_values, **kwargs) -> list:
+def parabola_fit(knob_range, observable_values, **kwargs):
 	"""
 	Apply the parabolic fit for the knob scan
 	
@@ -85,7 +86,7 @@ def parabola_fit(knob_range, observable_values, **kwargs) -> list:
 
 	if kwargs.get('ignore_restrictions', False):
 		''' fitting succeeded, skipping the restrictions'''
-		return [fit_params[2], lambda x: parabola(x, *fit_params), "Fit is correct! Smallest obs for " + str(fit_params[2])]
+		return [fit_params[2], lambda x: parabola(x, *fit_params), f"Fit is correct! Smallest obs for {fit_params[2]}"]
 
 	""" Check of the fitting effectiveness """
 	if fit_params[1] == 0:
@@ -104,7 +105,7 @@ def parabola_fit(knob_range, observable_values, **kwargs) -> list:
 		if optimal > knob_range[-1]: optimal = knob_range[-1]
 		if optimal < knob_range[0]: optimal = knob_range[0]
 
-		return [optimal, lambda x: parabola(x, *fit_params), "Fit is correct! Smallest obs for " + str(optimal)]
+		return [optimal, lambda x: parabola(x, *fit_params), f"Fit is correct! Smallest obs for {optimal}"]
 
 class Machine():
 	"""
@@ -194,6 +195,7 @@ class Machine():
 	surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", "misalign_girder", "misalign_girders"]
 	callbacks = ["save_sliced_beam", "save_beam", "empty"]
 
+	_placet_files = "placet_files"
 	def __init__(self, **calc_options):
 		"""
 			
@@ -212,10 +214,10 @@ class Machine():
 		self.console_output = calc_options.get("console_output", True)
 
 		#Sourcing the neccesarry scripts
-		self.placet.source("clic_basic_single.tcl", additional_lineskip = 2)
-		self.placet.source("clic_beam.tcl")
-		self.placet.source("wake_calc.tcl")
-		self.placet.source("make_beam.tcl")	#is optional
+		self.placet.source(os.path.join(self._placet_files, "clic_basic_single.tcl"), additional_lineskip = 2)
+		self.placet.source(os.path.join(self._placet_files, "clic_beam.tcl"))
+		self.placet.source(os.path.join(self._placet_files, "wake_calc.tcl"))
+		self.placet.source(os.path.join(self._placet_files, "make_beam.tcl"))	#is optional
 		self.placet.declare_proc(self.empty)
 		self.beamline, self.beams_invoked, self.beamlines_invoked = None, [], []
 
@@ -224,10 +226,10 @@ class Machine():
 		self.setup_data_folder()
 
 	def __repr__(self):
-		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)}"
+		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)} && beams = {self.beamlines_invoked}"
 
 	def __str__(self):
-		return f"Machine(placet = {str(self.placet)}, beamline = {str(self.beamline)})"
+		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {self.beamlines_invoked})"
 
 	def setup_data_folder(self):
 		"""Set the temporary folder in tmp/ folder"""
@@ -236,7 +238,7 @@ class Machine():
 
 	def term_logging(func):
 		"""Decorator with the fancy status logging"""
-		def status_message(func_name) -> str:
+		def status_message(func_name):
 
 			if func_name in ["make_beam_slice_energy_gradient", "make_beam_many"]:
 				return ["Creating a beam", "Beam created"]
@@ -278,7 +280,7 @@ class Machine():
 
 		return wrapper
 
-	def set_callback(self, func, **extra_params):
+	def set_callback(self, func: Callable, **extra_params):
 		"""
 		Set the callback function for the tracking
 
@@ -298,7 +300,7 @@ class Machine():
 		self.callback_struct_ = (func, extra_params)
 
 	@term_logging
-	def create_beamline(self, lattice, **extra_params) -> Beamline:
+	def create_beamline(self, lattice: str, **extra_params) -> Beamline:
 		"""
 		Create the beamline in Placet.
 		
@@ -331,7 +333,9 @@ class Machine():
 			The created beamline.
 		"""
 		lattice_name = extra_params.get("name", "default")
-		assert not lattice_name in self.beamlines_invoked, f"Beamline with the name '{lattice_name}' already exists."
+		if lattice_name in self.beamlines_invoked:
+			raise Exception(f"Beamline with the name '{lattice_name}' already exists.")
+
 		self.placet.BeamlineNew()
 		self.placet.source(lattice, additional_lineskip = 0)
 		if extra_params.get("callback", True):
@@ -349,7 +353,7 @@ class Machine():
 		return self.beamline
 
 	@term_logging
-	def import_beamline(self, lattice, **extra_params) -> Beamline:
+	def import_beamline(self, lattice: Beamline, **extra_params) -> Beamline:
 		"""
 		Import the Beamline in Placet.
 
@@ -365,14 +369,15 @@ class Machine():
 			If True creates the callback procedure in Placet by calling
 				Placet.TclCall(script = "callback")
 			
-			!!Should be handed carefully! Some functions expect 'callback' procedure to exist. 
+			!!Should be handled carefully! Some functions expect 'callback' procedure to exist. 
 			Eg. eval_track_results() evaluates the macroparticles coordinates. To do so, 'callback' procedure is required.
 		"""
-		assert isinstance(lattice, Beamline), f"'lattice' - expected 'Beamline', got{type(lattice)}"
-		assert not lattice.name in self.beamlines_invoked, f"Beamline with the name '{lattice.name}' already exists."
+		if lattice.name in self.beamlines_invoked:
+			raise Exception(f"Beamline with the name '{lattice.name}' already exists.")
+
 		self.placet.BeamlineNew()
-		lattice.to_placet(self._data_folder_ + "/lattice_for_placet.tcl")
-		self.placet.source(self._data_folder_ + "/lattice_for_placet.tcl", additional_lineskip = 0)
+		lattice.to_placet(os.path.join(self._data_folder_, "lattice_for_placet.tcl"))
+		self.placet.source(os.path.join(self._data_folder_, "lattice_for_placet.tcl"), additional_lineskip = 0)
 		
 		if extra_params.get("callback", True):
 			self.placet.TclCall(script = "callback")
@@ -471,7 +476,8 @@ class Machine():
 			When "from_file" survey is used
 		//**// Also accepts all the parameters of Placet.InterGirderMove //*//
 		"""
-		assert survey in (self.surveys + [None]), "Survey is not recognized"
+		if not survey in (self.surveys + [None]):
+			raise ValueError("survey is not recognized")
 
 		if survey == "default_clic":
 			self.survey_errors_set(**extra_params.get('static_errors', {}))
@@ -480,7 +486,8 @@ class Machine():
 			self._update_lattice_misalignments(cav_bpm = 1, cav_grad_phas = 1)
 
 		if survey == "from_file":
-			assert 'filename' in extra_params, "No file provided for the survey 'from_file'"
+			if not 'filename' in extra_params:
+				raise Exception("No file provided for the survey 'from_file'")
 			self.beamline.read_misalignments(extra_params.get('filename'), cav_bpm = 1, cav_grad_phas = 1)
 
 		if (survey == "empty") or (survey is None):
@@ -553,7 +560,7 @@ class Machine():
 			elif option in self.beam_parameters:
 				parameters[option] = self.beam_parameters[option]
 			else:
-				raise Exception("Parameters " + option + " is not specified")
+				raise Exception(f"Parameters '{option}' + is not specified")
 
 		beam_setup = {
 			'bunches': 1,
@@ -562,7 +569,7 @@ class Machine():
 			'energyspread': 0.01 * parameters['e_spread'] * parameters['e_initial'],
 			'ecut': 3.0,
 			'e0': parameters['e_initial'],
-			'file': self.placet.wake_calc(self._data_folder_ + "/wake.dat", parameters['charge'], -3,  3, parameters['sigma_z'], n_slice),
+			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), parameters['charge'], -3,  3, parameters['sigma_z'], n_slice),
 			'chargelist': "{1.0}",
 			'charge': 1.0,
 			'phase': 0.0,
@@ -589,7 +596,7 @@ class Machine():
 		return beam_name
 
 	@term_logging
-	def make_beam_slice_energy_gradient(self, beam_name, n_slice, n_macroparticles, eng, grad, beam_seed = 1234, **extra_params) -> str:
+	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: int = 1234, **extra_params) -> str:
 		"""
 		Generate the sliced beam
 		
@@ -642,8 +649,11 @@ class Machine():
 		str
 			The beam name
 		"""
-		assert self.beamlines_invoked != [], "Create a beamline first!"
-		assert not beam_name in self.beams_invoked, f"Beam with the name '{beam_name}' already exists!"
+		if self.beamlines_invoked == []:
+			raise Exception("No beamlines created, cannot create a beam. Create the beamline first")
+		if beam_name in self.beams_invoked:
+			raise ValueError(f"Beam with the name '{beam_name}' already exists!")
+
 		_options_list = ['charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'sigma_z', 'n_total']
 		for value in _options_list:
 			if not value in extra_params:
@@ -656,7 +666,7 @@ class Machine():
 			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
 			'ecut': 3.0,
 			'e0': eng * extra_params.get('e_initial'),
-			'file': self.placet.wake_calc(self._data_folder_ + "/wake.dat", extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
+			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
 			'chargelist': "{1.0}",
 			'charge': 1.0,
 			'phase': 0.0,
@@ -684,7 +694,7 @@ class Machine():
 		DataFrame
 			BPMs reading
 		"""
-		_tmp_filename = self._data_folder_ + "/bpm_readings.dat"
+		_tmp_filename = os.path.join(self._data_folder_, "bpm_readings.dat")
 		bpms = self.beamline.get_bpms_list()
 		self.placet.BpmReadings(file = _tmp_filename)
 		res = pd.DataFrame(columns = ['id', 's', 'x', 'y'])
@@ -722,7 +732,7 @@ class Machine():
 		def wrapper(self, beam, survey = None, **kwargs):
 			alignment = None
 			if survey is None:
-				_filename = self._data_folder_ + "/position_tmp.dat"
+				_filename = os.path.join(self._data_folder_, "position_tmp.dat")
 				self.beamline.save_misalignments(_filename, cav_bpm = True, cav_grad_phas = True)
 				self.placet.declare_proc(self.from_file, file = _filename, cav_bpm = 1, cav_grad_phas = 1)
 				alignment = "from_file"
@@ -745,7 +755,7 @@ class Machine():
 #	@term_logging
 	@add_beamline_to_final_dataframe
 	@verify_survey
-	def track(self, beam, survey = None, **extra_params) -> pd.DataFrame:
+	def track(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the tracking without applying any corrections
 
@@ -776,7 +786,7 @@ class Machine():
 
 	@update_readings
 	@verify_survey
-	def eval_orbit(self, beam, survey = None, **extra_params) -> pd.DataFrame:
+	def eval_orbit(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
 		"""
 		Evaluate the beam orbit based on the BPM readings
 
@@ -799,7 +809,7 @@ class Machine():
 
 		return self._get_bpm_readings()
 
-	def eval_twiss(self, beam, **command_details) -> pd.DataFrame:
+	def eval_twiss(self, beam: str, **command_details) -> pd.DataFrame:
 		"""
 		Evaluate the Twiss parameters along the lattice.
 
@@ -832,7 +842,7 @@ class Machine():
 		DataFrame
 			Returns a Pandas Dataframe with the Twiss
 		"""
-		_twiss_file = file = self._data_folder_ + "/twiss.dat"
+		_twiss_file = os.path.join(self._data_folder_, "twiss.dat")
 		if not command_details.get('read_only', False):
 			self.TwissPlotStep(**dict(command_details, file = _twiss_file))
 
@@ -842,7 +852,7 @@ class Machine():
 		_HEADER_LINES, line_id, element_start = 18, 0, True
 		mux_tmp, muy_tmp, twiss_current = 0.0, 0.0, {}
 
-		with open(command_details.get('file'), 'r') as f:
+		with open(_twiss_file, 'r') as f:
 			for line in f:
 				line_id += 1
 				if line_id <= _HEADER_LINES:
@@ -898,7 +908,7 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
-	def one_2_one(self, beam, survey = None, **extra_params) -> pd.DataFrame:
+	def one_2_one(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the 121 alignment
 
@@ -935,7 +945,7 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
-	def DFS(self, beam, survey = None, **extra_params) -> pd.DataFrame:
+	def DFS(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the Dispersion Free Steering
 		
@@ -999,7 +1009,7 @@ class Machine():
 			'survey': survey,
 			'machines': 1,
 			'timeout': 1000,
-			'emitt_file': self._data_folder_ + "/emitt_dfs.dat"
+			'emitt_file': os.path.join(self._data_folder_, "emitt_dfs.dat")
 		}
 		dfs_options = {**dfs_default_options, **extra_params}
 
@@ -1015,12 +1025,12 @@ class Machine():
 		return res
 
 	@update_misalignments
-	def _RF_align(self, beam, survey = None, **extra_params):
+	def _RF_align(self, beam: str, survey = None, **extra_params):
 		self.placet.TestRfAlignment(**dict(extra_params, beam = beam, survey = survey, machines = 1))
 
 	@term_logging
 	@verify_survey
-	def RF_align(self, beam, survey = None, **extra_params) -> pd.DataFrame:
+	def RF_align(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the RF alignment.
 
@@ -1054,7 +1064,7 @@ class Machine():
 		track_results.correction = "RF align"
 		return track_results
 
-	def apply_knob(self, knob, amplitude, **extra_params):
+	def apply_knob(self, knob: Knob, amplitude: float, **extra_params):
 		"""
 		Apply the knob and update the beamline offsets
 
@@ -1070,7 +1080,6 @@ class Machine():
 		cavs_only, default True
 			If True, only cavities on girders are misaligned
 		"""
-		assert isinstance(knob, Knob), "knob has to be of Knob type"
 		girders_offset, elements_offset = knob.apply(amplitude)
 		self.misalign_girders(offset_data = girders_offset, cavs_only = extra_params.get('cavs_only', True), no_run = True)
 		self.misalign_elements(offset_data = elements_offset, no_run = True)
@@ -1105,7 +1114,7 @@ class Machine():
 		run_track: bool, default True
 			If True runs track() before reading the file
 		beam: str, optional
-			The beam to be used for tracking. If run_track == True, must to be defined
+			The beam to be used for tracking. If run_track == True, must be defined
 
 		Additional parameters
 		---------------------
@@ -1126,10 +1135,11 @@ class Machine():
 
 			When run_track is False -> returns None as emittance value
 		"""
-		_filename, emitty = extra_params.get("filename", self._data_folder_ + "/particles.dat"), None
+		_filename, emitty = extra_params.get("filename", os.path.join(self._data_folder_, "particles.dat")), None
 		if run_track:
 			if beam is None:
-				raise ValueError("Beam for the tracking is not defined!")
+				raise ValueError("When 'run_track = True, the 'beam' must be defined.")
+
 			callback_func, callback_params = self.callback_struct_
 			if (callback_func.__name__ == self.save_sliced_beam.__name__) and (callback_params == dict(file = _filename)):
 				pass	#if the callback is there, no need to reset it
@@ -1149,7 +1159,7 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def iterate_knob(self, beam, knob, observables, knob_range = [-1.0, 0.0, 1.0], **extra_params) -> dict:
+	def iterate_knob(self, beam: str, knob: Knob, observables, knob_range = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
 		Iterate the knob
 		
@@ -1182,7 +1192,8 @@ class Machine():
 			The scan summary
 		"""
 		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
-		assert set(observables).issubset(set(_obs_values)), "the parameter(s) " + str(observables) + " are not supported"
+		if not set(observables).issubset(set(_obs_values)):
+			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
 		observable_values, elements_to_modify = [], knob.types_of_elements
 		self.beamline.cache_lattice_data(elements_to_modify)
@@ -1437,7 +1448,8 @@ class Machine():
 		"""
 		_options = ['no_run']
 		
-		assert 'offset_data' in extra_params, "Offset data is not given"
+		if not 'offset_data' in extra_params:
+			raise Exception("'offset_data' is not given")
 		
 		elements = extra_params.get('offset_data')
 		for element in elements:
@@ -1470,7 +1482,9 @@ class Machine():
 		"""
 		_options = ['x', 'xp', 'y', 'yp', 'roll', 'tilt', 'no_run']
 
-		assert 'girder' in extra_params, 'Girder number is not given'
+		if not 'girder' in extra_params:
+			raise Exception("'girder' number is not given")
+
 		cavs_only = extra_params.get('cavs_only', False)
 		for element in self.beamline.get_girder(extra_params.get('girder')):
 			if cavs_only and element.type != "Cavity":
@@ -1501,7 +1515,8 @@ class Machine():
 		no_run: bool default True
 			If True, placet command ElementAddOffset is not invoked
 		"""
-		assert 'offset_data' in extra_params, "Girders are not given"
+		if not 'offset_data' in extra_params:
+			raise Exception("'offset_data' is missing")
 
 		_options = ['cavs_only', 'no_run']
 
@@ -1520,7 +1535,8 @@ class Machine():
 		additional_lineskip: int, default 0
 			Can only take the value of '0'. If not given, the default values for the commands are used
 		"""
-		assert 'file' in extra_params, "file is not given"
+		if not 'file' in extra_params:
+			raise Exception("'file' is not given")
 
 		if extra_params.get('additional_lineskip', 0) != 0:
 			raise ValueError("additional_lineskip given to survey-function can only be 0")
@@ -1565,7 +1581,7 @@ class Machine():
 		---------------------
 		//**// Accepts all the parameters for Placet.BeamDump() //**//
 		"""
-		self.placet.BeamDump(file = extra_params.get('file', self._data_folder_ + "/particles.out"))
+		self.placet.BeamDump(file = extra_params.get('file', os.path.join(self._data_folder_, "particles.out")))
 
 	def save_sliced_beam(self, **extra_params):
 		"""
@@ -1614,7 +1630,7 @@ class Machine():
 		
 		//**//TO UPDATE THE DESCRIPTION//**//
 		"""
-		_options_list, _tmp_file = ['cav_bpm', 'cav_grad_phas'], self._data_folder_ + "/position_tmp.dat"
+		_options_list, _tmp_file = ['cav_bpm', 'cav_grad_phas'], os.path.join(self._data_folder_, "position_tmp.dat")
 
 		self.placet.SaveAllPositions(**_extract_dict(_options_list, extra_params), file = _tmp_file)
 		self.beamline.read_misalignments(_tmp_file, **_extract_dict(_options_list, extra_params))

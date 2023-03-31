@@ -310,7 +310,8 @@ class Beamline():
 			
 
 		"""
-		assert self.lattice != [], "Empty lattice"
+		if self.lattice == []:
+			raise ValueError("Empty lattice")
 
 		_to_float = lambda data: list(map(lambda x: float(x), data))
 
@@ -364,7 +365,8 @@ class Beamline():
 			
 
 		"""
-		assert self.lattice != [], "Empty lattice"
+		if self.lattice == []:
+			raise ValueError("Empty lattice")
 		res = ""
 		with open(filename, 'w') as f:
 			for element in self.lattice:

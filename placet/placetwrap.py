@@ -3,12 +3,12 @@ from .pyplacet import Placetpy, PlacetCommand
 import pandas as pd
 from functools import wraps
 from time import sleep, time
-import numpy as np
+from typing import Callable
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
-def _generate_command(command_name, param_list, **command_details) -> str:
+def _generate_command(command_name: str, param_list: list, **command_details) -> str:
 	"""
 	Generate the command for Placet.
 
@@ -19,9 +19,6 @@ def _generate_command(command_name, param_list, **command_details) -> str:
 	param_list: list
 		The list of the parameters that
 	"""
-	assert isinstance(command_name, str), "command_name should be of 'str' type, received - " + str(type(command_name))
-	assert isinstance(param_list, list), "param_list should be of 'list' type, received - " + str(type(param_list))
-	
 	res = command_name
 	for key in _extract_subset(param_list, command_details):
 		res += " -" + key + " " + str(command_details[key])
@@ -135,7 +132,7 @@ class Placet(Placetpy):
 		return wrapper
 
 
-	def __construct_command(self, command, command_params, **command_details):
+	def __construct_command(self, command: str, command_params: list, **command_details):
 		"""
 		Generic function for creating a PlacetCommand
 		
@@ -157,7 +154,7 @@ class Placet(Placetpy):
 		"""
 		return PlacetCommand(_generate_command(command, command_params, **command_details), **dict(_extract_dict(self._exec_params, command_details), type = command.split()[0]))
 
-	def __set_puts_command(self, command, command_params, **command_details):
+	def __set_puts_command(self, command: str, command_params: list, **command_details):
 		"""
 		Generic function for executing the following chain of commands:
 			set tmp [command param1 param2 ..]
@@ -243,7 +240,8 @@ class Placet(Placetpy):
 		"""
 		_options_list = ['file', 'beam', 'step', 'start', 'end', 'list']
 
-		assert 'file' in command_details, "Filename is not specified"
+		if not 'file' in command_details:
+			raise ValueError("'file' is not specified")
 
 		self.run_command(self.__construct_command("TwissPlotStep", _options_list, **command_details))
 
@@ -251,7 +249,7 @@ class Placet(Placetpy):
 		"""Run "FirstOrder" command in Placet TCL"""
 		self.run_command(self.__construct_command("FirstOrder 1", [], **command_details))
 
-	def set(self, variable, value, **command_details):
+	def set(self, variable: str, value, **command_details):
 		"""
 		Run 'set' command in TCL
 
@@ -274,8 +272,6 @@ class Placet(Placetpy):
 		-------
 		value
 		"""
-		assert isinstance(variable, str), "variable should be of 'str' type, received - " + str(type(variable))
-
 		self.run_command(self.__construct_command("set " + variable + " " + str(value), [], **command_details))
 		return value
 
@@ -288,7 +284,7 @@ class Placet(Placetpy):
 		for key in command_details:
 			self.set(name + "(" + key + ")", command_details[key])
 
-	def puts(self, variable, **command_details) -> str:
+	def puts(self, variable: str, **command_details) -> str:
 		"""
 		Run the 'puts' command in TCL
 		
@@ -310,8 +306,6 @@ class Placet(Placetpy):
 		str
 			The Placet return value
 		"""
-		assert isinstance(variable, str), "variable should be of 'str' type, received - " + str(type(variable))
-
 		self.run_command(self.__construct_command("puts $" + variable, [], **command_details))
 
 		if command_details.get('no_read', False):
@@ -323,7 +317,7 @@ class Placet(Placetpy):
 		else:
 			return self.readline() 
 
-	def source(self, filename, **command_details):
+	def source(self, filename: str, **command_details):
 		"""
 		Run the 'source' command in TCL
 
@@ -340,23 +334,17 @@ class Placet(Placetpy):
 		additional_lineskip: int
 			The amount of the lines in the output to skip after executing the command
 		"""
-		assert isinstance(filename, str), "filename should be of 'str' type, received - " + str(type(filename))
-
 		self.run_command(self.__construct_command("source " + filename, [], **command_details))
 
-	def make_beam_many(self, beam, nslice, n, **command_details):
-		'''
-			Correponds to 'make_beam_many' custom command in Placet TCL
-			Input:
-				name nslice n
-			values can be given directly or reference the existing variables in TCL
+	def make_beam_many(self, beam: str, nslice, n, **command_details):
+		"""
+		Correponds to 'make_beam_many' custom command in Placet TCL
+		Input:
+			name nslice n
+		values can be given directly or reference the existing variables in TCL
 
-			!! outdated
-		'''
-		assert isinstance(beam, str), "beam should be of 'str' type, received - " + str(type(beam))
-		assert isinstance(nslice, str) or isinstance(nslice, int), "nslice should be of 'str' or 'int' type, received - " + str(type(nslice))
-		assert isinstance(n, str) or isinstance(n, int), "n should be of 'str' or 'int' type, received - " + str(type(n))
-
+		!! outdated
+		"""
 		self.run_command(self.__construct_command("make_beam_many " + beam + " " + str(nslice) + " " + str(n), [], **command_details))	
 
 #	@logging
@@ -400,7 +388,8 @@ class Placet(Placetpy):
 			The number of rows correspond to the number of the machines simulated
 
 		"""
-		assert 'beam' in command_details, "beam is not given"
+		if not 'beam' in command_details:
+			raise Exception("'beam' parameter is missing")
 		
 		_options_list, _extra_time = ['machines', 'beam', 'survey', 'emitt_file', 'bpm_res', 'format'], 20.0
 
@@ -490,9 +479,8 @@ class Placet(Placetpy):
 			The number of rows correspond to the number of the machines simulated
 
 		"""
-		assert 'beam' in command_details, "beam is not given"
-#		assert hasattr(self, 'beam_seed'), "Beam seed is not defined"
-#		assert hasattr(self, 'errors_seed'), "Errors seed is not defined"
+		if not 'beam' in command_details:
+			raise Exception("'beam' parameter is missing")
 
 		_extra_time, _options_list = 120.0, ['machines', 'start', 'end', 'interleave', 'binlength', 'binoverlap', 'jitter_x', 'jitter_y', 'bpm_resolution', 'beam', 'testbeam',
 		'survey', 'emitt_file', 'bin_list', 'bin_file_out', 'bin_file_in', 'correctors']
@@ -727,8 +715,6 @@ class Placet(Placetpy):
 		_extra_time, _options_list = 120, ['beam', 'testbeam', 'machines', 'binlength', 'wgt0', 'wgt1', 'pwgt', 'girder', 'bpm_resolution', 'survey', 'emitt_file']
 		self.run_command(self.__construct_command("TestRfAlignment", _options_list, **command_details))
 
-		return None
-
 	def BeamlineNew(self, **command_details):
 		"""
 		Run 'BeamlineNew' command in Placet TCL
@@ -743,7 +729,7 @@ class Placet(Placetpy):
 		"""
 		self.run_command(self.__construct_command("BeamlineNew", [], **command_details))
 
-	def BeamlineSet(self, **command_details):
+	def BeamlineSet(self, **command_details) -> str:
 		"""
 		Run	'BeamlineSet' command in Placet TCL
 
@@ -761,7 +747,8 @@ class Placet(Placetpy):
 			The amount of the lines in the output to skip after executing the command
 
 		"""
-		assert 'name' in command_details, "'name' is not given"
+		if not 'name' in command_details:
+			raise Exception("'name' parameter is missing")
 
 		self.run_command(self.__construct_command("BeamlineSet", ['name'], **command_details))
 		return command_details.get('name')
@@ -1013,17 +1000,17 @@ class Placet(Placetpy):
 		"""
 		self.run_command(self.__construct_command("CavitySetPhaseList " + "{".join(list(map(lambda x: " " + str(x), values_list))) + "}", [], **command_details))
 
-	def ElementGetAttribute(self, element_id, parameter, **command_details) -> float:
-		'''
-			Corresponds to 'ElementGetAttribute' command in Placet TCL
-		'''
-		assert isinstance(element_id, int), "element_id should be of 'int' type, received - " + str(type(element_id))
-		assert isinstance(parameter, str), "parameter should be of 'str' type, received - " + str(type(parameter))
+	def ElementGetAttribute(self, element_id: int, parameter: str, **command_details) -> float:
+		"""
+		Corresponds to 'ElementGetAttribute' command in Placet TCL
+		
+		!!To be updated
 
+		"""
 		self.run_command(self.__construct_command("ElementGetAttribute " + str(element_id) + " -" + parameter, []))
 		return float(self.readline().split()[-1])
 
-	def ElementSetAttributes(self, element_id, **command_details):
+	def ElementSetAttributes(self, element_id: int, **command_details):
 		'''
 			Corresponds to 'ElementSetAttributes' command in Placet TCL
 
@@ -1031,8 +1018,6 @@ class Placet(Placetpy):
 
 			//**// Needs to be updated //**//
 		'''
-		assert isinstance(element_id, int), "element_id should be of 'int' type, received - " + str(type(element_id))
-
 		quads_option = ['name', 's', 'x', 'y', 'xp', 'yp', 'roll', 'length', 'synrad', 'six_dim', 'thin_lens', 'e0', 'aperture_x', 'aperture_y', 'aperture_losses', 'aperture_shape',
 		'strength', 'tilt', 'hcorrector', 'hcorrector_step_size', 'vcorrector', 'vcorrector_step_size']
 		additional_sbend_option = ['angle', 'E1', 'E2', 'K', 'K2']
@@ -1051,8 +1036,9 @@ class Placet(Placetpy):
 
 			Only file output is available
 		'''
-		assert 'file' in command_details, "file is not given"
-		
+		if not 'file' in command_details:
+			raise Exception("'file' parameter is missing")
+
 		_options_list = ['file', 'binary', 'beginning_only', 'absolute_position']		
 
 		self.run_command(self.__construct_command("WriteGirderLength", _options_list, **command_details))
@@ -1179,16 +1165,20 @@ class Placet(Placetpy):
 		additional_lineskip: int
 			The amount of the lines in the output to skip after executing the command
 		"""
-		assert 'file' in command_details, "file is not given"
+		if not 'file' in command_details:
+			raise Exception("'file' parameter is missing")
 		_options_list = ['file', 'binary', 'nodrift', 'vertical_only', 'positions_only', 'cav_bpm', 'cav_grad_phas']
 		
 		self.run_command(self.__construct_command("SaveAllPositions", _options_list, **command_details))
 
 	def ReadAllPositions(self, **command_details):
-		'''
-			Corresponds to 'ReadAllPositions' command in Placet TCL
-		'''
-		assert 'file' in command_details, "file is not given"
+		"""
+		Corresponds to 'ReadAllPositions' command in Placet TCL
+		
+		!To update description
+		"""
+		if not 'file' in command_details:
+			raise Exception("'file' parameter is missing")
 		_options_list = ['file', 'binary', 'nodrift', 'nomultipole', 'vertical_only', 'positions_only', 'cav_bpm', 'cav_grad_phas']
 
 		self.run_command(self.__construct_command("ReadAllPositions", _options_list, **command_details))
@@ -1242,7 +1232,7 @@ class Placet(Placetpy):
 
 	@execution_comfirmation
 	def InjectorBeam(self, beam_name, **command_details):
-		'''
+		"""
 		Run the 'InjectorBeam' command in Placet TCL
 		
 		Additional parameters
@@ -1303,7 +1293,7 @@ class Placet(Placetpy):
 			The amount of time dedicated to executing the command, before raising the Exception.
 		additional_lineskip: int
 			The amount of the lines in the output to skip after executing the command	
-		'''
+		"""
 		_options_list = ['macroparticles', 'silent', 'energyspread', 'ecut', 'energy_distribution', 'file', 'bunches', 'chargelist', 'slices', 'e0', 'charge',
 		'particles', 'last_wgt', 'distance', 'overlapp', 'phase', 'wake_scale_t', 'wake_scale_l', 'beta_x', 'alpha_x', 'emitt_x', 'beta_y', 'alpha_y', 'emitt_y',
 		'beamload']
@@ -1456,7 +1446,8 @@ class Placet(Placetpy):
 		'''
 		_options_list = ['beamline', 'start', 'end']
 			
-		assert 'beamline' in command_details, "beamline is not specified"
+		if not 'beamline' in command_details:
+			raise Exception("'beamline' parameter is missing")
 
 		matrix, res_matrix = self.__set_puts_command("GetTransferMatrix", _options_list, **command_details).replace("\n", "").replace("\r", ""), []
 		for x in matrix.split("}"):
@@ -1575,7 +1566,7 @@ class Placet(Placetpy):
 		return self.GetTransferMatrix(beamline = command_details.get('beamline'), start = index, end = index)
 
 	@execution_comfirmation
-	def wake_calc(self, filename, charge, a, b, sigma_z, n_slices, **command_details):
+	def wake_calc(self, filename, charge, a, b, sigma_z, n_slices, **command_details) -> str:
 		'''
 			Corresponds to a custom function calc{} in wake_calc.tcl in Placet TCL
 			Is used to evaluate the wakefields and writes the output to a file
@@ -1587,7 +1578,7 @@ class Placet(Placetpy):
 		self.run_command(self.__construct_command("calc " + filename + " " + str(charge) + " " + str(a) + " " + str(b) + " " + str(sigma_z) + " " + str(n_slices), [], **command_details))
 		return filename
 
-	def declare_proc(self, proc, **command_details):
+	def declare_proc(self, proc: Callable, **command_details):
 		"""
 		Declare a custom procedure in Placet TCL
 

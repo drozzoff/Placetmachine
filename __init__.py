@@ -9,3 +9,7 @@ from .lattice.drift import Drift
 from .lattice.placetlattice import Beamline
 
 __version__ = '0.0.1'
+
+__doc__ = """
+
+"""
