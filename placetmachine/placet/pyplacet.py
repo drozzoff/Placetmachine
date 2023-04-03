@@ -3,6 +3,7 @@ from .communicator import Communicator
 import time
 from functools import wraps
 
+
 class PlacetCommand():
 	"""
 	A class to to classify the Placet commands
@@ -24,7 +25,7 @@ class PlacetCommand():
 
 	"""
 	command_types = ["custom", "set", "BeamlineNew", "BeamlineSet", "source", "puts", "BeamDump", "ElementGetAttribute", "WriteGirderLength", "SurveyErrorSet", "Clic", "Zero", "SaveAllPositions", 
-	"InterGirderMove", "TestNoCorrection", "RandomReset", "TestSimpleCorrection", "ReadAllPositions", "QuadrupoleSetStrength", "InjectorBeam", "BeamRead", "wake_calc", "SetRfGradientSingle",
+					"InterGirderMove", "TestNoCorrection", "RandomReset", "TestSimpleCorrection", "ReadAllPositions", "QuadrupoleSetStrength", "InjectorBeam", "BeamRead", "wake_calc", "SetRfGradientSingle",
 	"make_beam_particles", "BeamSaveAll", "TestMeasuredCorrection", "GetTransferMatrix", "BpmNumberList", "TwissPlotStep", "FirstOrder", "BeamSetToOffset", "ElementSetToOffset",
 	"ElementAddOffset", "BpmReadings", "MoveGirder", "TestFreeCorrection", "BpmRealign", "TestRfAlignment", "QuadrupoleSetStrengthList", "CavitySetGradientList", "CavitySetPhaseList",
 	"ElementSetAttributes", "TclCall", "TwissMain"]
@@ -218,27 +219,3 @@ class Placetpy(Communicator):
 
 	def __str__(self):
 		return f"Placetpy(process_name = '{self._process_name}', is_alive = {self.isalive()})"
-
-
-
-
-def test():
-	placet = Placetpy(save_log = True)
-	placet.writeline("BeamlineNew")
-#	print(placet.readline())
-#	print(placet.readline())
-#	print(placet.readline())
-#	print(float(placet.readline()))
-
-def investigation():
-	placet = Placetpy(save_logs = True, debug_mode = True, send_delay = None)
-
-	for i in range(1000):
-		placet.writeline("set tmp 5\n")
-
-#	placet.save_debug_info("debug_data_py_placet_1000.pkl")
-	placet.close()
-
-if __name__  == "__main__":
-#	test()
-	investigation()

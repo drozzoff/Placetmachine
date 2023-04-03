@@ -2,6 +2,8 @@ import pexpect
 import time
 import pandas as pd
 from functools import wraps
+import json
+
 
 class Communicator(object):
 	"""
@@ -41,7 +43,6 @@ class Communicator(object):
 	_DELAY_BEFORE_SEND = 0.1
 	_TERMINAL_SPECIAL_SYMBOL = "% "
 
-
 	def __init__(self, process_name, **kwargs):
 		"""
 		29.11.2022	- New version of the communicator without the daemon running in the background
@@ -60,8 +61,9 @@ class Communicator(object):
 		send_delay: float, default Communicator._BUFFER_MAXSIZE
 			The time delay before each data transfer to a child process (sometimes needed for stability)
 		"""
-		self._process_name, self.debug_mode, self._save_logs, self._send_delay = process_name, kwargs.get('debug_mode', False), kwargs.get("save_logs", True), kwargs.get('send_delay', self._DELAY_BEFORE_SEND)	
-
+		self._process_name, self.debug_mode = process_name, kwargs.get('debug_mode', False),
+		self._save_logs = kwargs.get("save_logs", True)
+		self._send_delay = kwargs.get('send_delay', self._DELAY_BEFORE_SEND)
 		self.__init()
 
 	def __init(self):
@@ -104,9 +106,9 @@ class Communicator(object):
 				print("\t" + str(exec_summ))
 
 			res = func(self, *args, **kwargs)
-			
+
 			return res
-		
+
 		return wrapper_2
 
 	def add_send_delay(self, time = _DELAY_BEFORE_SEND):
@@ -127,10 +129,13 @@ class Communicator(object):
 		"""
 		Send the line to a child process
 		
-		[10.03.2023] - Added the expect to search for a prompt given in _TERMINAL_SPECIAL_SYMBOL before invoking `self.process.write()`.
-						Doing so, we make sure that we do not try to write while the process is still busy with the previous command.
+		[10.03.2023] - Added the expect to search for a prompt given in _TERMINAL_SPECIAL_SYMBOL before invoking
+						`self.process.write()`.
+						Doing so, we make sure that we do not try to write while the process is still busy with the
+						previous command.
 						We set the default timeout of Communicator._BASE_TIMEOUT.
-						Ideally, this should fix the issue, when we run the commands that do not produce any output in the terminal.
+						Ideally, this should fix the issue, when we run the commands that do not produce any output
+						in the terminal.
 
 		Parameters
 		----------
@@ -138,7 +143,8 @@ class Communicator(object):
 			Command to execute
 		skipline: bool, default True
 			If True, reads the command that was sent to a child process from child's process output
-			This flag depends on the default running mode of pexpect. By default it outputs to stdout what was just send to stdin
+			This flag depends on the default running mode of pexpect. By default, it outputs to stdout what was just
+			send to stdin
 		timeout: float, default _BASE_TIMEOUT
 			Timeout of the reader before raising the exception.
 			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
@@ -189,7 +195,7 @@ class Communicator(object):
 			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 		"""
 		self.readline(timeout)
-	
+
 	def __remove_special_symbol(func):
 		"""
 		Wrapper for readline()
@@ -220,7 +226,7 @@ class Communicator(object):
 		@wraps(func)
 		def wrapper(self, timeout = None):
 			res = func(self, timeout) if timeout is not None else func(self)
-			
+
 			if "error".casefold() in list(map(lambda x: x.casefold(), res.split())):
 				raise Exception("Process exited with an error message:\n" + res)
 			if "warning".casefold() in list(map(lambda x: x.casefold(), res.split())):
@@ -246,7 +252,7 @@ class Communicator(object):
 		str
 			The line of the data received from the child process.
 		"""
-		
+
 		return self.process.readline()
 
 	@logging
@@ -268,7 +274,7 @@ class Communicator(object):
 			The list of the lines received from the child process.
 		"""
 		res = []
-		for i in range(N_lines):	
+		for i in range(N_lines):
 			res.append(self.readline(timeout))
 		return res
 
@@ -293,51 +299,3 @@ class Communicator(object):
 
 	def __str__(self):
 		return f"Communicator(process_name = '{self._process_name}', is_alive = {self.isalive()})"
-
-def test():
-	test = Communicator("./madx")
-
-	test.save_logs()
-
-	for x in test.readlines(8):
-		print(x, end = "")
-#		print(x), #python 2.x
-	
-	test.writeline("tmp1 = 5;\n")
-	test.writeline("value, tmp1;\n")
-#	test.write("tmp2 = 6;\n")
-#	test.write("tmp3 = 7;\n")
-
-
-
-#	test.write("value, tmp3;\n")
-#	print(test.readlines(4))
-	print(test.readline())
-#	print(test.readline())
-#	print(test.readline())
-#	test.close()
-
-def test2():
-	test = Communicator("python2")
-	test.save_logs()
-
-	test.writeline("a = 5\n")
-
-	print(test.readline())
-	print(test.readline())
-	print(test.readline())
-	print(test.readline())
-
-def test3():
-	test = Communicator("placet", debug_mode = True, save_logs = True, send_delay = None)
-
-#	for i in range(19):
-#		test.readline(10)
-	test.readlines(19)
-
-	while True:
-		test.writeline("set tmp 5\n")
-		
-
-if __name__ == '__main__':
-	test3()

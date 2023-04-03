@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from pandas import DataFrame
 
-
 from .quadrupole import Quadrupole
 from .cavity import Cavity
 from .drift import Drift
 from .bpm import Bpm
+
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
@@ -370,14 +370,14 @@ class Beamline():
 		res = ""
 		with open(filename, 'w') as f:
 			for element in self.lattice:
-				res += str(element.settings['y']) + " " + str(element.settings['yp']) + " " + str(element.settings['x']) + " " + str(element.settings['xp'])
+				res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
 
 				if element.type == "Quadrupole":
-					res += " " + str(element.settings['roll'])
+					res += f" {element.settings['roll']}"
 
 				if element.type == "Cavity":
 					if extra_params.get('cav_bpm', False) and extra_params.get('cav_grad_phas', False):
-						res += " " + str(element.settings['bpm_offset_y']) + " " + str(element.settings['bpm_offset_x']) + " " + str(element.settings['gradient']) + " " + str(element.settings['phase'])
+						res += f" {element.settings['bpm_offset_y']} {element.settings['bpm_offset_x']} {element.settings['gradient']} {element.settings['phase']}"
 				res += "\n"
 			f.write(res)
 
@@ -460,7 +460,8 @@ class Beamline():
 				}
 				if element.type in ['Quadrupole', 'Bpm', 'Cavity']:
 					_height = _DEFAULT_HEIGHT * _classification[element.type]["length_scale"]
-					ax.add_patch(patches.Rectangle((s - length, -_height + center), length, 2 * _height, linewidth = 1e-6, edgecolor = _classification[element.type]["color"], facecolor = _classification[element.type]["color"]))
+					ax.add_patch(patches.Rectangle((s - length, -_height + center), length, 2 * _height, linewidth = 1e-6, edgecolor = _classification[element.type]["color"], 
+						         facecolor = _classification[element.type]["color"]))
 					
 
 
@@ -471,14 +472,6 @@ class Beamline():
 			if 'filename' in extra_params:
 				plt.savefig(extra_params.get('filename'))
 			plt.show()
-
-#	def __repr__(self):
-
-#		return f"Cavity({self.settings}, {self.girder}, {self.index}, '{self.type}')"
-
-#	def __str__(self):
-#		return f"Cavity({json.dumps(self.settings, indent = 4)})"
-
 
 def parse_line(data, girder_index = None, index = None):
 	"""
@@ -505,45 +498,3 @@ def parse_line(data, girder_index = None, index = None):
 
 	if elem_type == "Girder":
 		return "Girder", None
-
-def test_init():
-	
-	with open("Lattices/1000_db_ml.tcl", 'r') as f:
-		for line in f.readlines():
-			res = parse_line(line)
-			print(res)
-
-def test_write():
-	ml = Beamline("ml")
-	ml.read_from_file("tmp.dat")
-	print(ml)
-	ml.save(filename = "temp/beamline_tmp.json")
-
-def test_read():
-	ml = Beamline("ml")
-	ml.read("temp/beamline_tmp.json")
-	ml.to_placet("temp/lattice_tmp.tcl")
-
-def convert_to_json(filename_in, filename_out):
-	ml = Beamline()
-	ml.read_from_file(filename_in)
-	ml.save(filename = filename_out)
-
-def read_from_json():
-	ml = Beamline()
-	ml.read("Lattices/drive_beam_ml.json")
-	ml.to_placet("lattice_tmp.tcl")
-
-def errors_reading():
-	ml = Beamline("ml")
-	ml.read_from_file("Lattices/1000_db_ml.tcl")
-	ml.read_misalignments("temp/positions.dat", cav_bpm = True, cav_grad_phas = True)
-	ml.save_misalignments("temp/positions_2.dat", cav_bpm = True, cav_grad_phas = True)
-
-if __name__ == "__main__":
-#	test_write()
-#	test_read()
-
-#	convert_to_json()
-#	read_from_json()
-	errors_reading()

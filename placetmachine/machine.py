@@ -21,6 +21,7 @@ from rich.live import Live
 
 import tempfile
 
+
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
@@ -1196,7 +1197,8 @@ class Machine():
 		dict: 
 			The scan summary
 		"""
-		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 
+					   'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 		if not set(observables).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
@@ -1562,7 +1564,8 @@ class Machine():
 			Can only take the value of '0'. If not given, the default values for the commands are used
 		save_survey: str
 			If given saves the survey to a file with a given name
-		//**// Accepts the parameters for InterGirderMove (see Placet.InterGirderMove), and SaveAllPositions (see Placet.SaveAllPositions) and Placet.Clic (see Placet.Clic) //**//
+		//**// Accepts the parameters for InterGirderMove (see Placet.InterGirderMove), SaveAllPositions (see Placet.SaveAllPositions), 
+			   and Placet.Clic (see Placet.Clic) //**//
 		"""
 		if extra_params.get('additional_lineskip', 0) != 0:
 			raise Exception("additional_lineskip given to survey-function can only be 0")
@@ -1651,40 +1654,3 @@ class Machine():
 	def _update_cavs_gradients(self, **extra_params):
 		"""Synchronize the cavs phase in self.beamline with Placet"""
 		self.placet.CavitySetGradientList(self.beamline._get_quads_strengths())
-
-def CLIC_tuning_bumps():
-	
-	CLIC = machine()
-#	CLIC.run()
-#	CLIC.test()
-	CLIC.dfs_test()
-
-#	CLIC.track_test()
-
-	CLIC.end()
-#	CLIC.make_beam_many("test_beam", 1234)
-
-#@timing
-def CLIC_ML_twiss():
-	CLIC = machine()
-
-	#CLIC.twiss_test()
-	#CLIC.tracking_with_offset_test()
-#	CLIC.tracking_with_offset_quad()
-#	CLIC.tracking_monochrom_beam2()
-	CLIC.tracking_monochrom_beam3(5)
-#	CLIC.beam_orbit_test()
-	CLIC.end()
-
-#@timing
-def CLIC_ML_test():
-	CLIC = machine()
-#	CLIC.beam_creation_test()
-#	CLIC.tracking_test_sliced_beam_monochrom()
-#	CLIC.wakes_investigation()
-#	CLIC.end()
-
-if __name__ == "__main__":
-#	CLIC_tuning_bumps()
-#	CLIC_ML_twiss()
-	CLIC_ML_test()

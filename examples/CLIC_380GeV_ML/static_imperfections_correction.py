@@ -32,7 +32,7 @@ beam_parameters =  {
     'alpha_y': 6.250882009649877e-03,
     'n_total': 500
 }
-main_beam = clic.make_beam_slice_energy_gradient("main_beam", 11, 5, 1.0, 1.0, int(random.random() * 1e5, **beam_parameters)
+main_beam = clic.make_beam_slice_energy_gradient("main_beam", 11, 5, 1.0, 1.0, int(random.random() * 1e5), **beam_parameters)
 
 #+++++++++++Applying alignment errors+++++++++++
 static_errors = {

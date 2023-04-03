@@ -5,6 +5,7 @@ from functools import wraps
 from time import sleep, time
 from typing import Callable
 
+
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
@@ -1613,10 +1614,3 @@ class Placet(Placetpy):
 			Executes a custom command in Placet
 		'''
 		self.run_command(PlacetCommand(command, **command_details))
-
-
-def investigation():
-	pass
-
-if __name__ == "__main__":
-	investigation()
