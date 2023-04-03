@@ -11,7 +11,7 @@ DEPENDENCIES = [
 
 setup(
 	name = "placetmachine",
-	version = "alpha_v0.0.1",
+	version = "0.0.1-alpha",
 	description = "Python API for the beam tracking code Placet",
 	author = "Andrii Pastushenko",
 	url = "to add",
