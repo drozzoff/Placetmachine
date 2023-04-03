@@ -195,7 +195,6 @@ class Machine():
 	surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", "misalign_girder", "misalign_girders"]
 	callbacks = ["save_sliced_beam", "save_beam", "empty"]
 
-	_placet_files = "placet_files"
 	def __init__(self, **calc_options):
 		"""
 			
@@ -210,14 +209,16 @@ class Machine():
 		console_output: bool, default True
 			If True, prints the calculations progress in the console
 		"""
-		self.placet = Placet(save_logs = calc_options.get("save_logs", True), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None))
+		self.placet = Placet(save_logs = calc_options.get("save_logs", False), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None))
 		self.console_output = calc_options.get("console_output", True)
 
 		#Sourcing the neccesarry scripts
-		self.placet.source(os.path.join(self._placet_files, "clic_basic_single.tcl"), additional_lineskip = 2)
-		self.placet.source(os.path.join(self._placet_files, "clic_beam.tcl"))
-		self.placet.source(os.path.join(self._placet_files, "wake_calc.tcl"))
-		self.placet.source(os.path.join(self._placet_files, "make_beam.tcl"))	#is optional
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+
+		self.placet.source(os.path.join(dir_path, "placet_files/clic_basic_single.tcl"), additional_lineskip = 2)
+		self.placet.source(os.path.join(dir_path, "placet_files/clic_beam.tcl"))
+		self.placet.source(os.path.join(dir_path, "placet_files/wake_calc.tcl"))
+		self.placet.source(os.path.join(dir_path, "placet_files/make_beam.tcl"))	#is optional
 		self.placet.declare_proc(self.empty)
 		self.beamline, self.beams_invoked, self.beamlines_invoked = None, [], []
 
@@ -226,10 +227,10 @@ class Machine():
 		self.setup_data_folder()
 
 	def __repr__(self):
-		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)} && beams = {self.beamlines_invoked}"
+		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)}"
 
 	def __str__(self):
-		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {self.beamlines_invoked})"
+		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {self.beams_invoked})"
 
 	def setup_data_folder(self):
 		"""Set the temporary folder in tmp/ folder"""
@@ -371,6 +372,8 @@ class Machine():
 			
 			!!Should be handled carefully! Some functions expect 'callback' procedure to exist. 
 			Eg. eval_track_results() evaluates the macroparticles coordinates. To do so, 'callback' procedure is required.
+		cavities_setup: dict
+			The dictionary containing the parameters for 'Machine.cavities_setup()'
 		"""
 		if lattice.name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice.name}' already exists.")
@@ -386,6 +389,8 @@ class Machine():
 		self.placet.BeamlineSet(name = lattice.name)
 		self.beamline = lattice
 		self.beamlines_invoked.append(lattice.name)
+
+		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
 	def cavities_setup(self, **extra_params):
