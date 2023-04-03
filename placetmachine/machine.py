@@ -195,7 +195,6 @@ class Machine():
 	surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", "misalign_girder", "misalign_girders"]
 	callbacks = ["save_sliced_beam", "save_beam", "empty"]
 
-	_placet_files = "placet_files"
 	def __init__(self, **calc_options):
 		"""
 			
@@ -210,14 +209,16 @@ class Machine():
 		console_output: bool, default True
 			If True, prints the calculations progress in the console
 		"""
-		self.placet = Placet(save_logs = calc_options.get("save_logs", True), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None))
+		self.placet = Placet(save_logs = calc_options.get("save_logs", False), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None))
 		self.console_output = calc_options.get("console_output", True)
 
 		#Sourcing the neccesarry scripts
-		self.placet.source(os.path.join(self._placet_files, "clic_basic_single.tcl"), additional_lineskip = 2)
-		self.placet.source(os.path.join(self._placet_files, "clic_beam.tcl"))
-		self.placet.source(os.path.join(self._placet_files, "wake_calc.tcl"))
-		self.placet.source(os.path.join(self._placet_files, "make_beam.tcl"))	#is optional
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+
+		self.placet.source(os.path.join(dir_path, "placet_files/clic_basic_single.tcl"), additional_lineskip = 2)
+		self.placet.source(os.path.join(dir_path, "placet_files/clic_beam.tcl"))
+		self.placet.source(os.path.join(dir_path, "placet_files/wake_calc.tcl"))
+		self.placet.source(os.path.join(dir_path, "placet_files/make_beam.tcl"))	#is optional
 		self.placet.declare_proc(self.empty)
 		self.beamline, self.beams_invoked, self.beamlines_invoked = None, [], []
 
