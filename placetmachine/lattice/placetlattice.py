@@ -1,6 +1,4 @@
 import time
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from pandas import DataFrame
 
 from .quadrupole import Quadrupole
@@ -402,76 +400,6 @@ class Beamline():
 			else:
 				pass
 		self.lattice = parsed_beamline
-
-	def draw_beamline(self, plane = 'y', **extra_params):
-		"""
-		Draw the beamline
-
-		Parameters
-		----------
-		plane: str, default 'y'
-			Plane for the plot.
-
-		Additional parameters
-		---------------------
-		offsets_only: bool, default False
-			If True, only draws the elements that are mislaigned
-		length_scale: float, default 1.0
-			Scale the lengths of the elements accordingly
-			Sometimes needed to better see the elements
-		filename: str, optional
-			If given, saves the plot to the given path
-		"""
-		_DEFAULT_HEIGHT = 5
-		offsets_only, length_scale = extra_params.get("offsets_only", False), extra_params.get("length_scale", 1.0)
-		def _get_absolute_orbit(plane = 'y'):
-			bpms = list(filter(lambda element: element.type == "Bpm", self.lattice))
-			s = list(map(lambda x: x.settings['s'], bpms))
-			if plane == 'x':
-				return s, list(map(lambda x: x.settings['x'] + x.settings['reading_x'], bpms))
-			if plane == 'y':
-				return s, list(map(lambda x: x.settings['y'] + x.settings['reading_y'], bpms))
-		counter = 0
-		with plt.style.context(['science', 'ieee']):
-			fig = plt.figure()
-			ax = fig.add_subplot(111)
-			
-			s, orbit = _get_absolute_orbit(plane)
-
-			#reference line
-			plt.plot(s, [0.0] * len(s), linewidth = 0.2, linestyle = "solid", color = "black")
-			plt.plot(s, orbit, '-', linewidth = 0.5, linestyle = "solid", color = "red")
-
-			for element in self.lattice:
-				if plane == 'x':
-					center = element.settings['x']
-				elif plane == 'y':
-					center = element.settings['y']
-				else:
-					raise ValueError('"plane" accepts only "x" or "y", received - ' + str(plane))
-				if center == 0.0 and offsets_only:
-					continue
-
-				s, length = element.settings['s'], element.settings['length'] * length_scale
-				_classification = {
-					'Quadrupole': {"length_scale": 2.0, "color": "blue"},
-					'Bpm': {"length_scale": .75, "color": "green"},
-					'Cavity': {"length_scale": .5, "color": "grey"}
-				}
-				if element.type in ['Quadrupole', 'Bpm', 'Cavity']:
-					_height = _DEFAULT_HEIGHT * _classification[element.type]["length_scale"]
-					ax.add_patch(patches.Rectangle((s - length, -_height + center), length, 2 * _height, linewidth = 1e-6, edgecolor = _classification[element.type]["color"], 
-						         facecolor = _classification[element.type]["color"]))
-					
-
-
-			plt.ylim(-300, 300)
-			plt.xlim(0, 200)
-			plt.xlabel("s [m]")
-			plt.ylabel(plane + r" [$\mu$m]")
-			if 'filename' in extra_params:
-				plt.savefig(extra_params.get('filename'))
-			plt.show()
 
 def parse_line(data, girder_index = None, index = None):
 	"""

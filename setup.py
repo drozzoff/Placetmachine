@@ -3,9 +3,7 @@ from setuptools import setup, find_packages
 DEPENDENCIES = [
 	'pexpect==4.7.0',
 	'pandas==1.1.3',
-	'matplotlib==3.5.3',
 	'rich',
-	'scipy==1.3.1',
 	'numpy==1.21.6'
 ]
 

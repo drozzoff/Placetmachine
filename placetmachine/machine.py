@@ -12,7 +12,6 @@ from rich.console import Console
 from rich.errors import LiveError
 from functools import wraps
 import copy
-import scipy as sp
 
 import numpy as np
 
@@ -33,80 +32,6 @@ def get_data(filename) -> list:
 	return res
 
 cut = lambda data, index: list(map(lambda x: x[index], data))
-
-def parabola(x, a, b, c) -> float:
-	return a + b * (x - c)**2
-
-def parabola_jac(x, a, b, c) -> np.array:
-	J = np.zeros((len(x), 3))
-	for i in range(len(x)):
-		J[i][0] = 1
-		J[i][1] = (x[i] - c)**2
-		J[i][2] = -2 * b * (x[i] - c)
-
-	return J
-
-def parabola_fit(knob_range, observable_values, **kwargs):
-	"""
-	Apply the parabolic fit for the knob scan
-	
-	Parameters
-	----------
-	knob_range: list
-		The knob values
-	observable_values: list
-		The observable values
-
-	Additional parameters
-	---------------------
-	init_guess: [double, double, double] default [1e-13, 10, 0.0]
-		The list of the initial guesses for the parabola
-	ignore_restrictions: bool default False
-		If True, the initial fit result check is ignored
-	transform_observables: func, optional
-		If given, transforms each observable as func(obs) before doing the fit.
-										
-	Returns
-	-------
-	[double, func, message]
-		The fitting summary of the format
-		[
-			fit_center,			- double; center of the Gaussian fit
-			fit_func			- func; resulting fit function
-			message				- str; message from the fit
-		]
-	"""
-	convert = kwargs.get('transform_observables', None)
-	if convert is not None:
-		observable_values = [convert(obs) for obs in observable_values]
-	try: 
-		fit_params, pcov = sp.optimize.curve_fit(parabola, knob_range, observable_values, kwargs.get("init_guess", [1e-13, 10, 0.0]), None, True, True, [-np.inf, np.inf], 'lm', parabola_jac)
-	except RuntimeError:
-		''' fitting failed, setting to zero '''
-		return [sum(knob_range) / len(knob_range), None, "Fitting failed! Setting to zero"]
-
-	if kwargs.get('ignore_restrictions', False):
-		''' fitting succeeded, skipping the restrictions'''
-		return [fit_params[2], lambda x: parabola(x, *fit_params), f"Fit is correct! Smallest obs for {fit_params[2]}"]
-
-	""" Check of the fitting effectiveness """
-	if fit_params[1] == 0:
-		'''	incorrect fit, taking the average value'''
-		return [sum(knob_range) / len(knob_range), None, "Fit is not correct! Setting to zero"]
-
-	if fit_params[1] < 0.0:
-		if fit_params[2] > 0.0:
-			return [knob_range[0], None, "Fit is not correct! Setting to the boundary"]
-		else:
-			return [knob_range[1], None, "Fit is not correct! Setting to the boundary"]
-	else:
-		
-		optimal = fit_params[2]
-		'''Checking the boundaries'''
-		if optimal > knob_range[-1]: optimal = knob_range[-1]
-		if optimal < knob_range[0]: optimal = knob_range[0]
-
-		return [optimal, lambda x: parabola(x, *fit_params), f"Fit is correct! Smallest obs for {optimal}"]
 
 class Machine():
 	"""
@@ -1278,7 +1203,7 @@ class Machine():
 	def within_range(func):
 		"""Scan the knob until the optimal value is within the scan range"""	
 		@wraps(func)
-		def wrapper(self, beam, knob, observable, knob_range = [-1.0, 0.0, 1.0], fit_func = parabola_fit, **extra_params):
+		def wrapper(self, beam, knob, observable, knob_range, fit_func, **extra_params):
 			is_boundary = lambda knob_value: (knob_value == knob_range[0]) or (knob_value == knob_range[-1])
 			res = func(self, beam, knob, observable, knob_range, fit_func, **extra_params)
 			while is_boundary(res['knob_value'].values[-1]):
@@ -1288,7 +1213,7 @@ class Machine():
 		return wrapper
 
 	@within_range
-	def knob_scan(self, beam, knob, observable, knob_range = [-1.0, 0.0, 1.0], fit_func = parabola_fit, **extra_params) -> pd.DataFrame:
+	def knob_scan(self, beam, knob, observable, knob_range, fit_func, **extra_params) -> pd.DataFrame:
 		"""
 		Scan the knob
 
