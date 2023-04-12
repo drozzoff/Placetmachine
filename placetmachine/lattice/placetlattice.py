@@ -5,6 +5,7 @@ from .quadrupole import Quadrupole
 from .cavity import Cavity
 from .drift import Drift
 from .bpm import Bpm
+from typing import List
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -118,7 +119,7 @@ class Beamline():
 			return None
 		for elem_type in types:
 			if elem_type not in self._supported_elements:
-				raise ValueError("Unsupported element type - " + str(elem_type))
+				raise ValueError(f"Unsupported element type - {elem_type}")
 		return True
 
 	def cache_lattice_data(self, types):
@@ -193,7 +194,7 @@ class Beamline():
 		return self.lattice[-1].girder
 
 	@property
-	def quad_numbers_list(self):
+	def quad_numbers_list(self) -> List[int]:
 		"""Get the list of the Quadrupoles indices"""
 		if not hasattr(self, '_quad_numbers_list_'):
 			self._quad_numbers_list_ = list(map(lambda quad: quad.index, self.get_quads_list()))
@@ -201,7 +202,7 @@ class Beamline():
 		return self._quad_numbers_list_
 
 	@property
-	def cavs_numbers_list(self):
+	def cavs_numbers_list(self) -> List[int]:
 		"""Get the list of the Cavities indices"""
 		if not hasattr(self, '_cav_numbers_list_'):
 			self._cav_numbers_list_ = list(map(lambda cav: cav.index, self.get_cavs_list()))
@@ -209,38 +210,34 @@ class Beamline():
 		return self._cav_numbers_list_
 	
 	@property
-	def bpms_numbers_list(self):
+	def bpms_numbers_list(self) -> List[int]:
 		"""Get the list of the BPMs indices"""
 		if not hasattr(self, '_bpm_numbers_list_'):
 			self._bpm_numbers_list_ = list(map(lambda cav: cav.index, self.get_cavs_list()))
 			
 		return self._bpm_numbers_list_
 
-	def get_quads_numbers(self) -> list:
-		"""Get the list of the BPMs indices"""
-		return list(map(lambda quad: quad.index, self.get_quads_list()))
-
-	def get_cavs_list(self) -> list:
+	def get_cavs_list(self) -> List[Cavity]:
 		"""Get the list of the Cavities in the beamline"""
 		return list(filter(lambda element: element.type == "Cavity", self.lattice))
 
-	def get_quads_list(self) -> list:
+	def get_quads_list(self) -> List[Quadrupole]:
 		"""Get the list of the Quadrupoles in the beamline"""
 		return list(filter(lambda element: element.type == "Quadrupole", self.lattice))
 
-	def get_bpms_list(self) -> list:
+	def get_bpms_list(self) -> List[Bpm]:
 		"""Get the list of the Bpms in the beamline"""
 		return list(filter(lambda element: element.type == "Bpm", self.lattice))
 
-	def get_drifts_list(self) -> list:
+	def get_drifts_list(self) -> List[Drift]:
 		"""Get the list of the elements on the girder"""
 		return list(filter(lambda element: element.type == "Drift", self.lattice))
 
-	def _get_girder(self, girder_index) -> list:
+	def _get_girder(self, girder_index) -> List:
 		"""Get the list of the elements on the girder"""
 		return list(filter(lambda element: element.girder == girder_index, self.lattice))
 
-	def get_girder(self, girder_index) -> list:
+	def get_girder(self, girder_index) -> List:
 		"""
 		Get the list of the elements on the girder
 		
@@ -248,15 +245,15 @@ class Beamline():
 		"""
 		return self.girders[girder_index]
 
-	def _get_quads_strengths(self) -> list:
+	def _get_quads_strengths(self) -> List[float]:
 		"""Get the list of the quadrupoles strengths | Created for the use with Placet.QuadrupoleSetStrengthList() """
 		return list(map(lambda x: x.settings['strength'], self.get_quads_list()))
 
-	def _get_cavs_gradients(self) -> list:
+	def _get_cavs_gradients(self) -> List[float]:
 		"""Get the list of the cavs gradients | Created for the use with Placet.CavitySetGradientList() """
 		return list(map(lambda x: x.settings['gradient'], self.get_cavs_list()))
 
-	def _get_cavs_phases(self) -> list:
+	def _get_cavs_phases(self) -> List[float]:
 		"""Get the list of the cavs phases | Created for the use with Placet.CavitySetGradientList() """
 		return list(map(lambda x: x.settings['phase'], self.get_cavs_list()))
 

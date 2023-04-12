@@ -22,7 +22,7 @@ def _generate_command(command_name: str, param_list: list, **command_details) ->
 	"""
 	res = command_name
 	for key in _extract_subset(param_list, command_details):
-		res += " -" + key + " " + str(command_details[key])
+		res += f" -{key} {command_details[key]}"
 	
 	if command_details.get('no_nextline', False):
 		return res
@@ -456,9 +456,9 @@ class Placet(Placetpy):
 			Filename for the results
 		bin_last: str
 			Filename for the results
-		bin_file_out:str
+		bin_file_out: str
 			Filename for the bin information
-		bin_file_in:str
+		bin_file_in: str
 			Filename for the bin information
 		correctors: list
 			List of correctors to be used
@@ -669,10 +669,7 @@ class Placet(Placetpy):
 
 	def TestRfAlignment(self, **command_details) -> None:
 		"""
-		Run the 'TestRfAlignment' command in Placet TCL.
-
-		//**// Setting the number of the machines to 1 //**//
-		
+		Run the 'TestRfAlignment' command in Placet TCL.	
 		...........
 		The command TestRfAlignment does not produce any output inside Placet.
 
