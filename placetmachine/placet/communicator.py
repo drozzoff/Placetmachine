@@ -43,6 +43,7 @@ class Communicator(object):
 	_DELAY_BEFORE_SEND = 0.1
 	_TERMINAL_SPECIAL_SYMBOL = "% "
 
+	__expect_block = False
 	def __init__(self, process_name, **kwargs):
 		"""
 		29.11.2022	- New version of the communicator without the daemon running in the background
@@ -73,7 +74,7 @@ class Communicator(object):
 			print(f"Debug mode is on. Running the process {self._process_name}, debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}")
 			self.debug_data = pd.DataFrame(columns = ['function', 'arguments', 'run_time', "res"])
 
-		if self._save_logs:
+		if self._save_logs or self.debug_mode:
 			self.save_logs()
 
 		self.add_send_delay(self._send_delay)
@@ -136,6 +137,14 @@ class Communicator(object):
 						We set the default timeout of Communicator._BASE_TIMEOUT.
 						Ideally, this should fix the issue, when we run the commands that do not produce any output
 						in the terminal.
+		
+		The optional parameters 'expect_before' and 'expect_after' used to specify when to use the expect command
+		in between writing the command
+		There has to be always 1 'expect' call after command execution. By default, one 'expect' call is used before
+		writing the command. In certain situations, one would want to do the 'expect' call after the command is written.
+		The parameter __expect_block controls the use of 'expect' commands - making sure, only 1 expect command is 
+		invoked in between commands. But, with 'no_expect' one can skip this limitation.
+		..........
 
 		Parameters
 		----------
@@ -151,17 +160,20 @@ class Communicator(object):
 		
 		Additional parameters
 		---------------------
-		no_expect: bool default False
-			If True, the expect command is not invoked.
-
-			Is needed in rare occasions when the command consists of multiple lines (Eg. function definition)
+		expect_before: bool default True
+			If True, expect is invoked before writing the command.
+		expect_after: bool default False
+			If True, expect is invoked after writing the command.
+		no_expect: bool, False
+			If True, no expect is invoked, ignoring __expect_block
 
 		Returns
 		-------
 		str
 			The command that was sent to a child process
 		"""
-		if not kwargs.get('no_expect', False):
+		no_expect = kwargs.get('no_expect', False)
+		if kwargs.get('expect_before', True) and not self.__expect_block and not no_expect:
 			self.process.expect(self._TERMINAL_SPECIAL_SYMBOL, timeout = self._BASE_TIMEOUT)
 
 		self.flush()
@@ -169,6 +181,12 @@ class Communicator(object):
 		self.process.write(command)
 
 		if skipline: self.skipline(timeout)
+		self.__expect_block = False
+
+		if kwargs.get('expect_after', False) and not no_expect:
+			self.process.expect(self._TERMINAL_SPECIAL_SYMBOL, timeout = self._BASE_TIMEOUT)
+			self.__expect_block = True
+
 		return command
 
 	def isalive(self):

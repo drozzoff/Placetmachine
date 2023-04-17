@@ -1487,9 +1487,7 @@ class Machine():
 		---------------------
 		additional_lineskip: int, default 0
 			Can only take the value of '0'. If not given, the default values for the commands are used
-		save_survey: str
-			If given saves the survey to a file with a given name
-		//**// Accepts the parameters for InterGirderMove (see Placet.InterGirderMove), SaveAllPositions (see Placet.SaveAllPositions), 
+		//**// Accepts the parameters for InterGirderMove (see Placet.InterGirderMove) 
 			   and Placet.Clic (see Placet.Clic) //**//
 		"""
 		if extra_params.get('additional_lineskip', 0) != 0:
@@ -1497,10 +1495,6 @@ class Machine():
 
 		self.placet.Clic(**extra_params)
 		self.placet.InterGirderMove(**extra_params)
-
-		if 'save_survey' in extra_params:
-			self.placet.SaveAllPositions(**dict(extra_params, file = extra_params.get('save_survey'), cav_bpm = 1, cav_grad_phas = 1))
-			
 
 	def empty(self, **extra_params):
 		"""Apply the empty function"""
