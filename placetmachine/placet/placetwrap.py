@@ -179,15 +179,6 @@ class Placet(Placetpy):
 		self.set("tmp", "[" + _generate_command(command, command_params, **dict(command_details, no_nextline = True)) + "]")
 		return self.puts("tmp")
 
-	def execution_comfirmation(func):
-		@wraps(func)
-		def wrapper(self, *args, **kwargs):
-			res = func(self, *args, **kwargs)
-			self.set("finished", 1, **kwargs)
-			return res
-
-		return wrapper
-
 	def _BeamlineInfo(self, **command_details):
 		'''
 			Corresponds to "BeamlineInfo" command in Placet TCL executed in the form:
@@ -1135,7 +1126,6 @@ class Placet(Placetpy):
 		'''
 		self.run_command(self.__construct_command("Zero", [], **command_details))
 
-	@execution_comfirmation
 	def SaveAllPositions(self, **command_details):
 		"""
 		Run 'SaveAllPositions' command in Placet TCL
@@ -1228,7 +1218,6 @@ class Placet(Placetpy):
 		self.run_command(self.__construct_command("RandomReset", _options_list, **command_details))
 #		self.errors_seed = command_details.get('seed')
 
-	@execution_comfirmation
 	def InjectorBeam(self, beam_name, **command_details):
 		"""
 		Run the 'InjectorBeam' command in Placet TCL
@@ -1405,7 +1394,6 @@ class Placet(Placetpy):
 
 		self.run_command(self.__construct_command("BeamDump", _options_list, **command_details))
 
-	@execution_comfirmation
 	def TclCall(self, **command_details):
 		"""
 		Run the 'TclCall' command in Placet TCL
@@ -1500,7 +1488,6 @@ class Placet(Placetpy):
 
 		self.run_command(self.__construct_command("ElementAddOffset " + str(index), _options_list, **command_details))
 
-	@execution_comfirmation
 	def BpmReadings(self, **command_details):
 		"""
 		Run the 'BpmReadings' command in Placet TCL
@@ -1563,7 +1550,6 @@ class Placet(Placetpy):
 		'''
 		return self.GetTransferMatrix(beamline = command_details.get('beamline'), start = index, end = index)
 
-	@execution_comfirmation
 	def wake_calc(self, filename, charge, a, b, sigma_z, n_slices, **command_details) -> str:
 		'''
 			Corresponds to a custom function calc{} in wake_calc.tcl in Placet TCL
