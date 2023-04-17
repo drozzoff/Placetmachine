@@ -31,7 +31,7 @@ class PlacetCommand():
 	"ElementSetAttributes", "TclCall", "TwissMain"]
 
 	#options that affect the execution/parsing of the commands
-	optional_parameters = ['timeout', 'additional_lineskip', 'no_expect']
+	optional_parameters = ['timeout', 'additional_lineskip', 'expect_after', 'expect_before', 'no_expect']
 
 	def __init__(self, command, **kwargs):
 		"""
@@ -51,15 +51,22 @@ class PlacetCommand():
 			The number of lines of the Placet output to skip after writing the command
 
 			Each command type has its additional_lineskip associated with it. The value passed here will overwrite it.
-
+		
+		expect_before: bool default True
+			If True, expect command is invoked before 'writing' the command.
+		expect_after: bool default False
+			If True, expect command is invoked after 'writing' the command.
 		no_expect: bool default False
-			If True, expect command for the command prompt is not invoked before doing 'write'. Should be used carefully.
+			If True, expect command for the command prompt is not invoked neither before or after doing 'write'.
+			Overwrites 'expect_before' and 'expect_after'.
 		"""
-		self.command = command	
+		self.command = command
 		self.timeout = kwargs.get('timeout', None)
 		self.type = kwargs.get("type") if "type" in kwargs else self._get_command_type(command) 
 		self.additional_lineskip = kwargs.get("additional_lineskip") if "additional_lineskip" in kwargs else self._additional_lineskip(self.type)
 		self.no_expect = kwargs.get('no_expect', False)
+		self.expect_before = kwargs.get('expect_before', True)
+		self.expect_after = kwargs.get('expect_after', False)
 
 	def _additional_lineskip(self, command_type):
 		"""
@@ -113,7 +120,7 @@ class PlacetCommand():
 			raise ValueError("Command " + keyword + " does not exist!")
 
 	def __repr__(self):
-		return f"PlacetCommand({repr(self.command)}, timeout = {self.timeout}, type = '{self.type}', additional_lineskip = {self.additional_lineskip}, no_expect = {self.no_expect})"	
+		return f"PlacetCommand({repr(self.command)}, timeout = {self.timeout}, type = '{self.type}', additional_lineskip = {self.additional_lineskip}, expect_before = {self.expect_before}, expect_after = {self.expect_after}, no_expect = {self.no_expect})"	
 	
 	def __str__(self):
 		return f"PlacetCommand(command = {repr(self.command)})"
@@ -206,7 +213,11 @@ class Placetpy(Communicator):
 		skipline: bool, default True
 			If True invokes skipline() to read the written command from the buffer
 		"""
-		opt = {'no_expect': command.no_expect}
+		opt = {
+			'no_expect': command.no_expect,
+			'expect_before': command.expect_before,
+			'expect_after': command.expect_after
+		}
 		if command.timeout is not None:
 			opt['timeout'] = command.timeout
 

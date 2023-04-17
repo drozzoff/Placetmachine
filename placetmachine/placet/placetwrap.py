@@ -1157,7 +1157,7 @@ class Placet(Placetpy):
 			raise Exception("'file' parameter is missing")
 		_options_list = ['file', 'binary', 'nodrift', 'vertical_only', 'positions_only', 'cav_bpm', 'cav_grad_phas']
 		
-		self.run_command(self.__construct_command("SaveAllPositions", _options_list, **command_details))
+		self.run_command(self.__construct_command("SaveAllPositions", _options_list, **dict(command_details, expect_after = True)))
 
 	def ReadAllPositions(self, **command_details):
 		"""
@@ -1503,7 +1503,7 @@ class Placet(Placetpy):
 		additional_lineskip: int
 			The amount of the lines in the output to skip after executing the command
 		"""
-		self.run_command(self.__construct_command("BpmReadings", ['file'], **command_details))
+		self.run_command(self.__construct_command("BpmReadings", ['file'], **dict(command_details, expect_after = True)))
 
 	def MoveGirder(self, **command_details):
 		'''
