@@ -65,8 +65,10 @@ class Machine():
 
 	Methods
 	-------
-	create_beamline(lattice, **extra_params) -> lattice_wrap.Beamline
+	create_beamline(lattice, **extra_params) -> Beamline
 		Create the beamline.
+	import_beamline(lattice, **extra_params) -> Beamline
+		Import the existing Beamline
 	cavities_setup(**extra_params)
 		Set up the cavities of the ML.
 	make_beam_many(beam_name, n_slice, n_macroparticles, beam_seed = 1234, **extra_params) -> str
@@ -479,8 +481,6 @@ class Machine():
 		str
 			The beam name
 		"""
-		self.placet.beam_seed = self.placet.set("beam_seed", beam_seed)
-
 		_options_list = ['sigma_z', 'charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'n_total']
 		
 		parameters = {}
@@ -710,8 +710,8 @@ class Machine():
 		DataFrame
 			The tracking summary.
 			
-			The comlumns of the resulting DataFrame:
-			['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty']
+			The columns of the resulting DataFrame:
+			['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty']
 		"""
 		return self.placet.TestNoCorrection(beam = beam, machines = 1, survey = survey, timeout = 100)
 
@@ -868,7 +868,7 @@ class Machine():
 			The tracking summary
 
 			The columns of the resulting DataFrame:
-			['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty']
+			['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty']
 		"""
 		return self.placet.TestSimpleCorrection(**dict(extra_params, beam = beam, machines = 1, survey = survey, timeout = 100))
 
@@ -933,7 +933,7 @@ class Machine():
 			The tracking summary
 
 			The comlumns of the resulting DataFrame:
-			['correction', 'errors_seed', 'beam_seed', 'survey', 'positions_file', 'emittx', 'emitty']
+			['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty']
 		"""
 		dfs_default_options = {
 			'beam0': beam,
