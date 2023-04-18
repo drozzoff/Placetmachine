@@ -428,7 +428,7 @@ class Machine():
 
 	def make_beam_particles(self, e_design: float, e_spread: float, n_particles: int, beam_seed: int = 1234, **extra_params) -> pd.DataFrame:
 		"""
-		Generate the particles distribution.
+		Generate the particles distribution. Does not generate the beam!
 
 		Equivalent to the procedure of the same name from PLACET file 'make_beam.tcl'
 		
@@ -572,9 +572,15 @@ class Machine():
 		str
 			The beam name
 		"""
+		if self.beamlines_invoked == []:
+			raise Exception("No beamlines created, cannot create a beam. Create the beamline first")
+		if beam_name in self.beams_invoked:
+			raise ValueError(f"Beam with the name '{beam_name}' already exists!")
+
 		_options_list = ['sigma_z', 'charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'n_total']
-		
-		parameters = {}
+		for value in _options_list:
+			if not value in extra_params:
+				raise Exception(f"The parameter '{value}' is missing!")
 
 		for option in _options_list:
 			if option in extra_params:
@@ -587,33 +593,32 @@ class Machine():
 		beam_setup = {
 			'bunches': 1,
 			'macroparticles': n_macroparticles,
-			'particles': parameters['n_total'],
-			'energyspread': 0.01 * parameters['e_spread'] * parameters['e_initial'],
+			'particles': extra_params.get('n_total'),
+			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
 			'ecut': 3.0,
-			'e0': parameters['e_initial'],
-			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), parameters['charge'], -3,  3, parameters['sigma_z'], n_slice),
+			'e0': extra_params.get('e_initial'),
+			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
 			'chargelist': "{1.0}",
 			'charge': 1.0,
 			'phase': 0.0,
 			'overlapp': -390 * 0.3 / 1.3,	#no idea
 			'distance': 0.3 / 1.3,			#bunch distance, no idea what it is
-			'alpha_y': parameters['alpha_y'],
-			'beta_y': parameters['beta_y'],
-			'emitt_y': parameters['emitt_y'],
-			'alpha_x:': parameters['alpha_x'],
-			'beta_x': parameters['beta_x'],
-			'emitt_x': parameters['emitt_x']
+			'alpha_y': extra_params.get('alpha_y'),
+			'beta_y': extra_params.get('beta_y'),
+			'emitt_y': extra_params.get('emitt_y'),
+			'alpha_x:': extra_params.get('alpha_x'),
+			'beta_x': extra_params.get('beta_x'),
+			'emitt_x': extra_params.get('emitt_x')
 		}
 
 		self.placet.InjectorBeam(beam_name, **beam_setup)
 
 		self.placet.SetRfGradientSingle(beam_name, 0, "{1.0 0.0 0.0}")
 		
-		self.placet.set_list("match", **self.beam_parameters)	#for make_beam_particles, since it uses a bunch of external variables
+		particles_distribution = self.make_beam_particles(self.e_initial, self.beam_parameters['e_spread'], self.n_slice * self.n)
+		particles.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
 
-		self.placet.make_beam_particles(self.e_initial, self.beam_parameters['e_spread'], self.n_slice * self.n, additional_lineskip = 2, timeout = 20.0)
-
-		self.placet.BeamRead(beam = beam_name, file = "particles.in", timeout = 20.0)
+		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))
 
 		return beam_name
 
