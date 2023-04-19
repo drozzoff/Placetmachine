@@ -185,10 +185,13 @@ class Beamline():
 					print(f"#{__line_counter}. Line processed: '{line_tmp}'")
 					__line_counter += 1
 				elem_type, element = parse_line(line, girder_index, index)
+
 				if debug_mode:
 					print(f"  Element created: {repr(element)}")
 				if elem_type == 'Girder':
 					girder_index += 1
+					continue
+				elif elem_type is None:
 					continue
 				index += 1
 				if self.lattice == []:
@@ -434,3 +437,5 @@ def parse_line(data, girder_index = None, index = None):
 
 	if elem_type == "Girder":
 		return "Girder", None
+
+	return None, None
