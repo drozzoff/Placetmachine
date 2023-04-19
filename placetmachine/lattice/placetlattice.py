@@ -159,7 +159,7 @@ class Beamline():
 		else:
 			return
 
-	def read_from_file(self, filename):
+	def read_from_file(self, filename, **extra_params):
 		"""
 		Read the lattice from the Placet lattice file
 
@@ -171,13 +171,27 @@ class Beamline():
 		filename: str
 			Name of the file with the lattice
 
+		Additional parameters
+		---------------------
+		debug_mode: bool default False
+			If True, prints all the information it reads and processes
+
 		"""
-		girder_index, index = 0, 0
+		girder_index, index, debug_mode, __line_counter = 0, 0, extra_params.get('debug_mode', False), 1
 		with open(filename, 'r') as f:
 			for line in f.readlines():
+				if debug_mode:
+					line_tmp = line.strip('\n')
+					print(f"#{__line_counter}. Line processed: '{line_tmp}'")
+					__line_counter += 1
 				elem_type, element = parse_line(line, girder_index, index)
+
+				if debug_mode:
+					print(f"  Element created: {repr(element)}")
 				if elem_type == 'Girder':
 					girder_index += 1
+					continue
+				elif elem_type is None:
 					continue
 				index += 1
 				if self.lattice == []:
@@ -423,3 +437,5 @@ def parse_line(data, girder_index = None, index = None):
 
 	if elem_type == "Girder":
 		return "Girder", None
+
+	return None, None
