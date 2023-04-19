@@ -255,6 +255,8 @@ class Machine():
 				Placet.TclCall(script = "callback")
 		cavities_setup: dict
 			The dictionary containing the parameters for 'Machine.cavities_setup()'
+		debug_mode: bool default False
+			If True, prints the information the parses processes
 
 		Returns
 		-------
@@ -275,7 +277,7 @@ class Machine():
 		
 		#parsing the lattice with Beamline
 		self.beamline = Beamline(lattice_name)
-		self.beamline.read_from_file(lattice)
+		self.beamline.read_from_file(lattice, debug_mode = extra_params.get('debug_mode', False))
 		self.beamlines_invoked.append(lattice_name)
 
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))

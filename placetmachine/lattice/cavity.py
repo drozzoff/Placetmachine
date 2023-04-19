@@ -44,10 +44,13 @@ class Cavity():
 	def __init__(self, in_parameters, girder = None, index = None, **extra_params):
 		self.settings = _extract_dict(self.parameters, in_parameters)
 		for x in self._float_params:
-			if extra_params.get('angle', True) and (x == "phase"):
-				self.settings[x] = radians(float(self.settings[x]))
-			else:
-				self.settings[x] = float(self.settings[x])
+			if x in self.settings:
+				if extra_params.get('angle', True) and (x == "phase"):
+					self.settings[x] = radians(float(self.settings[x]))
+				else:
+					self.settings[x] = float(self.settings[x])
+		if not 'length' in self.settings:
+			self.settings['length'] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, "Cavity", None
 
 	def __repr__(self):
