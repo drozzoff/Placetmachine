@@ -1,5 +1,5 @@
 from .placet.placetwrap import Placet
-from .lattice.placetlattice import Beamline
+from .lattice.placetlattice import Beamline, AdvancedParser
 from .util import Knob, CoordTransformation
 
 import os
@@ -237,6 +237,9 @@ class Machine():
 		
 		[26.09.2022] The callback procedure has a fixed name in Placet - "callback". The procedure can no longer be created here.
 					By default sets the callback function to Machine.empty() to avoid errors when forgotten to declare
+		
+		[20.04.2023] Included another parser ("advanced"). It can substitute the the values with the given values in the text.
+					Also, can evaluate 'expr []' and rememember the values that are set in the files with 'set var value'.
 		......
 
 		Parameters
@@ -255,8 +258,17 @@ class Machine():
 				Placet.TclCall(script = "callback")
 		cavities_setup: dict
 			The dictionary containing the parameters for 'Machine.cavities_setup()'
+		parser: str default "default"
+			The type of parser to be used to read the file into a Beamline. The possibilities are (see Beamline._parsers): 
+				"default": The file is well formated, all the settings are numerical, thus no '$e0' or 'expr [..]'
+				"advanced": The file containes variables that are referenced. They are either in the file or defined by hand.
+		parser_variables: optional
+			The dict with the variables and their values that "advanced" parser is going to use to parse the file.
 		debug_mode: bool default False
 			If True, prints the information the parses processes
+		parse_for_placet: bool default False
+			[Only if "advanced" parser is used]. If True, feeds the parsed version of the lattice saved with 'to_placet()' function.
+			Otherwise, feeds the original file given in lattice.
 
 		Returns
 		-------
@@ -264,22 +276,29 @@ class Machine():
 			The created beamline.
 		"""
 		lattice_name = extra_params.get("name", "default")
+		_parser = extra_params.get('parser', "default")
+		if not _parser in Beamline._parsers:
+			raise ValueError(f"'parser' - incorrect value. Accepts {Beamline._parsers}, received - {_parser}")
 		if lattice_name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice_name}' already exists.")
 
+		self.beamline = Beamline(lattice_name)		
+		self.beamline.read_from_file(lattice, debug_mode = extra_params.get('debug_mode', False), parser = _parser, parser_variables = extra_params.get('parser_variables', {}))
+		self.beamlines_invoked.append(lattice_name)
+
 		self.placet.BeamlineNew()
-		self.placet.source(lattice, additional_lineskip = 0)
+		if _parser == "advanced" and extra_params.get('parse_for_placet', False):
+			self.beamline.to_placet(os.path.join(self._data_folder_, "lattice_for_placet.tcl"))
+			self.placet.source(os.path.join(self._data_folder_, "lattice_for_placet.tcl"), additional_lineskip = 0)
+		else:
+			self.placet.source(lattice, additional_lineskip = 0)
 		if extra_params.get("callback", True):
 			self.placet.TclCall(script = "callback")
 			self.set_callback(self.empty)
 
 		self.placet.BeamlineSet(name = lattice_name)
 		
-		#parsing the lattice with Beamline
-		self.beamline = Beamline(lattice_name)
-		self.beamline.read_from_file(lattice, debug_mode = extra_params.get('debug_mode', False))
-		self.beamlines_invoked.append(lattice_name)
-
+		
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
@@ -308,6 +327,10 @@ class Machine():
 		if lattice.name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice.name}' already exists.")
 
+		self.placet.BeamlineSet(name = lattice.name)
+		self.beamline = lattice
+		self.beamlines_invoked.append(lattice.name)
+
 		self.placet.BeamlineNew()
 		lattice.to_placet(os.path.join(self._data_folder_, "lattice_for_placet.tcl"))
 		self.placet.source(os.path.join(self._data_folder_, "lattice_for_placet.tcl"), additional_lineskip = 0)
@@ -315,10 +338,6 @@ class Machine():
 		if extra_params.get("callback", True):
 			self.placet.TclCall(script = "callback")
 			self.set_callback(self.empty)
-
-		self.placet.BeamlineSet(name = lattice.name)
-		self.beamline = lattice
-		self.beamlines_invoked.append(lattice.name)
 
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline

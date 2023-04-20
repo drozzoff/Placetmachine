@@ -1,11 +1,12 @@
-import time
 from pandas import DataFrame
+import re
+from typing import List, Callable
+import warnings
 
 from .quadrupole import Quadrupole
 from .cavity import Cavity
 from .drift import Drift
 from .bpm import Bpm
-from typing import List
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -21,14 +22,79 @@ def _to_str(x):
 	else:
 		return str(x)
 
-def timing(func):
+class AdvancedParser:
+	"""
+	A class to do the parsing of the PLACET lattice.
 
-	def wrapper(*args, **kwargs):
-		start = time.time()
-		func(*args, **kwargs)
-		print("Elapsed time = " + str(time.time() - start) + " s")
+	Can perform the following measures:
+		- Read and remember values that are set. Eg.:
+			% set tmp 5
+		- Put the value instead of the variable. Eg.:
+			% .. -strength expr [0.5*$e0] .. -> % .. -strength expr [0.5*190.0] ..
+			% .. -e0 $e_initial .. -> .. -e0 190.0 ..
+		- Evaluate the values inside of the expr call. Eg.:
+			% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
 
-	return wrapper
+	Attributes
+	----------
+
+	"""
+	def __init__(self, **variables_list):
+		"""Taking the variables list a"""
+		self.variables = variables_list
+
+		#making sure, everyhting is str:
+		self.variables = {key: str(self.variables[key]) for key in self.variables}
+
+	def replace_variables(self, var):
+		"""Get the variable from the memory. If does not exist, set to '0'"""
+		if var not in self.variables:
+			warnings.warn(f"Variable '{var}' is missing. It is assigned to '0'.")
+			self.variables[var] = "0"
+
+		return self.variables[var]
+
+	def evaluate_expression(self, match):
+		"""Evaluate the expression from inside of a Tcl expr []"""
+		parameter = match.group(1)
+		expression_with_vars = match.group(2)
+		
+		# Replace variables with their values
+		expression = re.sub(r'\$(\w+)', lambda match: self.replace_variables(match.group(1)), expression_with_vars)
+
+		result = eval(expression)
+		return f"{parameter} {result}"
+
+	def parse(self, line):
+		"""
+		Parse the line.
+
+		Currently, can perform the following measures:
+			- Read and remember values that are set. Eg.:
+				% set tmp 5
+			- Put the value instead of the variable. Eg.:
+				% .. -strength expr [0.5*$e0] .. -> % .. -strength expr [0.5*190.0] ..
+				% .. -e0 $e_initial .. -> .. -e0 190.0 ..
+			- Evaluate the values inside of the expr call. Eg.:
+				% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
+		..........
+		Parameters
+		----------
+		line: str
+			The string line to parse
+		"""
+		# Update the variables dictionary if a 'set' command is found
+		set_match = re.search(r'set (\w+) ([\d.]+)', line)
+		if set_match:
+			self.variables[set_match.group(1)] = set_match.group(2)
+
+		# Replace expressions with their evaluated results
+		line = re.sub(r'(\S+)\s*\[expr\s(.*?)\]', self.evaluate_expression, line)
+
+		# Replace other variables that appear in the format `-var $var`
+		line = re.sub(r'(\S+)\s*\$(\w+)', lambda match: f"{match.group(1)} {self.replace_variables(match.group(2))}", line)
+
+		return line
 
 class Beamline():
 	"""
@@ -87,6 +153,8 @@ class Beamline():
 	"""
 
 	_supported_elements = ["Bpm", "Cavity", "Quadrupole", "Drift"]
+	_parsers = ['advanced', 'default']
+
 	def __init__(self, name):
 		"""
 		Parameters
@@ -159,7 +227,7 @@ class Beamline():
 		else:
 			return
 
-	def read_from_file(self, filename, **extra_params):
+	def read_from_file(self, filename: str, **extra_params):
 		"""
 		Read the lattice from the Placet lattice file
 
@@ -175,19 +243,36 @@ class Beamline():
 		---------------------
 		debug_mode: bool default False
 			If True, prints all the information it reads and processes
-
+		parser: str default "default"
+			Type of parser to be used. See Beamline._parsers
+		parser_variables: {}
+			The dict with the variables for the 'advanced parser'.
 		"""
+		parser = extra_params.get('parser', "default")
+		if not parser in self._parsers:
+			raise ValueError(f"Unsupported parser '{parser}'. Accepted values are: {str(self._parsers)}")
+
+		preprocess_func = lambda x: x
+		if parser == "advanced":
+			advanced_parser = AdvancedParser(**extra_params.get('parser_variables', {}))
+			preprocess_func = lambda x: advanced_parser.parse(x)
+
 		girder_index, index, debug_mode, __line_counter = 0, 0, extra_params.get('debug_mode', False), 1
+		if debug_mode:
+			print(f"Processing the file '{filename}' with a parser '{parser}'")
 		with open(filename, 'r') as f:
 			for line in f.readlines():
 				if debug_mode:
 					line_tmp = line.strip('\n')
-					print(f"#{__line_counter}. Line processed: '{line_tmp}'")
+					print(f"#{__line_counter}. Read: '{line_tmp}'")
 					__line_counter += 1
-				elem_type, element = parse_line(line, girder_index, index)
+					if parser == "advanced":
+						processed_line_tmp = preprocess_func(line).strip('\n')
+						print(f"---Parsed: '{processed_line_tmp}'")
+				elem_type, element = parse_line(preprocess_func(line), girder_index, index)
 
 				if debug_mode:
-					print(f"  Element created: {repr(element)}")
+					print(f"---Element created: {repr(element)}")
 				if elem_type == 'Girder':
 					girder_index += 1
 					continue
@@ -327,7 +412,6 @@ class Beamline():
 		with open(filename, 'r') as f:
 			for i in range(len(self.lattice)):
 				data = f.readline()
-#				print(self.lattice[i].type, data)
 				if self.lattice[i].type == "Quadrupole":
 					y, py, x, px, roll = _to_float(data.split())
 					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px, roll = roll))
@@ -354,7 +438,7 @@ class Beamline():
 				if self.lattice[i].type == "Bpm":
 					y, py, x, px = _to_float(data.split())
 					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))	
-#	@timing
+
 	def save_misalignments(self, filename, **extra_params):
 		"""
 		Write the misalignments to a file
@@ -414,11 +498,28 @@ class Beamline():
 
 def parse_line(data, girder_index = None, index = None):
 	"""
-	Parse the line of the file containing the Placet lattice
+	Parse the line of the file with PLACET elements
+
+	Parameters
+	----------
+	data: str
+		The line from the PLACET file
+	girder_index: optional
+		The girder number of the current element
+	index: optional
+		The current element's id
+	
+	Returns
+	-------
+	Element_type, Element
+		Element_type is either a value from Beamline._supported_elements, 'Girder' or None. None is returned when the line 
+		does not contain any element (comment, set command, etc.)
+		Element is the object of the corresponding type, if exists. In other case (girder, etc.) returns None.
 	"""
 	data_list, i, res = data.split(), 1, {}
 	elem_type = data_list[0]
-
+	if not elem_type in Beamline._supported_elements:
+		return None, None
 	while i < len(data_list):
 		res[data_list[i][1:]] = data_list[i + 1]
 		i += 2
