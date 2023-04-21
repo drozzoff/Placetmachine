@@ -7,6 +7,7 @@ from .quadrupole import Quadrupole
 from .cavity import Cavity
 from .drift import Drift
 from .bpm import Bpm
+from .dipole import Dipole
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -329,8 +330,12 @@ class Beamline():
 		return list(filter(lambda element: element.type == "Bpm", self.lattice))
 
 	def get_drifts_list(self) -> List[Drift]:
-		"""Get the list of the elements on the girder"""
+		"""Get the list of the drifts in the beamline"""
 		return list(filter(lambda element: element.type == "Drift", self.lattice))
+
+	def get_dipoles_list(self) -> List[Dipole]:
+		"""Get the list of the dipoles in the beamline"""
+		return list(filter(lambda element: element.type == "Dipole", self.lattice))
 
 	def _get_girder(self, girder_index) -> List:
 		"""Get the list of the elements on the girder"""
@@ -535,7 +540,10 @@ def parse_line(data, girder_index = None, index = None):
 
 	if elem_type == "Drift":
 		return "Drift", Drift(res, girder_index, index)
-
+	
+	if elem_type == "Dipole":
+		return "Dipole", Dipole(res, girder_index, index)
+	
 	if elem_type == "Girder":
 		return "Girder", None
 
