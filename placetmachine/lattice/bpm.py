@@ -41,7 +41,10 @@ class Bpm():
 	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Bpm"):
 		self.settings = _extract_dict(self.parameters, in_parameters)
 		for x in self._float_params:
-			self.settings[x] = float(self.settings[x])
+			if x in self.settings:
+				self.settings[x] = float(self.settings[x])
+		if not 'length' in self.settings:
+			self.settings['length'] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, elem_type, None
 
 	def __repr__(self):

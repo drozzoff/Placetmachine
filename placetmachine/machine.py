@@ -1,5 +1,5 @@
 from .placet.placetwrap import Placet
-from .lattice.placetlattice import Beamline
+from .lattice.placetlattice import Beamline, AdvancedParser
 from .util import Knob, CoordTransformation
 
 import os
@@ -237,6 +237,9 @@ class Machine():
 		
 		[26.09.2022] The callback procedure has a fixed name in Placet - "callback". The procedure can no longer be created here.
 					By default sets the callback function to Machine.empty() to avoid errors when forgotten to declare
+		
+		[20.04.2023] Included another parser ("advanced"). It can substitute the the values with the given values in the text.
+					Also, can evaluate 'expr []' and rememember the values that are set in the files with 'set var value'.
 		......
 
 		Parameters
@@ -255,6 +258,17 @@ class Machine():
 				Placet.TclCall(script = "callback")
 		cavities_setup: dict
 			The dictionary containing the parameters for 'Machine.cavities_setup()'
+		parser: str default "default"
+			The type of parser to be used to read the file into a Beamline. The possibilities are (see Beamline._parsers): 
+				"default": The file is well formated, all the settings are numerical, thus no '$e0' or 'expr [..]'
+				"advanced": The file containes variables that are referenced. They are either in the file or defined by hand.
+		parser_variables: optional
+			The dict with the variables and their values that "advanced" parser is going to use to parse the file.
+		debug_mode: bool default False
+			If True, prints the information the parses processes
+		parse_for_placet: bool default False
+			[Only if "advanced" parser is used]. If True, feeds the parsed version of the lattice saved with 'to_placet()' function.
+			Otherwise, feeds the original file given in lattice.
 
 		Returns
 		-------
@@ -262,22 +276,29 @@ class Machine():
 			The created beamline.
 		"""
 		lattice_name = extra_params.get("name", "default")
+		_parser = extra_params.get('parser', "default")
+		if not _parser in Beamline._parsers:
+			raise ValueError(f"'parser' - incorrect value. Accepts {Beamline._parsers}, received - {_parser}")
 		if lattice_name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice_name}' already exists.")
 
+		self.beamline = Beamline(lattice_name)		
+		self.beamline.read_from_file(lattice, debug_mode = extra_params.get('debug_mode', False), parser = _parser, parser_variables = extra_params.get('parser_variables', {}))
+		self.beamlines_invoked.append(lattice_name)
+
 		self.placet.BeamlineNew()
-		self.placet.source(lattice, additional_lineskip = 0)
+		if _parser == "advanced" and extra_params.get('parse_for_placet', False):
+			self.beamline.to_placet(os.path.join(self._data_folder_, "lattice_for_placet.tcl"))
+			self.placet.source(os.path.join(self._data_folder_, "lattice_for_placet.tcl"), additional_lineskip = 0)
+		else:
+			self.placet.source(lattice, additional_lineskip = 0)
 		if extra_params.get("callback", True):
 			self.placet.TclCall(script = "callback")
 			self.set_callback(self.empty)
 
 		self.placet.BeamlineSet(name = lattice_name)
 		
-		#parsing the lattice with Beamline
-		self.beamline = Beamline(lattice_name)
-		self.beamline.read_from_file(lattice)
-		self.beamlines_invoked.append(lattice_name)
-
+		
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
@@ -306,6 +327,10 @@ class Machine():
 		if lattice.name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice.name}' already exists.")
 
+		self.placet.BeamlineSet(name = lattice.name)
+		self.beamline = lattice
+		self.beamlines_invoked.append(lattice.name)
+
 		self.placet.BeamlineNew()
 		lattice.to_placet(os.path.join(self._data_folder_, "lattice_for_placet.tcl"))
 		self.placet.source(os.path.join(self._data_folder_, "lattice_for_placet.tcl"), additional_lineskip = 0)
@@ -313,10 +338,6 @@ class Machine():
 		if extra_params.get("callback", True):
 			self.placet.TclCall(script = "callback")
 			self.set_callback(self.empty)
-
-		self.placet.BeamlineSet(name = lattice.name)
-		self.beamline = lattice
-		self.beamlines_invoked.append(lattice.name)
 
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
@@ -426,8 +447,99 @@ class Machine():
 		if (survey == "empty") or (survey is None):
 			pass
 
+	def make_beam_particles(self, e_design: float, e_spread: float, n_particles: int, beam_seed: int = 1234, **extra_params) -> pd.DataFrame:
+		"""
+		Generate the particles distribution. Does not generate the beam!
+
+		Equivalent to the procedure of the same name from PLACET file 'make_beam.tcl'
+		
+		Parameters
+		----------
+		e_design: float
+			The beam design energy in [GeV]
+		e_spread: float
+			The beam energy spread in [%]
+		n_particles: int
+			Number of particles in the beam
+		beam_seed: int, default 1234
+			The seed number of the random number distribution
+
+		Additional parameters
+		---------------------
+		sigma_z: float
+			Bunch length
+		beta_x: float
+			Horizontal beta-function
+		beta_y: float
+			Vertical beta-function
+		alpha_x: float
+			Horizontal alpha-function
+		alpha_y: float
+			Vertical alpha-function
+		emitt_x: float
+			Horizontal normalized emittance
+		emitt_y: float
+			Vertical normalized emittance
+
+		Returns
+		-------
+		DataFrame
+			The particles' coordinates
+		"""
+		_options_list = ['sigma_z', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y']
+		for value in _options_list:
+			if not value in extra_params:
+				raise Exception(f"The parameter '{value}' is missing!")
+
+		emittance_x = extra_params.get('emitt_x') * 1e-7 * 0.511e-3 / e_design
+		emittance_y = extra_params.get('emitt_y') * 1e-7 * 0.511e-3 / e_design
+
+		sigma_x = np.sqrt(emittance_x * extra_params.get('beta_x')) * 1e6
+		sigma_y = np.sqrt(emittance_y * extra_params.get('beta_y')) * 1e6
+		sigma_px = np.sqrt(emittance_x / extra_params.get('beta_x')) * 1e6
+		sigma_py = np.sqrt(emittance_y / extra_params.get('beta_y')) * 1e6
+		sigma_z = extra_params.get('sigma_z')
+		sigma_E = 0.01 * np.abs(e_spread)
+
+		e, x, y, z, px, py = [], [], [], [], [], []
+		if e_spread < 0:
+			for i in range(n_particles):
+				e.append(e_design * (1.0 + sigma_E * (random.uniform(0, 1) - 0.5)) * e_design)
+				z_tmp = random.gauss(0, sigma_z)
+				while np.abs(z_tmp) >= 3 * sigma_z:
+					z_tmp = random.gauss(0, sigma_z)
+				z.append(z_tmp)
+
+				x.append(random.gauss(0, sigma_x))
+				y.append(random.gauss(0, sigma_y))
+
+				px.append(random.gauss(0, sigma_px) - extra_params.get('alpha_x') * x[-1] * sigma_px / sigma_x)
+				py.append(random.gauss(0, sigma_py) - extra_params.get('alpha_y') * x[-1] * sigma_py / sigma_y)
+		else:
+			for i in range(n_particles):
+				e_offset = random.gauss(0, sigma_E)
+				while np.abs(e_offset) >= 3 * sigma_E:
+					e_offset = random.gauss(0, sigma_E)
+				e.append(e_design * (1.0 + e_offset))
+
+				z_tmp = random.gauss(0, sigma_z)
+				while np.abs(z_tmp) >= 3 * sigma_z:
+					z_tmp = random.gauss(0, sigma_z)
+				z.append(z_tmp)
+
+				x.append(random.gauss(0, sigma_x))
+				y.append(random.gauss(0, sigma_y))
+
+				px.append(random.gauss(0, sigma_px) - extra_params.get('alpha_x') * x[-1] * sigma_px / sigma_x)
+				py.append(random.gauss(0, sigma_py) - extra_params.get('alpha_y') * x[-1] * sigma_py / sigma_y)
+
+		particle_coordinates = pd.DataFrame({'E': e, 'x': x, 'y': y, 'z': z, 'px': px, 'py': py})
+		particle_coordinates = particle_coordinates.sort_values('z')
+
+		return particle_coordinates
+
 	@term_logging
-	def make_beam_many(self, beam_name, n_slice, n_macroparticles, beam_seed = 1234, **extra_params) -> str:
+	def make_beam_many(self, beam_name: str, n_slice: int, n_macroparticles: int, beam_seed: int = 1234, **extra_params) -> str:
 		"""
 		Generate the particle beam
 		
@@ -466,9 +578,9 @@ class Machine():
 		alpha_y: float
 			Vertical alpha-function
 		emitt_x: float
-			Horizontal emittance
+			Horizontal normalized emittance
 		emitt_y: float
-			Vertical emittance
+			Vertical normalized emittance
 		e_spread: float
 			Energy spread
 		e_initial: float
@@ -481,9 +593,15 @@ class Machine():
 		str
 			The beam name
 		"""
+		if self.beamlines_invoked == []:
+			raise Exception("No beamlines created, cannot create a beam. Create the beamline first")
+		if beam_name in self.beams_invoked:
+			raise ValueError(f"Beam with the name '{beam_name}' already exists!")
+
 		_options_list = ['sigma_z', 'charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'n_total']
-		
-		parameters = {}
+		for value in _options_list:
+			if not value in extra_params:
+				raise Exception(f"The parameter '{value}' is missing!")
 
 		for option in _options_list:
 			if option in extra_params:
@@ -496,33 +614,32 @@ class Machine():
 		beam_setup = {
 			'bunches': 1,
 			'macroparticles': n_macroparticles,
-			'particles': parameters['n_total'],
-			'energyspread': 0.01 * parameters['e_spread'] * parameters['e_initial'],
+			'particles': extra_params.get('n_total'),
+			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
 			'ecut': 3.0,
-			'e0': parameters['e_initial'],
-			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), parameters['charge'], -3,  3, parameters['sigma_z'], n_slice),
+			'e0': extra_params.get('e_initial'),
+			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
 			'chargelist': "{1.0}",
 			'charge': 1.0,
 			'phase': 0.0,
 			'overlapp': -390 * 0.3 / 1.3,	#no idea
 			'distance': 0.3 / 1.3,			#bunch distance, no idea what it is
-			'alpha_y': parameters['alpha_y'],
-			'beta_y': parameters['beta_y'],
-			'emitt_y': parameters['emitt_y'],
-			'alpha_x:': parameters['alpha_x'],
-			'beta_x': parameters['beta_x'],
-			'emitt_x': parameters['emitt_x']
+			'alpha_y': extra_params.get('alpha_y'),
+			'beta_y': extra_params.get('beta_y'),
+			'emitt_y': extra_params.get('emitt_y'),
+			'alpha_x:': extra_params.get('alpha_x'),
+			'beta_x': extra_params.get('beta_x'),
+			'emitt_x': extra_params.get('emitt_x')
 		}
 
 		self.placet.InjectorBeam(beam_name, **beam_setup)
 
 		self.placet.SetRfGradientSingle(beam_name, 0, "{1.0 0.0 0.0}")
 		
-		self.placet.set_list("match", **self.beam_parameters)	#for make_beam_particles, since it uses a bunch of external variables
+		particles_distribution = self.make_beam_particles(self.e_initial, self.beam_parameters['e_spread'], self.n_slice * self.n)
+		particles.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
 
-		self.placet.make_beam_particles(self.e_initial, self.beam_parameters['e_spread'], self.n_slice * self.n, additional_lineskip = 2, timeout = 20.0)
-
-		self.placet.BeamRead(beam = beam_name, file = "particles.in", timeout = 20.0)
+		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))
 
 		return beam_name
 
@@ -565,9 +682,9 @@ class Machine():
 		alpha_y: float
 			Vertical alpha-function
 		emitt_x: float
-			Horizontal emittance
+			Horizontal normalized emittance
 		emitt_y: float
-			Vertical emittance
+			Vertical normalized emittance
 		e_spread: float
 			Energy spread
 		e_initial: float
