@@ -153,7 +153,7 @@ class Beamline():
 		Upload the
 	"""
 
-	_supported_elements = ["Bpm", "Cavity", "Quadrupole", "Drift"]
+	_supported_elements = ["Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend"]
 	_parsers = ['advanced', 'default']
 
 	def __init__(self, name):
