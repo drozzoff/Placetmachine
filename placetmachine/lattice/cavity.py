@@ -1,4 +1,4 @@
-from numpy import radians
+from numpy import radians, degrees
 
 import json
 
@@ -64,7 +64,10 @@ class Cavity():
 	def to_placet(self) -> str:
 		res = "Cavity"
 		for key in self.settings:
-			res += f" -{key} {_to_str(self.settings[key])}"
+			if key == "phase":
+				res += f" -{key} {_to_str(degrees(self.settings[key]))}"
+			else:
+				res += f" -{key} {_to_str(self.settings[key])}"
 		return res
 
 	def cache_data(self):

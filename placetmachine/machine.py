@@ -297,8 +297,6 @@ class Machine():
 			self.set_callback(self.empty)
 
 		self.placet.BeamlineSet(name = lattice_name)
-		
-		
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
@@ -327,7 +325,6 @@ class Machine():
 		if lattice.name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice.name}' already exists.")
 
-		self.placet.BeamlineSet(name = lattice.name)
 		self.beamline = lattice
 		self.beamlines_invoked.append(lattice.name)
 
@@ -339,6 +336,7 @@ class Machine():
 			self.placet.TclCall(script = "callback")
 			self.set_callback(self.empty)
 
+		self.placet.BeamlineSet(name = lattice.name)
 		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
