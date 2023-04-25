@@ -533,6 +533,7 @@ def parse_line(data, girder_index = None, index = None):
 	remaining = match.group(2)
 #	print(elem_type, remaining)
 	if not elem_type in Beamline._supported_elements:
+		warnings.warn(f"Element '{elem_type}' is not supported and is ignored. The list of supported elements is {Beamline._supported_elements}.")
 		return None, None
 
 	res = {}

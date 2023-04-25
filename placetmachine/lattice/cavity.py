@@ -1,4 +1,4 @@
-from numpy import radians
+from numpy import radians, degrees
 
 import json
 
@@ -6,6 +6,8 @@ _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
 def _to_str(x):
+	if isinstance(x, str):
+		return f"\"{x}\""
 	if x == 0: 
 		return '0'
 	elif x == 1.0: 
@@ -62,7 +64,10 @@ class Cavity():
 	def to_placet(self) -> str:
 		res = "Cavity"
 		for key in self.settings:
-			res += " -" + key + " " + _to_str(self.settings[key])
+			if key == "phase":
+				res += f" -{key} {_to_str(degrees(self.settings[key]))}"
+			else:
+				res += f" -{key} {_to_str(self.settings[key])}"
 		return res
 
 	def cache_data(self):
