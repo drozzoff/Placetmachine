@@ -153,7 +153,7 @@ class Beamline():
 		Upload the
 	"""
 
-	_supported_elements = ["Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
+	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
 	_parsers = ['advanced', 'default']
 
 	def __init__(self, name):
@@ -522,12 +522,25 @@ def parse_line(data, girder_index = None, index = None):
 		Element is the object of the corresponding type, if exists. In other case (girder, etc.) returns None.
 	"""
 	data_list, i, res = data.split(), 1, {}
-	elem_type = data_list[0]
+
+	pattern = r'(\w+)((?:\s+-\w+\s*(?:\S+|"[^"]*")?)*)'
+	match = re.match(pattern, data)
+
+	if not match:
+		raise ValueError("Invalid line format")
+
+	elem_type = match.group(1)
+	remaining = match.group(2)
+#	print(elem_type, remaining)
 	if not elem_type in Beamline._supported_elements:
 		return None, None
-	while i < len(data_list):
-		res[data_list[i][1:]] = data_list[i + 1]
-		i += 2
+
+	res = {}
+	if remaining is not None:
+		params = re.findall(r'-(\w+)\s*(\S*)', remaining)
+		for param, value in params:
+			if value:
+				res[param] = value.strip('"')
 
 	if elem_type == "Quadrupole":
 		return "Quadrupole", Quadrupole(res, girder_index, index)
@@ -544,6 +557,12 @@ def parse_line(data, girder_index = None, index = None):
 	if elem_type == "Dipole":
 		return "Dipole", Dipole(res, girder_index, index)
 	
+	if elem_type == "Sbend":
+		return "Sbend", Sbend(res, girder_index, index)
+
+	if elem_type == "Multipole":
+		return "Multipole", Multipole(res, girder_index, index)
+
 	if elem_type == "Girder":
 		return "Girder", None
 
