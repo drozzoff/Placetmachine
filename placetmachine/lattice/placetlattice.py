@@ -1,5 +1,6 @@
 from pandas import DataFrame
 import re
+import shlex
 from typing import List, Callable
 import warnings
 
@@ -8,6 +9,8 @@ from .cavity import Cavity
 from .drift import Drift
 from .bpm import Bpm
 from .dipole import Dipole
+from .multipole import Multipole
+from .sbend import Sbend
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -35,6 +38,8 @@ class AdvancedParser:
 			% .. -e0 $e_initial .. -> .. -e0 190.0 ..
 		- Evaluate the values inside of the expr call. Eg.:
 			% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
+		- Remove the comments part from the line
+			% .. -strength 95.0 # text.. -> .. -strength 95.0
 
 	Attributes
 	----------
@@ -78,12 +83,16 @@ class AdvancedParser:
 				% .. -e0 $e_initial .. -> .. -e0 190.0 ..
 			- Evaluate the values inside of the expr call. Eg.:
 				% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
+			- Remove the comments part from the line
+				% .. -strength 95.0 # text.. -> .. -strength 95.0
 		..........
 		Parameters
 		----------
 		line: str
 			The string line to parse
 		"""
+		# Remove the comments
+		line = re.sub(r'#.*', '', line)
 		# Update the variables dictionary if a 'set' command is found
 		set_match = re.search(r'set (\w+) ([\d.]+)', line)
 		if set_match:
@@ -263,14 +272,16 @@ class Beamline():
 			print(f"Processing the file '{filename}' with a parser '{parser}'")
 		with open(filename, 'r') as f:
 			for line in f.readlines():
+				line, processed_line = line.strip('\n'), None
 				if debug_mode:
-					line_tmp = line.strip('\n')
-					print(f"#{__line_counter}. Read: '{line_tmp}'")
+					print(f"#{__line_counter}. Read: '{line}'")
 					__line_counter += 1
 					if parser == "advanced":
-						processed_line_tmp = preprocess_func(line).strip('\n')
-						print(f"---Parsed: '{processed_line_tmp}'")
-				elem_type, element = parse_line(preprocess_func(line), girder_index, index)
+						processed_line = preprocess_func(line)
+						print(f"---Parsed: '{processed_line}'")
+				else:
+					processed_line = preprocess_func(line)
+				elem_type, element = parse_line(processed_line, girder_index, index)
 
 				if debug_mode:
 					print(f"---Element created: {repr(element)}")
@@ -503,7 +514,7 @@ class Beamline():
 
 def parse_line(data, girder_index = None, index = None):
 	"""
-	Parse the line of the file with PLACET elements
+	Parse the line of the file with PLACET elements.
 
 	Parameters
 	----------
@@ -521,7 +532,8 @@ def parse_line(data, girder_index = None, index = None):
 		does not contain any element (comment, set command, etc.)
 		Element is the object of the corresponding type, if exists. In other case (girder, etc.) returns None.
 	"""
-	data_list, i, res = data.split(), 1, {}
+	if data == '':
+		return None, None
 
 	pattern = r'(\w+)((?:\s+-\w+\s*(?:\S+|"[^"]*")?)*)'
 	match = re.match(pattern, data)
@@ -538,10 +550,16 @@ def parse_line(data, girder_index = None, index = None):
 
 	res = {}
 	if remaining is not None:
-		params = re.findall(r'-(\w+)\s*(\S*)', remaining)
-		for param, value in params:
-			if value:
-				res[param] = value.strip('"')
+		# Splits the remaining string into parts
+		parts = shlex.split(remaining)
+		for i in range(len(parts)):
+			if parts[i].startswith('-'):
+				if i == len(parts) - 1 or (parts[i+1].startswith('-') and parts[i+1][1].isalpha()):
+					continue
+				else:
+					param = parts[i].strip('-')
+					value = parts[i+1].strip('"')
+					res[param] = value
 
 	if elem_type == "Quadrupole":
 		return "Quadrupole", Quadrupole(res, girder_index, index)

@@ -40,7 +40,7 @@ class Multipole():
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
 
-	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Bpm"):
+	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Multipole"):
 		self.settings = _extract_dict(self.parameters, in_parameters)
 		for x in self._float_params:
 			if x in self.settings:
