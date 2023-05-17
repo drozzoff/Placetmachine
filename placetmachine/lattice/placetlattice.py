@@ -185,7 +185,7 @@ class Beamline():
 		data_dict = {key: [None] * len(self.lattice) for key in _data_to_show}
 		for i in range(len(self.lattice)):
 			for key in _settings_data:
-				data_dict[key][i] = self.lattice[i].settings[key]
+				data_dict[key][i] = self.lattice[i].settings[key] if key in self.lattice[i].settings else None
 			data_dict['type'][i] = self.lattice[i].type
 			data_dict['girder'][i] = self.lattice[i].girder
 
