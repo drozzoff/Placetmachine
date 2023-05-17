@@ -93,10 +93,6 @@ class AdvancedParser:
 		"""
 		# Remove the comments
 		line = re.sub(r'#.*', '', line)
-		# Update the variables dictionary if a 'set' command is found
-		set_match = re.search(r'set (\w+) ([\d.]+)', line)
-		if set_match:
-			self.variables[set_match.group(1)] = set_match.group(2)
 
 		# Replace expressions with their evaluated results
 		line = re.sub(r'(\S+)\s*\[expr\s(.*?)\]', self.evaluate_expression, line)
@@ -104,6 +100,12 @@ class AdvancedParser:
 		# Replace other variables that appear in the format `-var $var`
 		line = re.sub(r'(\S+)\s*\$(\w+)', lambda match: f"{match.group(1)} {self.replace_variables(match.group(2))}", line)
 
+		# Update the variables dictionary if a 'set' command is found
+		set_match = re.search(r'set (\w+) ([\d.]+)', line)
+		if set_match:
+			self.variables[set_match.group(1)] = set_match.group(2)
+			line = ''
+		
 		return line
 
 class Beamline():
