@@ -136,8 +136,10 @@ class Machine():
 			The time delay before each data transfer to a Placet process (sometimes needed for stability)
 		console_output: bool, default True
 			If True, prints the calculations progress in the console
+		show_intro: bool default True
+			If True, prints the welcome message of Placet at the start
 		"""
-		self.placet = Placet(save_logs = calc_options.get("save_logs", False), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None))
+		self.placet = Placet(save_logs = calc_options.get("save_logs", False), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None), show_intro = calc_options.get("show_intro", True))
 		self.console_output = calc_options.get("console_output", True)
 
 		#Sourcing the neccesarry scripts
