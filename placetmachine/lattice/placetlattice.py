@@ -330,6 +330,7 @@ class Beamline():
 			
 		return self._bpm_numbers_list_
 
+	# Functions to return the list of the elements of specific type
 	def get_cavs_list(self) -> List[Cavity]:
 		"""Get the list of the Cavities in the beamline"""
 		return list(filter(lambda element: element.type == "Cavity", self.lattice))
@@ -349,6 +350,14 @@ class Beamline():
 	def get_dipoles_list(self) -> List[Dipole]:
 		"""Get the list of the dipoles in the beamline"""
 		return list(filter(lambda element: element.type == "Dipole", self.lattice))
+
+	def get_sbends_list(self) -> List[Sbend]:
+		"""Get the list of the dipoles in the beamline"""
+		return list(filter(lambda element: element.type == "Sbend", self.lattice))
+
+	def get_multipoles_list(self) -> List[Multipole]:
+		"""Get the list of the dipoles in the beamline"""
+		return list(filter(lambda element: element.type == "Multipole", self.lattice))
 
 	def _get_girder(self, girder_index) -> List:
 		"""Get the list of the elements on the girder"""
