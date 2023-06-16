@@ -464,7 +464,15 @@ class Beamline():
 
 				if self.lattice[i].type == "Bpm":
 					y, py, x, px = _to_float(data.split())
-					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))	
+					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))
+
+				if self.lattice[i].type == "Dipole":
+					strength_y, strength_x = _to_float(data.split())
+					self.lattice[i].settings.update(dict(strength_x = strength_x, strength_y = strength_y))
+
+				if self.lattice[i].type == "Multipole" or self.lattice[i].type == "Sbend":
+					y, py, x, px = _to_float(data.split())
+					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))
 
 	def save_misalignments(self, filename, **extra_params):
 		"""
@@ -490,14 +498,18 @@ class Beamline():
 		res = ""
 		with open(filename, 'w') as f:
 			for element in self.lattice:
-				res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
+				if element.type in ["Quadrupole", "Cavity", "Bpm", "Drift", "Multipole", "Sbend"]:
+					res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
 
-				if element.type == "Quadrupole":
-					res += f" {element.settings['roll']}"
+					if element.type == "Quadrupole":
+						res += f" {element.settings['roll']}"
 
-				if element.type == "Cavity":
-					if extra_params.get('cav_bpm', False) and extra_params.get('cav_grad_phas', False):
-						res += f" {element.settings['bpm_offset_y']} {element.settings['bpm_offset_x']} {element.settings['gradient']} {element.settings['phase']}"
+					if element.type == "Cavity":
+						if extra_params.get('cav_bpm', False) and extra_params.get('cav_grad_phas', False):
+							res += f" {element.settings['bpm_offset_y']} {element.settings['bpm_offset_x']} {element.settings['gradient']} {element.settings['phase']}"
+				
+				if element.type == "Dipole":
+					res += f"{element.settings['strength_y']} {element.settings['strength_x']}"
 				res += "\n"
 			f.write(res)
 

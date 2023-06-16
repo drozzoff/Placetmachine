@@ -48,9 +48,9 @@ class Multipole():
 	
 	def to_placet(self) -> str:
 		res = "Multipole"
-		to_str = lambda x: f"\"{x}\"" if isinstance(x, str) else x
+		_to_str = lambda x: f"\"{x}\"" if isinstance(x, str) else x
 		for key in self.settings:
-			res += f" -{key} {self.settings[key]}"
+			res += f" -{key} {_to_str(self.settings[key])}"
 		return res
 
 	def cache_data(self):
