@@ -1,5 +1,6 @@
 from pandas import DataFrame
 import re
+import shlex
 from typing import List, Callable
 import warnings
 
@@ -8,6 +9,8 @@ from .cavity import Cavity
 from .drift import Drift
 from .bpm import Bpm
 from .dipole import Dipole
+from .multipole import Multipole
+from .sbend import Sbend
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -35,6 +38,8 @@ class AdvancedParser:
 			% .. -e0 $e_initial .. -> .. -e0 190.0 ..
 		- Evaluate the values inside of the expr call. Eg.:
 			% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
+		- Remove the comments part from the line
+			% .. -strength 95.0 # text.. -> .. -strength 95.0
 
 	Attributes
 	----------
@@ -78,16 +83,16 @@ class AdvancedParser:
 				% .. -e0 $e_initial .. -> .. -e0 190.0 ..
 			- Evaluate the values inside of the expr call. Eg.:
 				% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
+			- Remove the comments part from the line
+				% .. -strength 95.0 # text.. -> .. -strength 95.0
 		..........
 		Parameters
 		----------
 		line: str
 			The string line to parse
 		"""
-		# Update the variables dictionary if a 'set' command is found
-		set_match = re.search(r'set (\w+) ([\d.]+)', line)
-		if set_match:
-			self.variables[set_match.group(1)] = set_match.group(2)
+		# Remove the comments
+		line = re.sub(r'#.*', '', line)
 
 		# Replace expressions with their evaluated results
 		line = re.sub(r'(\S+)\s*\[expr\s(.*?)\]', self.evaluate_expression, line)
@@ -95,6 +100,12 @@ class AdvancedParser:
 		# Replace other variables that appear in the format `-var $var`
 		line = re.sub(r'(\S+)\s*\$(\w+)', lambda match: f"{match.group(1)} {self.replace_variables(match.group(2))}", line)
 
+		# Update the variables dictionary if a 'set' command is found
+		set_match = re.search(r'set (\w+) ([\d.]+)', line)
+		if set_match:
+			self.variables[set_match.group(1)] = set_match.group(2)
+			line = ''
+		
 		return line
 
 class Beamline():
@@ -174,7 +185,7 @@ class Beamline():
 		data_dict = {key: [None] * len(self.lattice) for key in _data_to_show}
 		for i in range(len(self.lattice)):
 			for key in _settings_data:
-				data_dict[key][i] = self.lattice[i].settings[key]
+				data_dict[key][i] = self.lattice[i].settings[key] if key in self.lattice[i].settings else None
 			data_dict['type'][i] = self.lattice[i].type
 			data_dict['girder'][i] = self.lattice[i].girder
 
@@ -263,14 +274,16 @@ class Beamline():
 			print(f"Processing the file '{filename}' with a parser '{parser}'")
 		with open(filename, 'r') as f:
 			for line in f.readlines():
+				line, processed_line = line.strip('\n'), None
 				if debug_mode:
-					line_tmp = line.strip('\n')
-					print(f"#{__line_counter}. Read: '{line_tmp}'")
+					print(f"#{__line_counter}. Read: '{line}'")
 					__line_counter += 1
 					if parser == "advanced":
-						processed_line_tmp = preprocess_func(line).strip('\n')
-						print(f"---Parsed: '{processed_line_tmp}'")
-				elem_type, element = parse_line(preprocess_func(line), girder_index, index)
+						processed_line = preprocess_func(line)
+						print(f"---Parsed: '{processed_line}'")
+				else:
+					processed_line = preprocess_func(line)
+				elem_type, element = parse_line(processed_line, girder_index, index)
 
 				if debug_mode:
 					print(f"---Element created: {repr(element)}")
@@ -317,6 +330,7 @@ class Beamline():
 			
 		return self._bpm_numbers_list_
 
+	# Functions to return the list of the elements of specific type
 	def get_cavs_list(self) -> List[Cavity]:
 		"""Get the list of the Cavities in the beamline"""
 		return list(filter(lambda element: element.type == "Cavity", self.lattice))
@@ -336,6 +350,14 @@ class Beamline():
 	def get_dipoles_list(self) -> List[Dipole]:
 		"""Get the list of the dipoles in the beamline"""
 		return list(filter(lambda element: element.type == "Dipole", self.lattice))
+
+	def get_sbends_list(self) -> List[Sbend]:
+		"""Get the list of the dipoles in the beamline"""
+		return list(filter(lambda element: element.type == "Sbend", self.lattice))
+
+	def get_multipoles_list(self) -> List[Multipole]:
+		"""Get the list of the dipoles in the beamline"""
+		return list(filter(lambda element: element.type == "Multipole", self.lattice))
 
 	def _get_girder(self, girder_index) -> List:
 		"""Get the list of the elements on the girder"""
@@ -442,7 +464,15 @@ class Beamline():
 
 				if self.lattice[i].type == "Bpm":
 					y, py, x, px = _to_float(data.split())
-					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))	
+					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))
+
+				if self.lattice[i].type == "Dipole":
+					strength_y, strength_x = _to_float(data.split())
+					self.lattice[i].settings.update(dict(strength_x = strength_x, strength_y = strength_y))
+
+				if self.lattice[i].type == "Multipole" or self.lattice[i].type == "Sbend":
+					y, py, x, px = _to_float(data.split())
+					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))
 
 	def save_misalignments(self, filename, **extra_params):
 		"""
@@ -468,14 +498,18 @@ class Beamline():
 		res = ""
 		with open(filename, 'w') as f:
 			for element in self.lattice:
-				res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
+				if element.type in ["Quadrupole", "Cavity", "Bpm", "Drift", "Multipole", "Sbend"]:
+					res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
 
-				if element.type == "Quadrupole":
-					res += f" {element.settings['roll']}"
+					if element.type == "Quadrupole":
+						res += f" {element.settings['roll']}"
 
-				if element.type == "Cavity":
-					if extra_params.get('cav_bpm', False) and extra_params.get('cav_grad_phas', False):
-						res += f" {element.settings['bpm_offset_y']} {element.settings['bpm_offset_x']} {element.settings['gradient']} {element.settings['phase']}"
+					if element.type == "Cavity":
+						if extra_params.get('cav_bpm', False) and extra_params.get('cav_grad_phas', False):
+							res += f" {element.settings['bpm_offset_y']} {element.settings['bpm_offset_x']} {element.settings['gradient']} {element.settings['phase']}"
+				
+				if element.type == "Dipole":
+					res += f"{element.settings['strength_y']} {element.settings['strength_x']}"
 				res += "\n"
 			f.write(res)
 
@@ -503,7 +537,7 @@ class Beamline():
 
 def parse_line(data, girder_index = None, index = None):
 	"""
-	Parse the line of the file with PLACET elements
+	Parse the line of the file with PLACET elements.
 
 	Parameters
 	----------
@@ -521,7 +555,8 @@ def parse_line(data, girder_index = None, index = None):
 		does not contain any element (comment, set command, etc.)
 		Element is the object of the corresponding type, if exists. In other case (girder, etc.) returns None.
 	"""
-	data_list, i, res = data.split(), 1, {}
+	if data == '':
+		return None, None
 
 	pattern = r'(\w+)((?:\s+-\w+\s*(?:\S+|"[^"]*")?)*)'
 	match = re.match(pattern, data)
@@ -538,10 +573,16 @@ def parse_line(data, girder_index = None, index = None):
 
 	res = {}
 	if remaining is not None:
-		params = re.findall(r'-(\w+)\s*(\S*)', remaining)
-		for param, value in params:
-			if value:
-				res[param] = value.strip('"')
+		# Splits the remaining string into parts
+		parts = shlex.split(remaining)
+		for i in range(len(parts)):
+			if parts[i].startswith('-'):
+				if i == len(parts) - 1 or (parts[i+1].startswith('-') and parts[i+1][1].isalpha()):
+					continue
+				else:
+					param = parts[i].strip('-')
+					value = parts[i+1].strip('"')
+					res[param] = value
 
 	if elem_type == "Quadrupole":
 		return "Quadrupole", Quadrupole(res, girder_index, index)

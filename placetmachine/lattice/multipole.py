@@ -1,19 +1,8 @@
 import json
 
+
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
-
-def _to_str(x):
-	if isinstance(x, str):
-		return f"\"{x}\""
-	if x == 0: 
-		return '0'
-	elif x == 1.0: 
-		return '1'
-	elif x == -1.0:
-		return '-1'
-	else:
-		return str(x)
 
 class Multipole():
 	"""
@@ -35,16 +24,18 @@ class Multipole():
 	"""
 	parameters = ["name", "s", "x", "y", "xp", "yp", "roll", "length", "synrad", "six_dim", "thin_lens", "e0", "aperture_x", "aperture_y", "aperture_losses", "aperture_shape",
 	"strength", "type", "steps", "tilt", "tclcall_entrance", "tclcall_exit", "short_range_wake"]
-	_float_params = ["s", "x", "y", "xp", "yp", "roll", "length", "synrad", "six_dim", "thin_lens", "e0", "aperture_x", "aperture_y", "aperture_losses", "strength", "type",
-	"steps", "tilt"]
-
+	_float_params = ["s", "x", "y", "xp", "yp", "roll", "length", "e0", "aperture_x", "aperture_y", "aperture_losses", "strength", "tilt"]
+	_int_params = ["type", "steps", "synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
 
-	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Bpm"):
+	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Multipole"):
 		self.settings = _extract_dict(self.parameters, in_parameters)
 		for x in self._float_params:
 			if x in self.settings:
 				self.settings[x] = float(self.settings[x])
+		for x in self._int_params:
+			if x in self.settings:
+				self.settings[x] = int(self.settings[x])
 		if not 'length' in self.settings:
 			self.settings['length'] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, elem_type, None
@@ -57,6 +48,7 @@ class Multipole():
 	
 	def to_placet(self) -> str:
 		res = "Multipole"
+		_to_str = lambda x: f"\"{x}\"" if isinstance(x, str) else x
 		for key in self.settings:
 			res += f" -{key} {_to_str(self.settings[key])}"
 		return res

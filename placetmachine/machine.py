@@ -289,7 +289,7 @@ class Machine():
 		self.beamlines_invoked.append(lattice_name)
 
 		self.placet.BeamlineNew()
-		if _parser == "advanced" and extra_params.get('parse_for_placet', False):
+		if _parser == "advanced" and extra_params.get('parse_for_placet', True):
 			self.beamline.to_placet(os.path.join(self._data_folder_, "lattice_for_placet.tcl"))
 			self.placet.source(os.path.join(self._data_folder_, "lattice_for_placet.tcl"), additional_lineskip = 0)
 		else:
