@@ -504,7 +504,7 @@ class Machine():
 		e, x, y, z, px, py = [], [], [], [], [], []
 		if e_spread < 0:
 			for i in range(n_particles):
-				e.append(e_design * (1.0 + sigma_E * (random.uniform(0, 1) - 0.5)) * e_design)
+				e.append(e_design * (1.0 + sigma_E * (random.uniform(0, 1) - 0.5)))
 				z_tmp = random.gauss(0, sigma_z)
 				while np.abs(z_tmp) >= 3 * sigma_z:
 					z_tmp = random.gauss(0, sigma_z)
@@ -603,14 +603,6 @@ class Machine():
 			if not value in extra_params:
 				raise Exception(f"The parameter '{value}' is missing!")
 
-		for option in _options_list:
-			if option in extra_params:
-				parameters[option] = extra_params.get(option)
-			elif option in self.beam_parameters:
-				parameters[option] = self.beam_parameters[option]
-			else:
-				raise Exception(f"Parameters '{option}' + is not specified")
-
 		beam_setup = {
 			'bunches': 1,
 			'macroparticles': n_macroparticles,
@@ -627,7 +619,7 @@ class Machine():
 			'alpha_y': extra_params.get('alpha_y'),
 			'beta_y': extra_params.get('beta_y'),
 			'emitt_y': extra_params.get('emitt_y'),
-			'alpha_x:': extra_params.get('alpha_x'),
+			'alpha_x': extra_params.get('alpha_x'),
 			'beta_x': extra_params.get('beta_x'),
 			'emitt_x': extra_params.get('emitt_x')
 		}
@@ -636,8 +628,17 @@ class Machine():
 
 		self.placet.SetRfGradientSingle(beam_name, 0, "{1.0 0.0 0.0}")
 		
-		particles_distribution = self.make_beam_particles(self.e_initial, self.beam_parameters['e_spread'], self.n_slice * self.n)
-		particles.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
+		particle_beam_setup = {
+			'alpha_y': extra_params.get('alpha_y'),
+			'beta_y': extra_params.get('beta_y'),
+			'emitt_y': extra_params.get('emitt_y'),
+			'alpha_x': extra_params.get('alpha_x'),
+			'beta_x': extra_params.get('beta_x'),
+			'emitt_x': extra_params.get('emitt_x'),
+			'sigma_z': extra_params.get('sigma_z')
+		}
+		particles_distribution = self.make_beam_particles(extra_params.get('e_initial'), extra_params.get('e_spread'), extra_params.get('n_total'), **particle_beam_setup)
+		particles_distribution.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
 
 		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))
 
@@ -723,7 +724,7 @@ class Machine():
 			'alpha_y': extra_params.get('alpha_y'),
 			'beta_y': extra_params.get('beta_y'),
 			'emitt_y': extra_params.get('emitt_y'),
-			'alpha_x:': extra_params.get('alpha_x'),
+			'alpha_x': extra_params.get('alpha_x'),
 			'beta_x': extra_params.get('beta_x'),
 			'emitt_x': extra_params.get('emitt_x')
 		}
