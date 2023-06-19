@@ -38,7 +38,7 @@ class Communicator(object):
 		Save the debug data to a file
 
 	"""
-	_BASE_TIMEOUT = 5
+	_BASE_TIMEOUT = 100
 	_BUFFER_MAXSIZE = 1000
 	_DELAY_BEFORE_SEND = 0.1
 	_TERMINAL_SPECIAL_SYMBOL = "% "
