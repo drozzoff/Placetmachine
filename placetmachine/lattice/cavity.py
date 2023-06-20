@@ -32,7 +32,7 @@ class Cavity():
 	"gradient", "phase", "lambda", "frequency", "bookshelf_x", "bookshelf_y", "bookshelf_phase", "bpm_offset_x", "bpm_offset_y",  "bpm_reading_x", 
 	"bpm_reading_y", "dipole_kick_x", "dipole_kick_y", "pi_mode"]
 	_int_params = ["type", "synrad", "thin_lens", "six_dim"]
-	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
+	_cached_parameters = ['x', 'y', 'xp', 'yp', 'bpm_offset_y', 'bpm_offset_x', 'gradient', 'phase']
 
 	def __init__(self, in_parameters, girder = None, index = None, **extra_params):
 		self.settings = _extract_dict(self.parameters, in_parameters)
@@ -47,6 +47,10 @@ class Cavity():
 				self.settings[x] = int(self.settings[x])
 		if not 'length' in self.settings:
 			self.settings['length'] = 0.0
+		#setting default values
+		for x in self._cached_parameters:
+			if not x in self.settings:
+				self.settings[x] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, "Cavity", None
 
 	def __repr__(self):

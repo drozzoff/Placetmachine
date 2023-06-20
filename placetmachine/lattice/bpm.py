@@ -29,7 +29,7 @@ class Bpm():
 	_float_params = ["s", "x", "y", "xp", "yp", "roll", "tilt", "tilt_deg", "length", "e0", "aperture_x", "aperture_y", "aperture_losses", 
 	"resolution", "reading_x", "reading_y", "transmitted_charge", "scale_x", "scale_y", "hcorrector_step_size", "vcorrector_step_size"]
 	_int_params = ["store_bunches", "synrad", "thin_lens", "six_dim"]
-	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
+	_cached_parameters = ['x', 'y', 'xp', 'yp']
 
 	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Bpm"):
 		self.settings = _extract_dict(self.parameters, in_parameters)
@@ -41,6 +41,10 @@ class Bpm():
 				self.settings[x] = int(self.settings[x])
 		if not 'length' in self.settings:
 			self.settings['length'] = 0.0
+		#setting default values
+		for x in self._cached_parameters:
+			if not x in self.settings:
+				self.settings[x] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, elem_type, None
 
 	def __repr__(self):

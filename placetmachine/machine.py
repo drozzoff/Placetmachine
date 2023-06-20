@@ -339,7 +339,7 @@ class Machine():
 			self.set_callback(self.empty)
 
 		self.placet.BeamlineSet(name = lattice.name)
-		self.cavities_setup(**extra_params.get('cavities_setup', {}))
+#		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
 	def cavities_setup(self, **extra_params):
@@ -348,7 +348,10 @@ class Machine():
 		.........
 		It is required for the beam creation. Beams in Placet use the results from the command
 			% calc wake.dat
-		to have the values for the transverse (longitudinal?) wakes
+		to have the values for the transverse (longitudinal?) wakes.
+
+		calc functon from "wake_calc.tcl" uses the functions from "clic_beam.tcl". 
+		These functions use the global variable 'structure'. 
 
 		One has to provide all the additional parameters. Having zeros as default could lead to
 		unexpected behaviour
@@ -388,7 +391,7 @@ class Machine():
 		#some go separately
 		self.placet.set("phase", extra_params.get('phase', 0.0))
 		self.placet.set("frac_lambda", extra_params.get('frac_lambda', 0.0))
-		self.placet.set("scale", extra_params.get('scale', 0.0))
+		self.placet.set("scale", extra_params.get('scale', 1.0))
 
 	def survey_errors_set(self, **extra_params):
 		"""
@@ -539,7 +542,7 @@ class Machine():
 		return particle_coordinates
 
 	@term_logging
-	def make_beam_many(self, beam_name: str, n_slice: int, n_macroparticles: int, beam_seed: int = 1234, **extra_params) -> str:
+	def make_beam_many(self, beam_name: str, n_slice: int, n: int, beam_seed: int = 1234, **extra_params) -> str:
 		"""
 		Generate the particle beam
 		
@@ -605,7 +608,7 @@ class Machine():
 
 		beam_setup = {
 			'bunches': 1,
-			'macroparticles': n_macroparticles,
+			'macroparticles': n,
 			'particles': extra_params.get('n_total'),
 			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
 			'ecut': 3.0,
@@ -623,6 +626,7 @@ class Machine():
 			'beta_x': extra_params.get('beta_x'),
 			'emitt_x': extra_params.get('emitt_x')
 		}
+		print(os.path.join(self._data_folder_, "wake.dat"))
 
 		self.placet.InjectorBeam(beam_name, **beam_setup)
 
@@ -637,7 +641,7 @@ class Machine():
 			'emitt_x': extra_params.get('emitt_x'),
 			'sigma_z': extra_params.get('sigma_z')
 		}
-		particles_distribution = self.make_beam_particles(extra_params.get('e_initial'), extra_params.get('e_spread'), extra_params.get('n_total'), **particle_beam_setup)
+		particles_distribution = self.make_beam_particles(extra_params.get('e_initial'), extra_params.get('e_spread'), n_slice * n, **particle_beam_setup)
 		particles_distribution.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
 
 		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))

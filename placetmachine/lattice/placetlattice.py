@@ -470,7 +470,7 @@ class Beamline():
 					strength_y, strength_x = _to_float(data.split())
 					self.lattice[i].settings.update(dict(strength_x = strength_x, strength_y = strength_y))
 
-				if self.lattice[i].type == "Multipole" or self.lattice[i].type == "Sbend":
+				if self.lattice[i].type == "Multipole" or self.lattice[i].type == "Sbend" or self.lattice[i].type == "Drift":
 					y, py, x, px = _to_float(data.split())
 					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))
 
@@ -505,7 +505,7 @@ class Beamline():
 						res += f" {element.settings['roll']}"
 
 					if element.type == "Cavity":
-						if extra_params.get('cav_bpm', False) and extra_params.get('cav_grad_phas', False):
+						if extra_params.get('cav_bpm', True) and extra_params.get('cav_grad_phas', True):
 							res += f" {element.settings['bpm_offset_y']} {element.settings['bpm_offset_x']} {element.settings['gradient']} {element.settings['phase']}"
 				
 				if element.type == "Dipole":
