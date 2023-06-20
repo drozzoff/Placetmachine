@@ -101,6 +101,8 @@ class Machine():
 		Evaluate the Twiss functions along the beamline
 	eval_orbit(beam, survey = None, **extra_params)
 		Evaluate the beam orbit based on the BPMs readings
+	eval_track_results(run_track = True, beam = None, beam_type = "sliced", **extra_params)
+		Evaluate the beam parameters at the end of the lattice
 
 	Methods/Surveys
 	---------------
@@ -339,7 +341,7 @@ class Machine():
 			self.set_callback(self.empty)
 
 		self.placet.BeamlineSet(name = lattice.name)
-#		self.cavities_setup(**extra_params.get('cavities_setup', {}))
+		self.cavities_setup(**extra_params.get('cavities_setup', {}))
 		return self.beamline
 
 	def cavities_setup(self, **extra_params):
@@ -626,8 +628,6 @@ class Machine():
 			'beta_x': extra_params.get('beta_x'),
 			'emitt_x': extra_params.get('emitt_x')
 		}
-		print(os.path.join(self._data_folder_, "wake.dat"))
-
 		self.placet.InjectorBeam(beam_name, **beam_setup)
 
 		self.placet.SetRfGradientSingle(beam_name, 0, "{1.0 0.0 0.0}")
@@ -1137,13 +1137,15 @@ class Machine():
 		self.misalign_girders(offset_data = girders_offset, cavs_only = extra_params.get('cavs_only', True), no_run = True)
 		self.misalign_elements(offset_data = elements_offset, no_run = True)
 
-	def eval_track_results(self, run_track = True, beam = None, **extra_params) -> (pd.DataFrame, float, float):
+	def eval_track_results(self, run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
 		"""
-		Evaluate the beam parameters at the beamline exit
+		Evaluate the beam parameters at the beamline exit.
 		
-		At the beginning of the run, if the calculation requires performing the tracking - sets the callback
-		The structure of the data in the files:
+		At the beginning of the run, if the calculation requires performing the tracking - sets the callback.
+		Depending on the beam type, the different callback is defined. For sliced beam it is Machine.save_sliced_beam().
+		For particle beam it is Machine.save_beam().
 
+		The structure of the data in the files for the sliced beam:
 			1. s long position along [um]
 			2. weight
 			3. energy [GeV]
@@ -1161,13 +1163,23 @@ class Machine():
 			15. 0
 			16. 0
 			17. 0
-		
+
+		The structure of the data in the files for the particle beam:
+			1. energy [GeV]
+			2. x [um]
+			3. y [um]
+			4. z [um]
+			5. x' [urad]
+			6. y' [urad]
+
 		Parameters
 		----------
 		run_track: bool, default True
 			If True runs track() before reading the file
 		beam: str, optional
 			The beam to be used for tracking. If run_track == True, must be defined
+		beam_type: str, default "sliced"
+			The type of the beam passed.
 
 		Additional parameters
 		---------------------
@@ -1182,26 +1194,46 @@ class Machine():
 		-------
 		DataFrame, float, float
 			Returns the DataFrame with the particles' coordinates at the ML exit + final horizontal and vertical emittance
-
+			
 			The columns of the DataFrame includes are:
-			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx']
+				Sliced beam:
+				['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx']
+				
+				Particle beam:
+				['E', 'x', 'y', 'z', 'px', 'py']
 
 			When run_track is False -> returns None as emittance value
 		"""
+		if not beam_type in ["sliced", "particle"]:
+			raise ValueError(f"'beam_type' incorrect value. Accepted values are ['sliced', 'particle']. Received '{beam_type}'")
 		_filename, emitty = extra_params.get("filename", os.path.join(self._data_folder_, "particles.dat")), None
 		if run_track:
 			if beam is None:
 				raise ValueError("When 'run_track = True, the 'beam' must be defined.")
 
 			callback_func, callback_params = self.callback_struct_
-			if (callback_func.__name__ == self.save_sliced_beam.__name__) and (callback_params == dict(file = _filename)):
-				pass	#if the callback is there, no need to reset it
-			else:
-				self.set_callback(self.save_sliced_beam, file = _filename)
+
+			#sliced beam
+			if beam_type == "sliced":
+				if (callback_func.__name__ == self.save_sliced_beam.__name__) and (callback_params == dict(file = _filename)):
+					pass	#if the callback is there, no need to reset it
+				else:
+					self.set_callback(self.save_sliced_beam, file = _filename)
+			if beam_type == "particle":
+				if (callback_func.__name__ == self.save_beam.__name__) and (callback_params == dict(file = _filename)):
+					pass	#if the callback is there, no need to reset it
+				else:
+					self.set_callback(self.save_beam, file = _filename)				
 			track_res = self.track(beam)
 			emitty, emittx = track_res.emitty[0], track_res.emittx[0]
 
-		_columns = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx']
+		#reading the file, given in 'filename' or generated with track (when run_track = True)
+		_columns = []
+		if beam_type == 'sliced':
+			_columns = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx']
+		if beam_type == 'particle':
+			_columns = ['E', 'x', 'y', 'z', 'px', 'py']
+
 		data_res, j = pd.DataFrame(columns = _columns), 0
 
 		for data in get_data(_filename):
@@ -1630,7 +1662,7 @@ class Machine():
 		---------------------
 		//**// Accepts all the parameters for Placet.BeamDump() //**//
 		"""
-		self.placet.BeamDump(file = extra_params.get('file', os.path.join(self._data_folder_, "particles.out")))
+		self.placet.BeamDump(**extra_params)
 
 	def save_sliced_beam(self, **extra_params):
 		"""
