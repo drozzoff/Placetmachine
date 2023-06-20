@@ -28,7 +28,7 @@ class Dipole():
 	_float_params = ["s", "x", "y", "xp", "yp", "roll", "length", "e0", "aperture_x", "aperture_y", "aperture_losses", "strength_x", "strength_y", 
 	"hcorrector", "hcorrector_step_size", "vcorrector", "vcorrector_step_size"]
 	_int_params = ["synrad", "thin_lens", "six_dim"]
-	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
+	_cached_parameters = ['strength_x', 'strength_y']
 
 	def __init__(self, in_parameters, girder = None, index = None, elem_type = "Dipole"):
 		self.settings = _extract_dict(self.parameters, in_parameters)
@@ -40,6 +40,10 @@ class Dipole():
 				self.settings[x] = int(self.settings[x])
 		if not 'length' in self.settings:
 			self.settings['length'] = 0.0
+		#setting default values
+		for x in self._cached_parameters:
+			if not x in self.settings:
+				self.settings[x] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, elem_type, None
 
 	def __repr__(self):

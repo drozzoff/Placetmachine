@@ -38,6 +38,10 @@ class Quadrupole():
 				self.settings[x] = int(self.settings[x])
 		if not 'length' in self.settings:
 			self.settings['length'] = 0.0
+		#setting default values
+		for x in self._cached_parameters:
+			if not x in self.settings:
+				self.settings[x] = 0.0
 		self.girder, self.index, self.type, self._cached_data = girder, index, "Quadrupole", None
 
 	def __repr__(self):

@@ -26,7 +26,7 @@ class Drift():
 	"tclcall_entrance", "tclcall_exit", "short_range_wake"]
 	_float_params = ["s", "x", "y", "xp", "yp", "roll", "tilt", "tilt_deg", "length", "e0", "aperture_x", "aperture_y", "aperture_losses"]
 	_int_params = ["synrad", "thin_lens", "six_dim"]
-	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
+	_cached_parameters = ['x', 'y', 'xp', 'yp']
 
 	def __init__(self, in_parameters, girder = None, index = None):
 		self.settings = _extract_dict(self.parameters, in_parameters)
@@ -38,6 +38,10 @@ class Drift():
 				self.settings[x] = int(self.settings[x])
 		if not 'length' in self.settings:
 			self.settings['length'] = 0.0
+		#setting default values
+		for x in self._cached_parameters:
+			if not x in self.settings:
+				self.settings[x] = 0.0
 		self.girder, self.index, self.type = girder, index, "Drift"
 
 	def __repr__(self):
