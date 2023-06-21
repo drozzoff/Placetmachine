@@ -1,5 +1,6 @@
 from .placet.placetwrap import Placet
 from .machine import Machine
+from .util import Knob, CoordTransformation
 
 from .lattice.quadrupole import Quadrupole
 from .lattice.cavity import Cavity
