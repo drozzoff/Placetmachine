@@ -1002,7 +1002,7 @@ class Machine():
 		"""
 		Perform the Dispersion Free Steering
 		
-		Before actially invoking the 'TestMeasuredCorrection' command in Placet, runs 'Zero' command
+		Before actually invoking the 'TestMeasuredCorrection' command in Placet, runs 'Zero' command
 
 		If bpms_realign is False - the reference orbit will not be saved. That means, that any further alignment will 
 		typically use BPMs center as the best orbit solution (Eg. Rf alignment). 
@@ -1285,7 +1285,7 @@ class Machine():
 		self.beamline.cache_lattice_data(elements_to_modify)
 		
 		if self.console_output:
-			table = Table(title = "Performing " + str(knob.name) + " scan")
+			table = Table(title = f"Performing {knob.name} scan")
 			table.add_column("Amplitude", style = "green")
 			for observable in observables:
 				table.add_column(observable, style = "green")
