@@ -1284,6 +1284,16 @@ class Machine():
 		observable_values, elements_to_modify = [], knob.types_of_elements
 		self.beamline.cache_lattice_data(elements_to_modify)
 		
+		if not hasattr(self, '_CACHE_LOCK'):
+			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
+		elif self._CACHE_LOCK['iterate_knob']:
+			# this corresponds to the case when the values from the cache were not uploaded to the lattice
+			# the reason for this could be the interruption of the execution of eval_obs() function
+			self.beamline.upload_from_cache(elements_to_modify)
+			self._CACHE_LOCK['iterate_knob'] = False
+		else:
+			self._CACHE_LOCK['iterate_knob'] = False
+
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
 			table.add_column("Amplitude", style = "green")
@@ -1291,7 +1301,7 @@ class Machine():
 				table.add_column(observable, style = "green")
 			
 			return table
-		
+
 		def eval_obs(knob, amplitude):
 			"""
 			Maybe this function can be used universally, Machine wide.
@@ -1300,6 +1310,7 @@ class Machine():
 			*I use the similar function to test the knob performance.
 			"""
 			self.apply_knob(knob, amplitude)
+			self._CACHE_LOCK['iterate_knob'] = True
 			obs = []
 			if set(observables).issubset(set(['emittx', 'emitty'])):
 				#using the results of machine.track 
@@ -1315,6 +1326,7 @@ class Machine():
 						obs.append(list(track_res[observable].values))
 			
 			self.beamline.upload_from_cache(elements_to_modify)
+			self._CACHE_LOCK['iterate_knob'] = False
 
 			return obs
 		
