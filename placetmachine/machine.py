@@ -1284,50 +1284,64 @@ class Machine():
 		observable_values, elements_to_modify = [], knob.types_of_elements
 		self.beamline.cache_lattice_data(elements_to_modify)
 		
-		if self.console_output:
+		if not hasattr(self, '_CACHE_LOCK'):
+			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
+		elif self._CACHE_LOCK['iterate_knob']:
+			# this corresponds to the case when the values from the cache were not uploaded to the lattice
+			# the reason for this could be the interruption of the execution of eval_obs() function
+			self.beamline.upload_from_cache(elements_to_modify)
+			self._CACHE_LOCK['iterate_knob'] = False
+		else:
+			self._CACHE_LOCK['iterate_knob'] = False
+
+		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
 			table.add_column("Amplitude", style = "green")
 			for observable in observables:
 				table.add_column(observable, style = "green")
 			
+			return table
+
+		def eval_obs(knob, amplitude):
+			"""
+			Maybe this function can be used universally, Machine wide.
+
+			It sets the knob, runs the track, reverts the changes, and returns the observable values.
+			*I use the similar function to test the knob performance.
+			"""
+			self.apply_knob(knob, amplitude)
+			self._CACHE_LOCK['iterate_knob'] = True
+			obs = []
+			if set(observables).issubset(set(['emittx', 'emitty'])):
+				#using the results of machine.track 
+				track_results = self.track(beam)
+				obs = [float(track_results[observable].values) for observable in observables]
+			else:
+				#running machine.eval_track_results to identify the coordinates etc.
+				track_res, emittx, emitty = self.eval_track_results(True, beam)
+				for observable in observables:
+					if observable in ['emittx', 'emitty']:
+						obs.append(emitty if observable == 'emitty' else emittx)
+					else:
+						obs.append(list(track_res[observable].values))
+			
+			self.beamline.upload_from_cache(elements_to_modify)
+			self._CACHE_LOCK['iterate_knob'] = False
+
+			return obs
+		
+		if self.console_output:
+			table = console_table()	
+			
 			with Live(table, refresh_per_second = 10):
 				for amplitude in knob_range:
-					self.apply_knob(knob, amplitude)
-					obs = []
-					if set(observables).issubset(set(['emittx', 'emitty'])):
-						#using the results of machine.track 
-						track_results = self.track(beam)
-						obs = [float(track_results[observable].values) for observable in observables]
-					else:
-						#running machine.eval_track_results to identify the coordinates etc.
-						track_res, emittx, emitty = self.eval_track_results(True, beam)
-						for observable in observables:
-							if observable in ['emittx', 'emitty']:
-								obs.append(emitty if observable == 'emitty' else emittx)
-							else:
-								obs.append(list(track_res[observable].values))
+					obs = eval_obs(knob, amplitude)
 					observable_values.append(obs)
-					self.beamline.upload_from_cache(elements_to_modify)
-					
 					table.add_row(str(amplitude), *list(map(lambda x: str(x), obs)))
 		else:
 			for amplitude in knob_range:
-				self.apply_knob(knob, amplitude)
-				obs = []
-				if set(observables).issubset(set(['emittx', 'emitty'])):
-					#using the results of machine.track 
-					track_results = self.track(beam)
-					obs = [float(track_results[observable].values) for observable in observables]
-				else:
-					#running machine.eval_track_results to identify the coordinates etc.
-					track_res, emittx, emitty = self.eval_track_results(True, beam)
-					for observable in observables:
-						if observable in ['emittx', 'emitty']:
-							obs.append(emitty if observable == 'emitty' else emittx)
-						else:
-							obs.append(list(track_res[observable].values))
+				obs = eval_obs(knob, amplitude)
 				observable_values.append(obs)
-				self.beamline.upload_from_cache(elements_to_modify)
 
 		iter_data = json.dumps({'knob_range': list(knob_range), 'obs_data': observable_values})
 		obs_f_element = list(map(lambda x: x[0], observable_values))
