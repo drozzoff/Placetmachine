@@ -65,44 +65,54 @@ class Machine():
 
 	Methods
 	-------
+	set_callback(func: Callable, **extra_params)
+		Set the callback function for the tracking
 	create_beamline(lattice, **extra_params) -> Beamline
 		Create the beamline.
 	import_beamline(lattice, **extra_params) -> Beamline
 		Import the existing Beamline
 	cavities_setup(**extra_params)
-		Set up the cavities of the ML.
-	make_beam_many(beam_name, n_slice, n_macroparticles, beam_seed = 1234, **extra_params) -> str
-		Create the particle beam
-	make_beam_slice_energy_gradient(beam_name, n_slice, n_macroparticles, eng, grad, beam_seed = 1234, **extra_params) -> str
-		Create the sliced beam.
+		Set up the cavities of the ML
+	survey_errors_set(**extra_params)
+		Set the survey default errors for the machine
 	assign_errors(survey = None, **extra_params)
-		Apply the lattice missalignments
-	apply_quads_errors(strength_error = 0.0)
-		Apply the quadrupoles strengths errors
-	apply_cavs_errors(phase_error = 0.0, grad_error = 0.0)
-		Apply the cavities phase and gradient errors
-	save_beam(**extra_params)
-		Save the beam with Placet.BeamDump() command
-	save_sliced_beam(**extra_params):
-		Save the beam with Placet.BeamSaveAll() command
+		Assign the alignment errors to the beamline
+	make_beam_particles(e_design: float, e_spread: float, n_particles: int, beam_seed: int = 1234, **extra_params) -> pd.DataFrame:
+		Generate the particles distribution
+	make_beam_many(beam_name: str, n_slice: int, n: int, beam_seed: int = 1234, **extra_params)
+		Generate the particle beam
+	make_beam_slice_energy_gradient(beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: int = 1234, **extra_params) -> str
+		Generate the sliced beam
 	track(beam, survey = None, **extra_params) 
 		Perform the tracking without applying any corrections
-	DFS(beam, n_slices, n_macroparticles, **extra_params)
-		Perform the Dispersion Free Steering
+	eval_orbit(beam, survey = None, **extra_params)
+		Evaluate the beam orbit based on the BPMs readings
+	eval_twiss(beam, **extra_params)
+		Evaluate the Twiss functions along the beamline
 	one_2_one(beam, survey = None, **extra_params)
 		Perform the 1-2-1 Beam Based alingment
+	DFS(beam, n_slices, n_macroparticles, **extra_params)
+		Perform the Dispersion Free Steering
 	RF_align(beam, survey = None, **extra_params)
-		Perform the RF alignment	| To be verified that it works correctly
+		Perform the RF alignment
+	apply_knob(knob: Knob, amplitude: float, **extra_params)
+		Apply the knob and update the beamline offsets
+	eval_track_results(run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float)	
+		Evaluate the beam parameters at the beamline exit.
 	iterate_knob(beam, knob, knob_range = [-1.0, 0.0, 1.0], **extra_params)
 		Iterate the given knob in the given range
 	knob_scan(beam, knob, knob_range = [-1.0, 0.0, 1.0], **extra_params)
 		Scan the knob in the given range, and if the fit is given, assign the knob to the center best value
-	eval_twiss(beam, **extra_params)
-		Evaluate the Twiss functions along the beamline
-	eval_orbit(beam, survey = None, **extra_params)
-		Evaluate the beam orbit based on the BPMs readings
-	eval_track_results(run_track = True, beam = None, beam_type = "sliced", **extra_params)
-		Evaluate the beam parameters at the end of the lattice
+	apply_quads_errors(strength_error = 0.0)
+		Add the strength errors to all the quads
+	apply_cavs_errors(phase_error = 0.0, grad_error = 0.0)
+		Add the errors to the cavities phase and gradient
+	save_beam(**extra_params)
+		Save the beam with Placet.BeamDump() command
+	save_sliced_beam(**extra_params):
+		Save the beam with Placet.BeamSaveAll() command
+	phase_advance(self, start_id, end_id)
+		Get the phase advance	| Does not work atm
 
 	Methods/Surveys
 	---------------
@@ -156,7 +166,7 @@ class Machine():
 
 		#I/O setup
 		self.console = Console()
-		self.setup_data_folder()
+		self._setup_data_folder()
 
 	def __repr__(self):
 		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)}"
@@ -164,7 +174,7 @@ class Machine():
 	def __str__(self):
 		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {self.beams_invoked})"
 
-	def setup_data_folder(self):
+	def _setup_data_folder(self):
 		"""Set the temporary folder in tmp/ folder"""
 		self.dict = tempfile.TemporaryDirectory()
 		self._data_folder_ = self.dict.name

@@ -40,11 +40,12 @@ class Placet(Placetpy):
 
 	.......
 
-	Methods/PLACET commands ([23/11/2022] - 49 in Total)
+	Methods/PLACET commands ([21/08/2023] - 49 in Total)
 	-------
 	TwissPlotStep(**command_details)
 	FirstOrder(**command_details)
-	set(variable, value, **command_details)	
+	set(variable, value, **command_details)
+	set_list(name, **command_details)
 	puts(variable, **command_details)
 	source(filename, **command_details)
 	TestNoCorrection(**command_details)
@@ -96,7 +97,7 @@ class Placet(Placetpy):
 	get_element_transverse_matrix(index, **command_details)
 		Returns the Tranfer matrix of an element with a given index
 	wake_calc(filename, charge, a, b, sigma_z, n_slices, **command_details)
-		..
+		Evaluate the wakefield parameters
 	declare_proc(proc, **command_details)
 		Declare a custom procedure in Placet TCL
 
@@ -327,17 +328,6 @@ class Placet(Placetpy):
 			The amount of the lines in the output to skip after executing the command
 		"""
 		self.run_command(self.__construct_command("source " + filename, [], **command_details))
-
-	def make_beam_many(self, beam: str, nslice, n, **command_details):
-		"""
-		Correponds to 'make_beam_many' custom command in Placet TCL
-		Input:
-			name nslice n
-		values can be given directly or reference the existing variables in TCL
-
-		!! outdated
-		"""
-		self.run_command(self.__construct_command("make_beam_many " + beam + " " + str(nslice) + " " + str(n), [], **command_details))	
 
 #	@logging
 	def TestNoCorrection(self, **command_details) -> pd.DataFrame:
