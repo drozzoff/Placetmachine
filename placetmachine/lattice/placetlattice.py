@@ -138,10 +138,20 @@ class Beamline():
 
 	Methods
 	-------
+	cache_lattice_data(types)
+		Cache up the data for certain types of the elements
+	upload_from_cache(types, clear_cache = False, **extra_params)
+		Restore the cached data for certain elements
+	read_from_file(filename: str, **extra_params)
+		Read the lattice from the Placet lattice file
 	get_girders_number()
 		Get the total number of the girders in the beamline
-	get_quads_numbers()
+	quad_numbers_list()
 		Get the list of the Quadrupoles indices
+	cavs_numbers_list()
+		Get the list of the Cavities indices
+	bpms_numbers_list()
+		Get the list of the BPMs indices
 	get_cavs_list()
 		Get the list of the Cavities in the beamline
 	get_quads_list()
@@ -150,6 +160,12 @@ class Beamline():
 		Get the list of the Bpms in the beamline
 	get_drifts_list()
 		Get the list of the Drifts in the beamline
+	get_dipoles_list()
+		Get the list of the dipoles in the beamline
+	get_sbends_list()
+		Get the list of the dipoles in the beamline
+	get_multipoles_list()
+		Get the list of the dipoles in the beamline
 	get_girder(girder_index)
 		Get the list of the elements on the girder
 	to_placet(filename = None)
@@ -158,10 +174,8 @@ class Beamline():
 		Read the lattice misalignments from a file (same format Placet uses)
 	save_misalignments(filename, **extra_params)
 		Save the lattice misalingments to a file (same format Placet uses)
-	cache_beamline(**extra_params)
-		Create the backup copy of the beamline
-	upload_from_cache(clear_cache = False, **extra_params)
-		Upload the
+	parse_beamline()
+		Parse the Placet lattice file and read it to Beamline.lattice
 	"""
 
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
