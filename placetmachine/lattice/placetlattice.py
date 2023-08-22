@@ -227,7 +227,7 @@ class Beamline():
 		new_element = element.duplicate(element)
 		if new_girder:
 			if self.lattice == []:
-				new_element.girder = 0
+				new_element.girder = 1
 			elif self.lattice[-1].girder is not None:
 				new_element.girder = self.lattice[-1].girder + 1
 			else:
@@ -399,33 +399,47 @@ class Beamline():
 		return self._bpm_numbers_list_
 
 	# Functions to return the list of the elements of specific type
-	def get_cavs_list(self) -> List[Cavity]:
-		"""Get the list of the Cavities in the beamline"""
-		return list(filter(lambda element: element.type == "Cavity", self.lattice))
+	def get_cavs_list(self):
+		"""Get the Cavities from the lattice"""
+		for element in self.lattice:
+			if element.type == "Cavity":
+				yield element
 
-	def get_quads_list(self) -> List[Quadrupole]:
-		"""Get the list of the Quadrupoles in the beamline"""
-		return list(filter(lambda element: element.type == "Quadrupole", self.lattice))
+	def get_quads_list(self):
+		"""Get the Quadrupoles from the lattice"""
+		for element in self.lattice:
+			if element.type == "Quadrupole":
+				yield element
 
-	def get_bpms_list(self) -> List[Bpm]:
-		"""Get the list of the Bpms in the beamline"""
-		return list(filter(lambda element: element.type == "Bpm", self.lattice))
+	def get_bpms_list(self):
+		"""Get the Bpms from the lattice"""
+		for element in self.lattice:
+			if element.type == "Bpm":
+				yield element
 
-	def get_drifts_list(self) -> List[Drift]:
-		"""Get the list of the drifts in the beamline"""
-		return list(filter(lambda element: element.type == "Drift", self.lattice))
+	def get_drifts_list(self):
+		"""Get the Drifts from the lattice"""
+		for element in self.lattice:
+			if element.type == "Drift":
+				yield element
 
-	def get_dipoles_list(self) -> List[Dipole]:
-		"""Get the list of the dipoles in the beamline"""
-		return list(filter(lambda element: element.type == "Dipole", self.lattice))
+	def get_dipoles_list(self):
+		"""Get the Dipoles from the lattice"""
+		for element in self.lattice:
+			if element.type == "Dipole":
+				yield element
 
-	def get_sbends_list(self) -> List[Sbend]:
-		"""Get the list of the dipoles in the beamline"""
-		return list(filter(lambda element: element.type == "Sbend", self.lattice))
+	def get_sbends_list(self):
+		"""Get the Sbend from the lattice"""
+		for element in self.lattice:
+			if element.type == "Sbend":
+				yield element
 
-	def get_multipoles_list(self) -> List[Multipole]:
-		"""Get the list of the dipoles in the beamline"""
-		return list(filter(lambda element: element.type == "Multipole", self.lattice))
+	def get_multipoles_list(self):
+		"""Get the Multipoles from the lattice"""
+		for element in self.lattice:
+			if element.type == "Multipole":
+				yield element
 
 	def _get_girder(self, girder_index) -> List:
 		"""Get the list of the elements on the girder"""
