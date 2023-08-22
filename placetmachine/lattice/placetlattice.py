@@ -527,28 +527,6 @@ class Beamline():
 				res += "\n"
 			f.write(res)
 
-	def parse_beamline(self):
-		"""
-		Parse the Placet lattice file and read it to self.lattice
-
-		Currently, can parse Quadrupole, Cavity, BPM, and Drift
-
-		So far, not used, the need of this function is questionable
-		"""
-		parsed_beamline = []
-		for element in self.lattice:
-			if element['type'] == "Quadrupole":
-				parsed_beamline.append(Quadrupole(element['settings'], element['girder'], element['index']))
-			elif element['type'] == "Cavity":
-				parsed_beamline.append(Cavity(element['settings'], element['girder'], element['index']))
-			elif element['type'] == "Bpm":
-				parsed_beamline.append(Bpm(element['settings'], element['girder'], element['index']))
-			elif element['type'] == "Drift":
-				parsed_beamline.append(Drift(element['settings'], element['girder'], element['index']))
-			else:
-				pass
-		self.lattice = parsed_beamline
-
 def parse_line(data, girder_index = None, index = None):
 	"""
 	Parse the line of the file with PLACET elements.
