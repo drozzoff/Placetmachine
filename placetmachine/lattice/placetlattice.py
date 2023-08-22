@@ -71,7 +71,7 @@ class AdvancedParser:
 		result = eval(expression)
 		return f"{parameter} {result}"
 
-	def parse(self, line):
+	def parse(self, line: str):
 		"""
 		Parse the line.
 
@@ -207,6 +207,60 @@ class Beamline():
 #		res_table.name = self.name
 		
 		return f"Beamline(name = '{self.name}', structure = \n{str(res_table)})"
+
+	def __len__(self):
+		return len(self.lattice)
+
+	def append(self, element, new_girder: bool = False):
+		"""
+		Append a given element at the end of the lattice
+
+		Parameters
+		----------
+		element:
+			Element to append at the end of the sequence
+		new_girder: bool, default False
+			If True, places the element on a new girder. Otherwise places it on the same girder last element is placed.
+
+			If False and there are no elements in the lattice, does not set any girder number (defaults to None)
+		"""
+		new_element = element.duplicate(element)
+		if new_girder:
+			if self.lattice == []:
+				new_element.girder = 0
+			elif self.lattice[-1].girder is not None:
+				new_element.girder = self.lattice[-1].girder + 1
+			else:
+				warnings.warn("Cannot create a new girder when previous elements are not on girders!")
+				new_element.girder = None
+		else:
+			if self.lattice == []:
+				new_element.girder = None
+			else:
+				new_element.girder = self.lattice[-1].girder
+			
+		self.lattice.append(new_element)
+
+	def __setitem__(self, index, value):
+		self.lattice[index] = value
+
+	def __getitem__(self, index):
+		return self.lattice[index]
+	
+	def __iter__(self):
+		self._iter_index = 0
+		return self
+
+	def __next__(self):
+		if not hasattr(self, '_iter_index'):
+			self._iter_index = 0
+		
+		if self._iter_index < len(self.lattice):
+			res = self.lattice[self._iter_index]
+			self._iter_index += 1
+			return res
+		else:
+			raise StopIteration
 
 	def _verify_supported_elem_types(self, types):
 		if types is None:
