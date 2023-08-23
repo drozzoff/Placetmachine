@@ -37,7 +37,7 @@ class Machine():
 	"""
 	A class used for controling the beamline in Placet
 
-	Uses placet_wrap.Placet interface to Placet and lattice_parse.Beamline for controling the beamline.
+	Uses Placet interface to Placet and Beamline for controling the beamline.
 
 	Changes the logic of using the Placet for beam tracking. By default, the number of the machines is set to 1.
 	Each Machine instance corresponds to 1 actual beamline. The beamline is described with Beamline.

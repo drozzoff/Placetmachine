@@ -1,7 +1,7 @@
 from pandas import DataFrame
 import re
 import shlex
-from typing import List, Callable
+from typing import List, Callable, Generator
 import warnings
 
 from .quadrupole import Quadrupole
@@ -11,7 +11,7 @@ from .bpm import Bpm
 from .dipole import Dipole
 from .multipole import Multipole
 from .sbend import Sbend
-
+from .element import Element
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
@@ -71,7 +71,7 @@ class AdvancedParser:
 		result = eval(expression)
 		return f"{parameter} {result}"
 
-	def parse(self, line):
+	def parse(self, line: str):
 		"""
 		Parse the line.
 
@@ -208,6 +208,64 @@ class Beamline():
 		
 		return f"Beamline(name = '{self.name}', structure = \n{str(res_table)})"
 
+	def __len__(self):
+		return len(self.lattice)
+	
+	def append(self, element, new_girder: bool = False):
+		"""
+		Append a given element at the end of the lattice
+
+		Parameters
+		----------
+		element:
+			Element to append at the end of the sequence
+		new_girder: bool, default False
+			If True, places the element on a new girder. Otherwise places it on the same girder last element is placed.
+
+			If False and there are no elements in the lattice, does not set any girder number (defaults to None)
+		"""
+		new_element = element.duplicate(element)
+		if new_girder:
+			if self.lattice == []:
+				new_element.girder = 1
+			elif self.lattice[-1].girder is not None:
+				girder_id = self.lattice[-1].girder
+				new_element.girder = girder_id + 1
+				
+				#updating the generator functions list for the previous girder
+				self.girders[girder_id] = self._get_girder(girder_id)
+			else:
+				warnings.warn("Cannot create a new girder when previous elements are not on girders!")
+				new_element.girder = None
+		else:
+			if self.lattice == []:
+				new_element.girder = None
+			else:
+				new_element.girder = self.lattice[-1].girder
+			
+		self.lattice.append(new_element)
+
+	def __setitem__(self, index, value):
+		self.lattice[index] = value
+
+	def __getitem__(self, index):
+		return self.lattice[index]
+	
+	def __iter__(self):
+		self._iter_index = 0
+		return self
+
+	def __next__(self):
+		if not hasattr(self, '_iter_index'):
+			self._iter_index = 0
+		
+		if self._iter_index < len(self.lattice):
+			res = self.lattice[self._iter_index]
+			self._iter_index += 1
+			return res
+		else:
+			raise StopIteration
+
 	def _verify_supported_elem_types(self, types):
 		if types is None:
 			return None
@@ -313,6 +371,7 @@ class Beamline():
 					element.settings['s'] = self.lattice[-1].settings['s'] + element.settings['length']
 				self.lattice.append(element)
 
+		self.girders = {} # making sure it is empty
 		for girder_id in range(1, self.get_girders_number() + 1):
 			self.girders[girder_id] = self._get_girder(girder_id)
 
@@ -345,45 +404,70 @@ class Beamline():
 		return self._bpm_numbers_list_
 
 	# Functions to return the list of the elements of specific type
-	def get_cavs_list(self) -> List[Cavity]:
-		"""Get the list of the Cavities in the beamline"""
-		return list(filter(lambda element: element.type == "Cavity", self.lattice))
+	def get_cavs_list(self) -> Generator[Cavity, None, None]:
+		"""Get the Cavities from the lattice"""
+		for element in self.lattice:
+			if element.type == "Cavity":
+				yield element
 
-	def get_quads_list(self) -> List[Quadrupole]:
-		"""Get the list of the Quadrupoles in the beamline"""
-		return list(filter(lambda element: element.type == "Quadrupole", self.lattice))
+	def get_quads_list(self) -> Generator[Quadrupole, None, None]:
+		"""Get the Quadrupoles from the lattice"""
+		for element in self.lattice:
+			if element.type == "Quadrupole":
+				yield element
 
-	def get_bpms_list(self) -> List[Bpm]:
-		"""Get the list of the Bpms in the beamline"""
-		return list(filter(lambda element: element.type == "Bpm", self.lattice))
+	def get_bpms_list(self) -> Generator[Bpm, None, None]:
+		"""Get the Bpms from the lattice"""
+		for element in self.lattice:
+			if element.type == "Bpm":
+				yield element
 
-	def get_drifts_list(self) -> List[Drift]:
-		"""Get the list of the drifts in the beamline"""
-		return list(filter(lambda element: element.type == "Drift", self.lattice))
+	def get_drifts_list(self) -> Generator[Drift, None, None]:
+		"""Get the Drifts from the lattice"""
+		for element in self.lattice:
+			if element.type == "Drift":
+				yield element
 
-	def get_dipoles_list(self) -> List[Dipole]:
-		"""Get the list of the dipoles in the beamline"""
-		return list(filter(lambda element: element.type == "Dipole", self.lattice))
+	def get_dipoles_list(self) -> Generator[Dipole, None, None]:
+		"""Get the Dipoles from the lattice"""
+		for element in self.lattice:
+			if element.type == "Dipole":
+				yield element
 
-	def get_sbends_list(self) -> List[Sbend]:
-		"""Get the list of the dipoles in the beamline"""
-		return list(filter(lambda element: element.type == "Sbend", self.lattice))
+	def get_sbends_list(self) -> Generator[Sbend, None, None]:
+		"""Get the Sbend from the lattice"""
+		for element in self.lattice:
+			if element.type == "Sbend":
+				yield element
 
-	def get_multipoles_list(self) -> List[Multipole]:
-		"""Get the list of the dipoles in the beamline"""
-		return list(filter(lambda element: element.type == "Multipole", self.lattice))
+	def get_multipoles_list(self) -> Generator[Multipole, None, None]:
+		"""Get the Multipoles from the lattice"""
+		for element in self.lattice:
+			if element.type == "Multipole":
+				yield element
 
-	def _get_girder(self, girder_index) -> List:
-		"""Get the list of the elements on the girder"""
-		return list(filter(lambda element: element.girder == girder_index, self.lattice))
+	def _get_girder(self, girder_index) -> Generator[Element, None, None]:
+		"""Get the elements on the girder"""
+		for element in self.lattice:
+			if element.girder == girder_index:
+				yield element
 
-	def get_girder(self, girder_index) -> List:
+	def get_girder(self, girder_index) -> Generator[Element, None, None]:
 		"""
 		Get the list of the elements on the girder
+
+		The return value is generator-function not an object.
 		
 		Girders numbering starts from 1
 		"""
-		return self.girders[girder_index]
+		try:
+			return self.girders[girder_index]
+		except IndexError:
+			if girder_index <= self.get_girders_number():
+				self.girders[girder_index] = self._get_girder(girder_index)
+				return self.girders[girder_index]
+			else:
+				raise IndexError
 
 	def _get_quads_strengths(self) -> List[float]:
 		"""Get the list of the quadrupoles strengths | Created for the use with Placet.QuadrupoleSetStrengthList() """
