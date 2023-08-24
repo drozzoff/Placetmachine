@@ -188,7 +188,7 @@ class Beamline():
 		name: str
 			Name of the beamline.
 		"""
-		self.name, self.lattice, self.girders = name, [], {}
+		self.name, self.lattice = name, []
 
 	def __repr__(self):
 		return f"Beamline('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
@@ -211,29 +211,32 @@ class Beamline():
 	def __len__(self):
 		return len(self.lattice)
 	
-	def append(self, element, new_girder: bool = False):
+	def append(self, element, **extra_params):
 		"""
-		Append a given element at the end of the lattice
+		Append a given element at the end of the lattice.
+
+		By default, places the element on the same girder as previous one. 
+		If the previous one is not on the girder or this is the first element, the element is not placet on girder
 
 		Parameters
 		----------
 		element:
 			Element to append at the end of the sequence
+		
+		Additional parameters
+		---------------------
 		new_girder: bool, default False
 			If True, places the element on a new girder. Otherwise places it on the same girder last element is placed.
 
 			If False and there are no elements in the lattice, does not set any girder number (defaults to None)
 		"""
 		new_element = element.duplicate(element)
-		if new_girder:
+		if extra_params.get('new_girder', False):
 			if self.lattice == []:
 				new_element.girder = 1
 			elif self.lattice[-1].girder is not None:
 				girder_id = self.lattice[-1].girder
 				new_element.girder = girder_id + 1
-				
-				#updating the generator functions list for the previous girder
-				self.girders[girder_id] = self._get_girder(girder_id)
 			else:
 				warnings.warn("Cannot create a new girder when previous elements are not on girders!")
 				new_element.girder = None
@@ -242,7 +245,14 @@ class Beamline():
 				new_element.girder = None
 			else:
 				new_element.girder = self.lattice[-1].girder
-			
+		
+		if self.lattice == []:
+			new_element.settings['s'] = new_element.settings['length']
+			new_element.index = 0
+		else:
+			new_element.settings['s'] = self.lattice[-1].settings['s'] + new_element.settings['length']
+			new_element.index = self.lattice[-1].index + 1
+		
 		self.lattice.append(new_element)
 
 	def __setitem__(self, index, value):
@@ -371,10 +381,6 @@ class Beamline():
 					element.settings['s'] = self.lattice[-1].settings['s'] + element.settings['length']
 				self.lattice.append(element)
 
-		self.girders = {} # making sure it is empty
-		for girder_id in range(1, self.get_girders_number() + 1):
-			self.girders[girder_id] = self._get_girder(girder_id)
-
 	def get_girders_number(self) -> int:
 		"""Get the total number of the girders in the beamline"""
 		return self.lattice[-1].girder
@@ -446,28 +452,11 @@ class Beamline():
 			if element.type == "Multipole":
 				yield element
 
-	def _get_girder(self, girder_index) -> Generator[Element, None, None]:
+	def get_girder(self, girder_index) -> Generator[Element, None, None]:
 		"""Get the elements on the girder"""
 		for element in self.lattice:
 			if element.girder == girder_index:
 				yield element
-
-	def get_girder(self, girder_index) -> Generator[Element, None, None]:
-		"""
-		Get the list of the elements on the girder
-
-		The return value is generator-function not an object.
-		
-		Girders numbering starts from 1
-		"""
-		try:
-			return self.girders[girder_index]
-		except IndexError:
-			if girder_index <= self.get_girders_number():
-				self.girders[girder_index] = self._get_girder(girder_index)
-				return self.girders[girder_index]
-			else:
-				raise IndexError
 
 	def _get_quads_strengths(self) -> List[float]:
 		"""Get the list of the quadrupoles strengths | Created for the use with Placet.QuadrupoleSetStrengthList() """
