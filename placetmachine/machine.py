@@ -37,7 +37,7 @@ class Machine():
 	"""
 	A class used for controling the beamline in Placet
 
-	Uses placet_wrap.Placet interface to Placet and lattice_parse.Beamline for controling the beamline.
+	Uses Placet interface to Placet and Beamline for controling the beamline.
 
 	Changes the logic of using the Placet for beam tracking. By default, the number of the machines is set to 1.
 	Each Machine instance corresponds to 1 actual beamline. The beamline is described with Beamline.
@@ -1565,9 +1565,126 @@ class Machine():
 		for element in elements:
 			self.misalign_element(element_index = int(element), **elements[element], **_extract_dict(_options, extra_params))
 
+	def misalign_articulation_point(self, **extra_params):
+		"""
+		Offset the articulation point either between 2 girders or at the beamline start/end.
+
+		The girders and elements on them are misalligned accordingly.
+
+		Additional parameters
+		---------------------
+		girder_left: int, optional
+			The id of the girder to the left of the articulation point
+		girder_right: int, optional
+			The id of the girder to the roght of the articulation point
+		x: float, default 0.0
+			The horizontal offset in micrometers
+		y: float, default 0.0
+			The vertical offset in micrometers
+		no_run: bool default True
+			If True, placet command ElementAddOffset is not invoked
+		cavs_only: bool, default False
+			If True only cavities are misaligned
+			
+		There is an option to provide the ids of the girders to the right and to the left of the articulation point.
+		That require girder_right - girder_left = 1, otherwise an exception will be raised.
+
+		It is possible to provide only 1 id either of the right or the left one. This also works for the start/end of the beamline
+
+		"""
+		_options = ['x', 'y', 'no_run']
+
+		N_girders = self.beamline.get_girders_number()
+
+		girder_left, girder_right = extra_params.get('girder_left', None), extra_params.get('girder_right', None)
+		
+		if girder_left is not None and girder_right is not None and girder_right - girder_left != 1:
+			raise ValueError("The girders provided do not have a common articulation point.")
+
+		if girder_left is not None:
+			if girder_left < 1 or girder_left > N_girders:
+				raise ValueError(f"A girder with {girder_left} id does not exist!")
+		
+		if girder_right is not None:
+			if girder_right < 1 or girder_right > N_girders:
+				raise ValueError(f"A girder with {girder_right} id does not exist!")
+
+		if girder_right is not None:
+			girder_left = girder_right - 1 if girder_right != 1 else None
+		
+		elif girder_left is not None:
+			girder_right = girder_left + 1 if girder_left != N_girders else None
+
+		if girder_left is not None:
+			# misalign the girder_left from the right
+			self.misalign_girder_2(**{
+				'girder': girder_left,
+				'x_right': extra_params.get('x', 0.0),
+				'y_right': extra_params.get('y', 0.0),
+				'no_run': extra_params.get('no_run', True),
+				'cavs_only': extra_params.get('cavs_only', True)
+			})
+
+		if girder_right is not None:
+			self.misalign_girder_2(**{
+				'girder': girder_right,
+				'x_left': extra_params.get('x', 0.0),
+				'y_left': extra_params.get('y', 0.0),
+				'no_run': extra_params.get('no_run', True),
+				'cavs_only': extra_params.get('cavs_only', True)
+			})
+	
+	def misalign_girder_2(self, **extra_params):
+		"""
+		Misalign the girder by means of moving its end points
+		
+		Additional parameters
+		---------------------
+		girder: int
+			The id of the girder
+		x_right: float default 0.0
+			The horizontal offset in micrometers of right end-point
+		y_right: float default 0.0
+			The vertical offset in micrometers of the right end-point
+		x_left: float default 0.0
+			The horizontal offset in micrometers of left end-point
+		y_left: float default 0.0
+			The vertical offset in micrometers of the left end-point
+		cavs_only: bool, default False
+			If True, only the cavities are misaligned
+		no_run: bool default True
+			If True, placet command ElementAddOffset is not invoked
+		"""
+
+		girder_start, girder_end = None, None
+
+		#evaluating the dimenstions of the girder
+		for element in self.beamline.get_girder(extra_params.get('girder')):
+			if girder_start is None:
+				girder_start = element.settings['s'] - element.settings['length']
+			
+			girder_end = element.settings['s']
+
+		girder_length = girder_end - girder_start
+
+
+		for element in self.beamline.get_girder(extra_params.get('girder')):
+			element_center = element.settings['s'] - element.settings['length'] / 2
+			
+			# misaligning the left end-point
+			x = extra_params.get('x_left', 0.0) * (girder_end - element_center) / girder_length
+			y = extra_params.get('y_left', 0.0) * (girder_end - element_center) / girder_length
+			
+			# misaligning the right end-point
+			x += extra_params.get('x_right', 0.0) * (element_center - girder_start) / girder_length
+			y += extra_params.get('y_right', 0.0) * (element_center - girder_start) / girder_length
+			self.misalign_element(element_index = element.index, x = x, y = y, cavs_only = extra_params.get('cavs_only', False), no_run = extra_params.get('no_run', True))
+	
 	def misalign_girder(self, **extra_params):
 		"""
-		Offset the elements on the girder
+		Offset the girder along with the elements on it.
+
+		All the elements on the girder are equally misaligned.
 
 		Additional parameters
 		---------------------
