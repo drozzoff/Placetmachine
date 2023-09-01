@@ -1144,8 +1144,8 @@ class Machine():
 			If True, only cavities on girders are misaligned
 		"""
 		girders_offset, elements_offset = knob.apply(amplitude)
-		self.misalign_girders(offset_data = girders_offset, cavs_only = extra_params.get('cavs_only', True), no_run = True)
-		self.misalign_elements(offset_data = elements_offset, no_run = True)
+		self.misalign_girders(offset_data = girders_offset, cavs_only = extra_params.get('cavs_only', True))
+		self.misalign_elements(offset_data = elements_offset)
 
 	def eval_track_results(self, run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
 		"""
@@ -1493,9 +1493,6 @@ class Machine():
 		Apply the geometrical misalignments to the element
 
 		The offset is added to the element property in self.beamline
-
-		To have them in Placet as well, one has to use a flag no_run = False.
-		This will invoke the Placet.ElementAddOffset() command
 		
 		Additional parameters
 		---------------------
@@ -1511,9 +1508,7 @@ class Machine():
 			The vertical angle in micrometers/m
 		roll: float default 0.0
 			The roll angle in microrad
-		no_run: bool default True
-			If True, placet command ElementAddOffset is not invoked 
-			!! To be used carefullt
+
 		"""
 		_options = ['x', 'xp', 'y', 'yp', 'roll']
 		
@@ -1526,9 +1521,6 @@ class Machine():
 		offsets_dict = _extract_dict(_options, extra_params)
 		for key in offsets_dict:
 			self.beamline.lattice[elem_id].settings[key] += offsets_dict[key]
-
-		if not extra_params.get('no_run', True):
-			self.placet.ElementAddOffset(elem_id, offsets_dict)
 
 	def misalign_elements(self, **extra_params):
 		"""
@@ -1553,10 +1545,8 @@ class Machine():
 				}
 				..
 			}
-		no_run: bool default False
-			If True, placet command ElementAddOffset is not invoked
 		"""
-		_options = ['no_run']
+		_options = []
 		
 		if not 'offset_data' in extra_params:
 			raise Exception("'offset_data' is not given")
@@ -1581,8 +1571,6 @@ class Machine():
 			The horizontal offset in micrometers
 		y: float, default 0.0
 			The vertical offset in micrometers
-		no_run: bool default True
-			If True, placet command ElementAddOffset is not invoked
 		cavs_only: bool, default False
 			If True only cavities are misaligned
 			
@@ -1592,7 +1580,7 @@ class Machine():
 		It is possible to provide only 1 id either of the right or the left one. This also works for the start/end of the beamline
 
 		"""
-		_options = ['x', 'y', 'no_run']
+		_options = ['x', 'y']
 
 		N_girders = self.beamline.get_girders_number()
 
@@ -1621,7 +1609,6 @@ class Machine():
 				'girder': girder_left,
 				'x_right': extra_params.get('x', 0.0),
 				'y_right': extra_params.get('y', 0.0),
-				'no_run': extra_params.get('no_run', True),
 				'cavs_only': extra_params.get('cavs_only', True)
 			})
 
@@ -1630,7 +1617,6 @@ class Machine():
 				'girder': girder_right,
 				'x_left': extra_params.get('x', 0.0),
 				'y_left': extra_params.get('y', 0.0),
-				'no_run': extra_params.get('no_run', True),
 				'cavs_only': extra_params.get('cavs_only', True)
 			})
 	
@@ -1652,8 +1638,6 @@ class Machine():
 			The vertical offset in micrometers of the left end-point
 		cavs_only: bool, default False
 			If True, only the cavities are misaligned
-		no_run: bool default True
-			If True, placet command ElementAddOffset is not invoked
 		"""
 
 		girder_start, girder_end = None, None
@@ -1678,7 +1662,7 @@ class Machine():
 			# misaligning the right end-point
 			x += extra_params.get('x_right', 0.0) * (element_center - girder_start) / girder_length
 			y += extra_params.get('y_right', 0.0) * (element_center - girder_start) / girder_length
-			self.misalign_element(element_index = element.index, x = x, y = y, cavs_only = extra_params.get('cavs_only', False), no_run = extra_params.get('no_run', True))
+			self.misalign_element(element_index = element.index, x = x, y = y, cavs_only = extra_params.get('cavs_only', False))
 	
 	def misalign_girder(self, **extra_params):
 		"""
@@ -1704,10 +1688,8 @@ class Machine():
 			The roll angle in microrad
 		tilt: float default 0.0
 			The tilt angle in microrad
-		no_run: bool default True
-			If True, placet command ElementAddOffset is not invoked
 		"""
-		_options = ['x', 'xp', 'y', 'yp', 'roll', 'tilt', 'no_run']
+		_options = ['x', 'xp', 'y', 'yp', 'roll', 'tilt']
 
 		if not 'girder' in extra_params:
 			raise Exception("'girder' number is not given")
@@ -1739,13 +1721,11 @@ class Machine():
 			}
 		cavs_only: bool default False
 			If True, only offsets the cavities on the girder
-		no_run: bool default True
-			If True, placet command ElementAddOffset is not invoked
 		"""
 		if not 'offset_data' in extra_params:
 			raise Exception("'offset_data' is missing")
 
-		_options = ['cavs_only', 'no_run']
+		_options = ['cavs_only']
 
 		girders = extra_params.get('offset_data')
 		for girder in girders:
