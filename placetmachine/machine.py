@@ -1549,8 +1549,9 @@ class Machine():
 			The horizontal offset in micrometers
 		y: float, default 0.0
 			The vertical offset in micrometers
-		cavs_only: bool, default False
-			If True only cavities are misaligned
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 			
 		There is an option to provide the ids of the girders to the right and to the left of the articulation point.
 		That require girder_right - girder_left = 1, otherwise an exception will be raised.
@@ -1576,8 +1577,9 @@ class Machine():
 			The horizontal offset in micrometers of left end-point
 		y_left: float default 0.0
 			The vertical offset in micrometers of the left end-point
-		cavs_only: bool, default False
-			If True, only the cavities are misaligned
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 		"""
 		self.beamline.misalign_girder_2(**extra_params)
 	
@@ -1591,8 +1593,9 @@ class Machine():
 		---------------------
 		girder: int
 			The id of the girder
-		cavs_only: bool default False
-			If True, only offsets the cavities on the girder
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 		x: float default 0.0
 			The horizontal offset in micrometers
 		xp: float default 0.0
@@ -1627,8 +1630,9 @@ class Machine():
 				}
 				..
 			}
-		cavs_only: bool default False
-			If True, only offsets the cavities on the girder
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 		"""
 		self.beamline.misalign_girders(**extra_params)
 
