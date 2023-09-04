@@ -552,10 +552,18 @@ class Beamline():
 			The horizontal offset in micrometers of left end-point
 		y_left: float default 0.0
 			The vertical offset in micrometers of the left end-point
-		cavs_only: bool, default False
-			If True, only the cavities are misaligned
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 		"""
-
+		# Check the correctness of the types
+		filter_types = extra_params.get('filter_types', None)
+		if filter_types is not None:
+			for element in filter_types:
+				if element == 'Girder':
+					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
+				elif not element in self._supported_elements:
+					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
 		girder_start, girder_end = None, None
 
 		#evaluating the dimenstions of the girder
@@ -577,7 +585,10 @@ class Beamline():
 			# misaligning the right end-point
 			x += extra_params.get('x_right', 0.0) * (element_center - girder_start) / girder_length
 			y += extra_params.get('y_right', 0.0) * (element_center - girder_start) / girder_length
-			self.misalign_element(element_index = element.index, x = x, y = y, cavs_only = extra_params.get('cavs_only', False))
+			if filter_types is not None:
+				if not element.type in filter_types:
+					continue
+			self.misalign_element(element_index = element.index, x = x, y = y)
 
 	def misalign_girder(self, **extra_params):
 		"""
@@ -589,31 +600,18 @@ class Beamline():
 		---------------------
 		girder: int
 			The id of the girder
-		cavs_only: bool default False
-			If True, only offsets the cavities on the girder
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 		x: float default 0.0
 			The horizontal offset in micrometers
-		xp: float default 0.0
-			The horizontal angle in micrometers/m
 		y: float default 0.0
 			The vertical offset in micrometers
-		yp: float default 0.0
-			The vertical angle in micrometers/m
-		roll: float default 0.0
-			The roll angle in microrad
-		tilt: float default 0.0
-			The tilt angle in microrad
 		"""
-		_options = ['x', 'xp', 'y', 'yp', 'roll', 'tilt']
+		_options = ['x', 'y']
 
-		if not 'girder' in extra_params:
-			raise Exception("'girder' number is not given")
-
-		cavs_only = extra_params.get('cavs_only', False)
-		for element in self.get_girder(extra_params.get('girder')):
-			if cavs_only and element.type != "Cavity":
-				continue
-			self.misalign_element(**dict(_extract_dict(_options, extra_params), element_index = element.index))
+		x, y = extra_params.get('x'), extra_params.get('y')
+		self.misalign_girder_2(x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
 
 	def misalign_articulation_point(self, **extra_params):
 		"""
@@ -631,8 +629,9 @@ class Beamline():
 			The horizontal offset in micrometers
 		y: float, default 0.0
 			The vertical offset in micrometers
-		cavs_only: bool, default False
-			If True only cavities are misaligned
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 			
 		There is an option to provide the ids of the girders to the right and to the left of the articulation point.
 		That require girder_right - girder_left = 1, otherwise an exception will be raised.
@@ -641,6 +640,15 @@ class Beamline():
 
 		"""
 		_options = ['x', 'y']
+
+		# Check the correctness of the types
+		filter_types = extra_params.get('filter_types', None)
+		if filter_types is not None:
+			for element in filter_types:
+				if element == 'Girder':
+					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
+				elif not element in self._supported_elements:
+					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
 
 		N_girders = self.get_girders_number()
 
@@ -669,7 +677,7 @@ class Beamline():
 				'girder': girder_left,
 				'x_right': extra_params.get('x', 0.0),
 				'y_right': extra_params.get('y', 0.0),
-				'cavs_only': extra_params.get('cavs_only', True)
+				'filter_types': filter_types
 			})
 
 		if girder_right is not None:
@@ -677,7 +685,7 @@ class Beamline():
 				'girder': girder_right,
 				'x_left': extra_params.get('x', 0.0),
 				'y_left': extra_params.get('y', 0.0),
-				'cavs_only': extra_params.get('cavs_only', True)
+				'filter_types': filter_types
 			})
 
 	def misalign_girders(self, **extra_params):
@@ -699,13 +707,14 @@ class Beamline():
 				}
 				..
 			}
-		cavs_only: bool default False
-			If True, only offsets the cavities on the girder
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to
+			By default, the misalignments are applied to all the elements on the girder
 		"""
 		if not 'offset_data' in extra_params:
 			raise Exception("'offset_data' is missing")
 
-		_options = ['cavs_only']
+		_options = ['filter_types']
 
 		girders = extra_params.get('offset_data')
 		for girder in girders:
