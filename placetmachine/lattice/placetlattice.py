@@ -470,6 +470,247 @@ class Beamline():
 		"""Get the list of the cavs phases | Created for the use with Placet.CavitySetGradientList() """
 		return list(map(lambda x: x.settings['phase'], self.get_cavs_list()))
 
+	'''Misalignment routines'''
+	def misalign_element(self, **extra_params):
+		"""
+		Apply the geometrical misalignments to the element given by the element_index.
+
+		An alternative is to individually apply the misalignment
+			>>> for element in beamline:
+			>>> 	element.settings['x'] += delta_x
+		
+		Additional parameters
+		---------------------
+		element_index: int
+			The id of the element in the lattice
+		x: float default 0.0
+			The horizontal offset in micrometers
+		xp: float default 0.0
+			The horizontal angle in micrometers/m
+		y: float default 0.0
+			The vertical offset in micrometers
+		yp: float default 0.0
+			The vertical angle in micrometers/m
+		roll: float default 0.0
+			The roll angle in microrad
+
+		"""
+		_options = ['x', 'xp', 'y', 'yp', 'roll']
+		
+		try:
+			elem_id = extra_params.get('element_index')
+		except KeyError:
+			print("Element number is not given")
+			return
+
+		offsets_dict = _extract_dict(_options, extra_params)
+		for key in offsets_dict:
+			self.lattice[elem_id].settings[key] += offsets_dict[key]
+
+	def misalign_elements(self, **extra_params):
+		"""
+		Apply the geometrical misalignments to several elements
+
+		Additional parameters
+		---------------------
+		offsets_data: dict
+			The dictionary with the elements offsets in the following format
+			{
+				'element_id1': {
+					'x': ..
+					'y': ..
+					..
+				}
+				'element_id2':{
+					..
+				}
+				..
+			}
+		"""
+		_options = []
+		
+		if not 'offset_data' in extra_params:
+			raise Exception("'offset_data' is not given")
+		
+		elements = extra_params.get('offset_data')
+		for element in elements:
+			self.misalign_element(element_index = int(element), **elements[element], **_extract_dict(_options, extra_params))
+
+	def misalign_girder_2(self, **extra_params):
+		"""
+		Misalign the girder by means of moving its end points
+		
+		Additional parameters
+		---------------------
+		girder: int
+			The id of the girder
+		x_right: float default 0.0
+			The horizontal offset in micrometers of right end-point
+		y_right: float default 0.0
+			The vertical offset in micrometers of the right end-point
+		x_left: float default 0.0
+			The horizontal offset in micrometers of left end-point
+		y_left: float default 0.0
+			The vertical offset in micrometers of the left end-point
+		cavs_only: bool, default False
+			If True, only the cavities are misaligned
+		"""
+
+		girder_start, girder_end = None, None
+
+		#evaluating the dimenstions of the girder
+		for element in self.get_girder(extra_params.get('girder')):
+			if girder_start is None:
+				girder_start = element.settings['s'] - element.settings['length']
+			
+			girder_end = element.settings['s']
+
+		girder_length = girder_end - girder_start
+
+		for element in self.get_girder(extra_params.get('girder')):
+			element_center = element.settings['s'] - element.settings['length'] / 2
+			
+			# misaligning the left end-point
+			x = extra_params.get('x_left', 0.0) * (girder_end - element_center) / girder_length
+			y = extra_params.get('y_left', 0.0) * (girder_end - element_center) / girder_length
+			
+			# misaligning the right end-point
+			x += extra_params.get('x_right', 0.0) * (element_center - girder_start) / girder_length
+			y += extra_params.get('y_right', 0.0) * (element_center - girder_start) / girder_length
+			self.misalign_element(element_index = element.index, x = x, y = y, cavs_only = extra_params.get('cavs_only', False))
+
+	def misalign_girder(self, **extra_params):
+		"""
+		Offset the girder along with the elements on it.
+
+		All the elements on the girder are equally misaligned.
+
+		Additional parameters
+		---------------------
+		girder: int
+			The id of the girder
+		cavs_only: bool default False
+			If True, only offsets the cavities on the girder
+		x: float default 0.0
+			The horizontal offset in micrometers
+		xp: float default 0.0
+			The horizontal angle in micrometers/m
+		y: float default 0.0
+			The vertical offset in micrometers
+		yp: float default 0.0
+			The vertical angle in micrometers/m
+		roll: float default 0.0
+			The roll angle in microrad
+		tilt: float default 0.0
+			The tilt angle in microrad
+		"""
+		_options = ['x', 'xp', 'y', 'yp', 'roll', 'tilt']
+
+		if not 'girder' in extra_params:
+			raise Exception("'girder' number is not given")
+
+		cavs_only = extra_params.get('cavs_only', False)
+		for element in self.get_girder(extra_params.get('girder')):
+			if cavs_only and element.type != "Cavity":
+				continue
+			self.misalign_element(**dict(_extract_dict(_options, extra_params), element_index = element.index))
+
+	def misalign_articulation_point(self, **extra_params):
+		"""
+		Offset the articulation point either between 2 girders or at the beamline start/end.
+
+		The girders and elements on them are misalligned accordingly.
+
+		Additional parameters
+		---------------------
+		girder_left: int, optional
+			The id of the girder to the left of the articulation point
+		girder_right: int, optional
+			The id of the girder to the roght of the articulation point
+		x: float, default 0.0
+			The horizontal offset in micrometers
+		y: float, default 0.0
+			The vertical offset in micrometers
+		cavs_only: bool, default False
+			If True only cavities are misaligned
+			
+		There is an option to provide the ids of the girders to the right and to the left of the articulation point.
+		That require girder_right - girder_left = 1, otherwise an exception will be raised.
+
+		It is possible to provide only 1 id either of the right or the left one. This also works for the start/end of the beamline
+
+		"""
+		_options = ['x', 'y']
+
+		N_girders = self.get_girders_number()
+
+		girder_left, girder_right = extra_params.get('girder_left', None), extra_params.get('girder_right', None)
+		
+		if girder_left is not None and girder_right is not None and girder_right - girder_left != 1:
+			raise ValueError("The girders provided do not have a common articulation point.")
+
+		if girder_left is not None:
+			if girder_left < 1 or girder_left > N_girders:
+				raise ValueError(f"A girder with {girder_left} id does not exist!")
+		
+		if girder_right is not None:
+			if girder_right < 1 or girder_right > N_girders:
+				raise ValueError(f"A girder with {girder_right} id does not exist!")
+
+		if girder_right is not None:
+			girder_left = girder_right - 1 if girder_right != 1 else None
+		
+		elif girder_left is not None:
+			girder_right = girder_left + 1 if girder_left != N_girders else None
+
+		if girder_left is not None:
+			# misalign the girder_left from the right
+			self.misalign_girder_2(**{
+				'girder': girder_left,
+				'x_right': extra_params.get('x', 0.0),
+				'y_right': extra_params.get('y', 0.0),
+				'cavs_only': extra_params.get('cavs_only', True)
+			})
+
+		if girder_right is not None:
+			self.misalign_girder_2(**{
+				'girder': girder_right,
+				'x_left': extra_params.get('x', 0.0),
+				'y_left': extra_params.get('y', 0.0),
+				'cavs_only': extra_params.get('cavs_only', True)
+			})
+
+	def misalign_girders(self, **extra_params):
+		"""
+		Misalign the girders according to the dictionary
+
+		Additional parameters
+		---------------------
+		offsets_data: dict
+			The dictionary with the girders offsets in the following format
+			{
+				'girder_id1': {
+					'x': ..
+					'y': ..
+					..
+				}
+				'girder_id2':{
+					..
+				}
+				..
+			}
+		cavs_only: bool default False
+			If True, only offsets the cavities on the girder
+		"""
+		if not 'offset_data' in extra_params:
+			raise Exception("'offset_data' is missing")
+
+		_options = ['cavs_only']
+
+		girders = extra_params.get('offset_data')
+		for girder in girders:
+			self.misalign_girder(girder = int(girder), **girders[girder], **_extract_dict(_options, extra_params))
+
 	def to_placet(self, filename = None) -> str:
 		"""
 		Write the lattice in Placet readable format
