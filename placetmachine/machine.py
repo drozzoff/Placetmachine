@@ -1140,11 +1140,12 @@ class Machine():
 
 		Additional parameters
 		---------------------
-		cavs_only, default True
-			If True, only cavities on girders are misaligned
+		filter_types: list(Element), optional
+			The types of elements to apply the misalignments to when invoking the girder misalignment
+			By default, the misalignments are applied to all the elements on the girder
 		"""
 		girders_offset, elements_offset = knob.apply(amplitude)
-		self.misalign_girders(offset_data = girders_offset, cavs_only = extra_params.get('cavs_only', True))
+		self.misalign_girders(offset_data = girders_offset, filter_types = extra_params.get('filter_types', None))
 		self.misalign_elements(offset_data = elements_offset)
 
 	def eval_track_results(self, run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
