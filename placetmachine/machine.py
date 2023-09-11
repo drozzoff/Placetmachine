@@ -1,17 +1,15 @@
 from .placet.placetwrap import Placet
-from .lattice.placetlattice import Beamline, AdvancedParser
-from .util import Knob, CoordTransformation
+from .lattice.placetlattice import Beamline
+from .util import Knob
 
 import os
 from typing import List, Callable
 import json
-import time
 import random
 import pandas as pd
 from rich.console import Console
 from rich.errors import LiveError
 from functools import wraps
-import copy
 
 import numpy as np
 
@@ -25,7 +23,7 @@ _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
 _get_data = lambda name: list(map(lambda x: [float(y) for y in x.split()], open(name, 'r')))
-def get_data(filename) -> list:
+def get_data(filename) -> List:
 	res = _get_data(filename)
 	if res[-1] == []:
 		res.pop(len(res) - 1)
@@ -179,7 +177,7 @@ class Machine():
 		self.dict = tempfile.TemporaryDirectory()
 		self._data_folder_ = self.dict.name
 
-	def term_logging(func):
+	def term_logging(func: Callable):
 		"""Decorator with the fancy status logging"""
 		def status_message(func_name):
 
@@ -421,7 +419,7 @@ class Machine():
 			errors_dict[error] = extra_params.get(error, 0.0)
 		self.placet.SurveyErrorSet(**errors_dict)
 
-	def assign_errors(self, survey = None, **extra_params):
+	def assign_errors(self, survey: str = None, **extra_params):
 		"""
 		Assign the alignment errors to the beamline. 
 		Uses given survey and the given static errors to misalign the beamline.
@@ -462,7 +460,7 @@ class Machine():
 		if (survey == "empty") or (survey is None):
 			pass
 
-	def make_beam_particles(self, e_design: float, e_spread: float, n_particles: int, beam_seed: int = 1234, **extra_params) -> pd.DataFrame:
+	def make_beam_particles(self, e_design: float, e_spread: float, n_particles: int, **extra_params) -> pd.DataFrame:
 		"""
 		Generate the particles distribution. Does not generate the beam!
 
@@ -476,8 +474,6 @@ class Machine():
 			The beam energy spread in [%]
 		n_particles: int
 			Number of particles in the beam
-		beam_seed: int, default 1234
-			The seed number of the random number distribution
 
 		Additional parameters
 		---------------------
@@ -554,19 +550,16 @@ class Machine():
 		return particle_coordinates
 
 	@term_logging
-	def make_beam_many(self, beam_name: str, n_slice: int, n: int, beam_seed: int = 1234, **extra_params) -> str:
+	def make_beam_many(self, beam_name: str, n_slice: int, n: int, **extra_params) -> str:
 		"""
 		Generate the particle beam
 		
 		Similar to 'make_beam_many' in Placet TCl but rewritten in Python
-
-		To check the function - placet.make_beam_particles does not exist (???)
 		........
 		
 		Practically could pass the whole beam_setup to the function. Keep the same structure as in Placet
 		Optional parameters (if not given, checks self.beam_parameters. If self.beam_parameters does not have them throws an Exception)
 		
-		[29.04.2023] Outdated. To be checked!
 		Parameters
 		----------
 		beam_name: str
@@ -575,8 +568,6 @@ class Machine():
 			Number of the slices
 		n_macroparticles: int
 			Number of the particles per slice
-		beam_seed: int, default 1234
-			The seed number of the random number distribution
 	
 		Additional parameters
 		---------------------
@@ -722,6 +713,8 @@ class Machine():
 			if not value in extra_params:
 				raise Exception(f"The parameter '{value}' is missing!")
 
+		self.placet.RandomReset(seed = beam_seed)
+
 		beam_setup = {
 			'bunches': 1,
 			'macroparticles': n_macroparticles,
@@ -770,7 +763,7 @@ class Machine():
 				i += 1
 		return res
 
-	def update_misalignments(func):
+	def update_misalignments(func: Callable):
 		"""Decorator for updating the beamline alignment"""
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
@@ -779,7 +772,7 @@ class Machine():
 			return res
 		return wrapper
 
-	def update_readings(func):
+	def update_readings(func: Callable):
 		"""Decorator for updating the BPMs reading"""
 		def wrapper(self, *args, **kwargs):
 			res = func(self, *args, **kwargs)
@@ -789,7 +782,7 @@ class Machine():
 			return res
 		return wrapper
 
-	def verify_survey(func):
+	def verify_survey(func: Callable):
 		"""Decorator used for verifying the correctness of the survey parameter passed to the track/correct routines"""
 		@wraps(func)
 		def wrapper(self, beam, survey = None, **kwargs):
@@ -806,7 +799,7 @@ class Machine():
 			return func(self, beam, alignment, **kwargs)
 		return wrapper
 
-	def add_beamline_to_final_dataframe(func):
+	def add_beamline_to_final_dataframe(func: Callable):
 		"""Decorator used to add the Beamline name used in the tracking/correction"""
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
@@ -818,7 +811,7 @@ class Machine():
 #	@term_logging
 	@add_beamline_to_final_dataframe
 	@verify_survey
-	def track(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
+	def track(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the tracking without applying any corrections
 
@@ -849,7 +842,7 @@ class Machine():
 
 	@update_readings
 	@verify_survey
-	def eval_orbit(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
+	def eval_orbit(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
 		"""
 		Evaluate the beam orbit based on the BPM readings
 
@@ -971,7 +964,7 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
-	def one_2_one(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
+	def one_2_one(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the 121 alignment
 
@@ -1008,7 +1001,7 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
-	def DFS(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
+	def DFS(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the Dispersion Free Steering
 		
@@ -1088,12 +1081,12 @@ class Machine():
 		return res
 
 	@update_misalignments
-	def _RF_align(self, beam: str, survey = None, **extra_params):
+	def _RF_align(self, beam: str, survey: str = None, **extra_params):
 		self.placet.TestRfAlignment(**dict(extra_params, beam = beam, survey = survey, machines = 1))
 
 	@term_logging
 	@verify_survey
-	def RF_align(self, beam: str, survey = None, **extra_params) -> pd.DataFrame:
+	def RF_align(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the RF alignment.
 
