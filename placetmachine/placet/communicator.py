@@ -214,24 +214,6 @@ class Communicator(object):
 		"""
 		self.readline(timeout)
 
-	def __remove_special_symbol(func):
-		"""
-		Wrapper for readline()
-
-		Check if the string has special interactive shell symbols at the start. If so, removes them.
-		"""
-		@wraps(func)
-		def wrapper(self, timeout = None):
-			res = func(self, timeout) if timeout is not None else func(self)
-			base = ""
-			while len(base) < len(res):
-				if res.startswith(base + self._TERMINAL_SPECIAL_SYMBOL):
-					base += self._TERMINAL_SPECIAL_SYMBOL
-				else:
-					break
-			return res[len(base):]
-		return wrapper
-
 	def __error_seeker(func):
 		"""
 		Wrapper for readline().
@@ -253,7 +235,6 @@ class Communicator(object):
 		return wrapper
 
 	@logging
-	@__remove_special_symbol
 	@__error_seeker
 	def readline(self, timeout = _BASE_TIMEOUT) -> str:
 		"""
