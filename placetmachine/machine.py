@@ -201,7 +201,11 @@ class Machine():
 
 			if func_name in ["import_beamline"]:
 				return ["Importing a beamline", "Beamline imported"]
-			return ["", ""]
+			
+			if func_name in ["eval_twiss"]:
+				return ["Evaluating Twiss", ""]
+
+			return [f"Running '{func_name}'", ""]
 
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
@@ -808,9 +812,13 @@ class Machine():
 			return res_dataframe
 		return wrapper
 
-#	@term_logging
 	@add_beamline_to_final_dataframe
 	@verify_survey
+	def _track(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
+		"""Perform the tracking without applying any corrections. For internal usage only"""
+		return self.placet.TestNoCorrection(beam = beam, machines = 1, survey = survey, timeout = 100)
+
+	@term_logging
 	def track(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the tracking without applying any corrections
@@ -838,7 +846,8 @@ class Machine():
 			The columns of the resulting DataFrame:
 			['correction', 'beam', 'survey', 'positions_file', 'emittx', 'emitty']
 		"""
-		return self.placet.TestNoCorrection(beam = beam, machines = 1, survey = survey, timeout = 100)
+		return self._track(beam, survey)
+
 
 	@update_readings
 	@verify_survey
@@ -861,11 +870,11 @@ class Machine():
 		DataFrame
 			The orbit along the beamline.
 		"""
-		self.placet.TestNoCorrection(beam = beam, machines = 1, survey = survey, timeout = 100)
-
+		self._track(beam)
 		return self._get_bpm_readings()
 
-	def eval_twiss(self, beam: str, **command_details) -> pd.DataFrame:
+	@term_logging
+	def eval_twiss(self, beam: str, **extra_params) -> pd.DataFrame:
 		"""
 		Evaluate the Twiss parameters along the lattice.
 
@@ -880,7 +889,7 @@ class Machine():
 
 		Additional parameters
 		---------------------
-		step: int
+		step: float
 			Step size to be taken for the calculation. If less than 0 the parameters will be plotted only in the centres of the quadrupoles
 		start: int
 			First particle for twiss computation
@@ -888,7 +897,7 @@ class Machine():
 			Last particle for twiss computation
 		list: list
 			Save the twiss parameters only at the selected elements		
-		read_only: bool
+		file_read_only: filename
 			The program just reads the Twiss table and does not generate it
 		beamline: str
 			The beamline to be used in the calculations
@@ -898,16 +907,18 @@ class Machine():
 		DataFrame
 			Returns a Pandas Dataframe with the Twiss
 		"""
-		_twiss_file = os.path.join(self._data_folder_, "twiss.dat")
-		if not command_details.get('read_only', False):
-			self.TwissPlotStep(**dict(command_details, file = _twiss_file))
-
-		res = pd.DataFrame(columns = ["id", "keyword", "s", "betx", "bety", 'alfx', 'alfy', 'mux', 'muy', 'Dx', 'Dy', 'E'])
+		_twiss_file = None
+		if 'file_read_only' in extra_params:
+			_twiss_file = extra_params.get('file_read_only')
+		else:
+			_twiss_file = os.path.join(self._data_folder_, "twiss.dat")
+			self.placet.TwissPlotStep(**dict(extra_params, file = _twiss_file, beam = beam))
+			
+		res = pd.DataFrame(columns = ["id", "type", "s", "betx", "bety", 'alfx', 'alfy', 'Dx', 'Dy', 'E'])
 		
 		convert_line = lambda line: list(map(lambda x: float(x), line.split()))
-		_HEADER_LINES, line_id, element_start = 18, 0, True
-		mux_tmp, muy_tmp, twiss_current = 0.0, 0.0, {}
-
+		_HEADER_LINES, line_id = 18, 0
+		twiss_current = 0.0, 0.0, {}
 		with open(_twiss_file, 'r') as f:
 			for line in f:
 				line_id += 1
@@ -915,48 +926,21 @@ class Machine():
 					continue
 
 				data_list = convert_line(line)
-				i = data_list[0]
-				keyword = None
-				if i in self.beamline.quad_numbers_list:
-					keyword = "quad"
-				elif i in self.beamline.cav_numbers_list:
-					keyword = "cavity"
-				elif i in self.beamline.bpm_numbers_list:
-					keyword = "BPM"
-				else:
-					keyword = "drift"
-
-				def get_phases():
-					nonlocal element_start
-					if element_start:
-						element_start = False
-						return twiss_current['mux'] if 'mux' in twiss_current else 0.0, twiss_current['muy'] if 'muy' in twiss_current else 0.0
-					else:
-						R = self.get_element_transverse_matrix(int(i), beamline = command_details.get('beamline'))
-						R_11, R_12 = R[0][0], R[0][1]
-						R_33, R_34 = R[2][2], R[2][3]
-						element_start = True
-						return twiss_current['mux'] + np.arctan2(R_12, R_11 * twiss_current['betx'] - R_12 * twiss_current['alfx']) / np.pi, twiss_current['muy'] + np.arctan2(R_34, R_33 * twiss_current['bety'] - R_34 * twiss_current['alfy'])/ np.pi
-
-				mux, muy = get_phases()
 
 				twiss_current = {
 						"id": int(data_list[0]),
-						"keyword": keyword,
+						"type": self.beamline.at(int(data_list[0])).type,
 						"s": data_list[1],
 						"betx": data_list[5],
 						"bety": data_list[9],
 						"alfx": data_list[6],
 						"alfy": data_list[10],
-						"mux": mux,
-						"muy": muy,
 						"Dx": data_list[11],
 						"Dy": data_list[13],
 						"E": data_list[2]
 					}
 
 				res = res.append(twiss_current, ignore_index = True)
-				i += 1
 		
 		return res	
 
@@ -1116,7 +1100,7 @@ class Machine():
 		"""
 		self.placet.Zero()
 		self._RF_align(beam, survey, **extra_params)
-		track_results = self.track(beam)
+		track_results = self._track(beam)
 		track_results.correction = "RF align"
 		return track_results
 
@@ -1228,7 +1212,7 @@ class Machine():
 					pass	#if the callback is there, no need to reset it
 				else:
 					self.set_callback(self.save_beam, file = _filename)				
-			track_res = self.track(beam)
+			track_res = self._track(beam)
 			emitty, emittx = track_res.emitty[0], track_res.emittx[0]
 
 		#reading the file, given in 'filename' or generated with track (when run_track = True)
@@ -1318,7 +1302,7 @@ class Machine():
 			obs = []
 			if set(observables).issubset(set(['emittx', 'emitty'])):
 				#using the results of machine.track 
-				track_results = self.track(beam)
+				track_results = self._track(beam)
 				obs = [float(track_results[observable].values) for observable in observables]
 			else:
 				#running machine.eval_track_results to identify the coordinates etc.
@@ -1431,7 +1415,7 @@ class Machine():
 
 		best_obs = fit_data['best_obs']
 		if extra_params.get('evaluate_optimal', True):
-			best_obs = self.track(beam)[observable].values[0]
+			best_obs = self._track(beam)[observable].values[0]
 
 		res = {
 			'correction' : knob.name,
