@@ -225,9 +225,9 @@ class Placet(Placetpy):
 		step: float
 			Step size to be taken for the calculation. If less than 0 the parameters will be plotted only in the centres of the quadrupoles
 		start: int (?)
-			First particle for twiss computation
+			First particle for twiss computation (?)
 		end: int (?)
-			Last particle for twiss computation
+			Last particle for twiss computation (?)
 		list: list
 			Save the twiss parameters only at the selected elements			
 		"""
@@ -236,7 +236,7 @@ class Placet(Placetpy):
 		if not 'file' in command_details:
 			raise ValueError("'file' is not specified")
 
-		self.run_command(self.__construct_command("TwissPlotStep", _options_list, **command_details))
+		self.run_command(self.__construct_command("TwissPlotStep", _options_list, **dict(command_details, expect_after = True)))
 
 	def FirstOrder(self, **command_details):
 		"""Run "FirstOrder" command in Placet TCL"""
