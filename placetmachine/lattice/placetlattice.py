@@ -13,18 +13,9 @@ from .multipole import Multipole
 from .sbend import Sbend
 from .element import Element
 
+
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
-
-def _to_str(x):
-	if x == 0: 
-		return '0'
-	elif x == 1.0: 
-		return '1'
-	elif x == -1.0:
-		return '-1'
-	else:
-		return str(x)
 
 class AdvancedParser:
 	"""
@@ -181,7 +172,7 @@ class Beamline():
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
 	_parsers = ['advanced', 'default']
 
-	def __init__(self, name):
+	def __init__(self, name: str):
 		"""
 		Parameters
 		----------
@@ -211,7 +202,7 @@ class Beamline():
 	def __len__(self):
 		return len(self.lattice)
 	
-	def append(self, element, **extra_params):
+	def append(self, element: Element, **extra_params):
 		"""
 		Append a given element at the end of the lattice.
 
@@ -220,7 +211,7 @@ class Beamline():
 
 		Parameters
 		----------
-		element:
+		element: Element
 			Element to append at the end of the sequence
 		
 		Additional parameters
@@ -255,10 +246,31 @@ class Beamline():
 		
 		self.lattice.append(new_element)
 
-	def __setitem__(self, index, value):
+	def at(self, element_id: int):
+		"""
+		Return the element at a given lcoation
+		
+		Parameters
+		----------
+		element_id: int
+			The id of the element
+		
+		Returns
+		-------
+		Element
+			Element at the given location
+		"""
+		if element_id > len(self.lattice):
+			raise IndexError(f"The number of elements in the lattice {len(self.lattice)}, the id received {element_id}")
+		if element_id < 0:
+			raise IndexError("Element index cannot be negative")
+
+		return self.lattice[element_id]
+
+	def __setitem__(self, index: int, value: Element):
 		self.lattice[index] = value
 
-	def __getitem__(self, index):
+	def __getitem__(self, index: int):
 		return self.lattice[index]
 	
 	def __iter__(self):
@@ -276,7 +288,7 @@ class Beamline():
 		else:
 			raise StopIteration
 
-	def _verify_supported_elem_types(self, types):
+	def _verify_supported_elem_types(self, types: List[str]):
 		if types is None:
 			return None
 		for elem_type in types:
@@ -284,7 +296,7 @@ class Beamline():
 				raise ValueError(f"Unsupported element type - {elem_type}")
 		return True
 
-	def cache_lattice_data(self, types):
+	def cache_lattice_data(self, types: List[str]):
 		"""
 		Cache up the data for certain types of the elements
 		
@@ -302,7 +314,7 @@ class Beamline():
 		else:
 			return
 
-	def upload_from_cache(self, types, clear_cache = False, **extra_params):
+	def upload_from_cache(self, types: List[str], clear_cache = False, **extra_params):
 		"""
 		Restore the cached data for certain elements
 
@@ -409,7 +421,6 @@ class Beamline():
 			
 		return self._bpm_numbers_list_
 
-	# Functions to return the list of the elements of specific type
 	def get_cavs_list(self) -> Generator[Cavity, None, None]:
 		"""Get the Cavities from the lattice"""
 		for element in self.lattice:
@@ -720,7 +731,7 @@ class Beamline():
 		for girder in girders:
 			self.misalign_girder(girder = int(girder), **girders[girder], **_extract_dict(_options, extra_params))
 
-	def to_placet(self, filename = None) -> str:
+	def to_placet(self, filename: str = None) -> str:
 		"""
 		Write the lattice in Placet readable format
 		
@@ -749,7 +760,7 @@ class Beamline():
 		return res
 
 	"""misallignments handling"""
-	def read_misalignments(self, filename, **extra_params):
+	def read_misalignments(self, filename: str, **extra_params):
 		"""
 		Read the misalignments from the file
 
@@ -811,7 +822,7 @@ class Beamline():
 					y, py, x, px = _to_float(data.split())
 					self.lattice[i].settings.update(dict(y = y, yp = py, x = x, xp = px))
 
-	def save_misalignments(self, filename, **extra_params):
+	def save_misalignments(self, filename: str, **extra_params):
 		"""
 		Write the misalignments to a file
 
@@ -850,7 +861,7 @@ class Beamline():
 				res += "\n"
 			f.write(res)
 
-def parse_line(data, girder_index = None, index = None):
+def parse_line(data: str, girder_index: int = None, index: int = None):
 	"""
 	Parse the line of the file with PLACET elements.
 
