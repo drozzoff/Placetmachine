@@ -25,5 +25,5 @@ class Multipole(Element):
 	_int_params = ["type", "steps", "synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
 
-	def __init__(self, in_parameters: dict, girder: int = None, index: int = None):
+	def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None):
 		super(Multipole, self).__init__(in_parameters, girder, index, "Multipole")

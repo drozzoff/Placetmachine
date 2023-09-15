@@ -31,7 +31,7 @@ class Cavity(Element):
 	_int_params = ["type", "synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp', 'bpm_offset_y', 'bpm_offset_x', 'gradient', 'phase']
 
-	def __init__(self, in_parameters, girder = None, index = None, **extra_params):
+	def __init__(self, in_parameters = None, girder = None, index = None, **extra_params):
 		super(Cavity, self).__init__(in_parameters, girder, index, "Cavity")
 		if extra_params.get('angle', True):
 			self.settings['phase'] = radians(float(self.settings['phase']))

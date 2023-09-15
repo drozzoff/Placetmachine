@@ -25,5 +25,5 @@ class Sbend(Element):
 	_int_params = ["synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 
-	def __init__(self, in_parameters: dict, girder: int = None, index: int = None):
+	def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None):
 		super(Sbend, self).__init__(in_parameters, girder, index, "Sbend")

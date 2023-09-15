@@ -26,7 +26,7 @@ class Element():
 	_int_params = []
 	_cached_parameters = []
 	
-	def __init__(self, in_parameters: dict, girder: int = None, index: int = None, elem_type: str = None):
+	def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None, elem_type: str = None):
 		"""
 		Parameters
 		----------
@@ -37,6 +37,8 @@ class Element():
 		index: int, optional
 			The index of the element in the lattice
 		"""
+		if in_parameters is None:
+			in_parameters = {}
 		self.settings = _extract_dict(self.parameters, in_parameters)
 		for x in self._float_params:
 			if x in self.settings:
@@ -70,7 +72,7 @@ class Element():
 		for key in self._cached_parameters:
 			self._cached_data[key] = self.settings[key]
 
-	def use_cached_data(self, clear_cache = False):
+	def use_cached_data(self, clear_cache: bool = False):
 		assert self._cached_data is not None, "No data in cache"
 		for key in self._cached_parameters:
 			self.settings[key] = self._cached_data[key]

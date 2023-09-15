@@ -27,5 +27,5 @@ class Dipole(Element):
 	_int_params = ["synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['strength_x', 'strength_y']
 
-	def __init__(self, in_parameters: dict, girder: int = None, index: int = None):
+	def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None):
 		super(Dipole, self).__init__(in_parameters, girder, index, "Dipole")
