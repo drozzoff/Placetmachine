@@ -248,7 +248,7 @@ class Beamline():
 
 	def at(self, element_id: int):
 		"""
-		Return the element at a given lcoation
+		Return the element at a given location
 		
 		Parameters
 		----------

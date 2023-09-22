@@ -71,7 +71,10 @@ class Knob:
 	def apply(self, amplitude) -> (dict, dict):
 		"""
 		Apply the knob with the given amplitude
-		
+		...............
+
+		Returns two dictionaries, first one with the girders offsets, second one with the elements offsets.
+
 		Parameters
 		----------
 		amplitude: float
