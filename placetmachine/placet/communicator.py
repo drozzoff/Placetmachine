@@ -3,6 +3,7 @@ import time
 import pandas as pd
 from functools import wraps
 import json
+from typing import Callable
 
 
 class Communicator(object):
@@ -44,7 +45,7 @@ class Communicator(object):
 	_TERMINAL_SPECIAL_SYMBOL = "% "
 
 	__expect_block = False
-	def __init__(self, process_name, **kwargs):
+	def __init__(self, process_name: str, **kwargs):
 		"""
 		29.11.2022	- New version of the communicator without the daemon running in the background
 
@@ -86,7 +87,7 @@ class Communicator(object):
 
 		self.__init()
 
-	def logging(func):
+	def logging(func: Callable) -> Callable:
 		"""Log the functions running"""
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
@@ -112,7 +113,7 @@ class Communicator(object):
 
 		return wrapper_2
 
-	def add_send_delay(self, time = _DELAY_BEFORE_SEND):
+	def add_send_delay(self, time: float = _DELAY_BEFORE_SEND):
 		"""Add the time delay before each data transfer"""
 		self.process.delaybeforesend = time
 
@@ -126,7 +127,7 @@ class Communicator(object):
 		self.process.logfile_read = open("log_read.txt", "w")
 
 	@logging
-	def writeline(self, command, skipline = True, timeout = _BASE_TIMEOUT, **kwargs) -> str:
+	def writeline(self, command: str, skipline: bool = True, timeout: float = _BASE_TIMEOUT, **kwargs) -> str:
 		"""
 		Send the line to a child process
 		
@@ -189,7 +190,7 @@ class Communicator(object):
 
 		return command
 
-	def isalive(self):
+	def isalive(self) -> bool:
 		return self.process.isalive()
 
 	def __terminate(self):
@@ -202,7 +203,7 @@ class Communicator(object):
 		self.__terminate()
 
 	@logging
-	def skipline(self, timeout = _BASE_TIMEOUT):
+	def skipline(self, timeout: float = _BASE_TIMEOUT):
 		"""
 		Skip the line of the child's process output.
 		
@@ -214,7 +215,7 @@ class Communicator(object):
 		"""
 		self.readline(timeout)
 
-	def __error_seeker(func):
+	def __error_seeker(func: Callable) -> Callable:
 		"""
 		Wrapper for readline().
 
@@ -224,7 +225,7 @@ class Communicator(object):
 		If containts "WARNING", throws an exception
 		"""
 		@wraps(func)
-		def wrapper(self, timeout = None):
+		def wrapper(self, timeout: float = None):
 			res = func(self, timeout) if timeout is not None else func(self)
 
 			if "error".casefold() in list(map(lambda x: x.casefold(), res.split())):
@@ -255,7 +256,7 @@ class Communicator(object):
 		return self.process.readline()
 
 	@logging
-	def readlines(self, N_lines, timeout = _BASE_TIMEOUT) -> list:
+	def readlines(self, N_lines: int, timeout: float = _BASE_TIMEOUT) -> list:
 		"""
 		Read several lines from the child process.
 		
@@ -281,7 +282,7 @@ class Communicator(object):
 		"""Flush the child process buffer"""
 		self.process.flush()
 
-	def save_debug_info(self, filename = "debug_data.pkl"):
+	def save_debug_info(self, filename: str = "debug_data.pkl"):
 		"""
 		Save the debug info to a files.
 		

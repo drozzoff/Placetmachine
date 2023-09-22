@@ -60,6 +60,18 @@ class Element():
 	def __str__(self):
 		return f"{self.type}({json.dumps(self.settings, indent = 4)})"
 
+	def __getitem__(self, key: str):
+		if key not in self.parameters:
+			raise KeyError(f"Element does not have a '{key}' property!")
+		
+		return self.settings[key]
+
+	def __setitem__(self, key:str, value):
+		if key not in self.parameters:
+			raise KeyError(f"Element does not have a '{key}' property!")
+		
+		self.settings[key] = value
+
 	def to_placet(self) -> str:
 		res = self.type
 		_to_str = lambda x: f"\"{x}\"" if isinstance(x, str) else x
