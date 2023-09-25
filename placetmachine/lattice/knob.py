@@ -1,5 +1,6 @@
 from .element import Element
 from typing import List
+from pandas import DataFrame
 
 
 class Knob:
@@ -54,3 +55,26 @@ class Knob:
 		i = 0
 		for element in self.elements:
 			element[self.coord] += self.values[i] * amplitude
+			i += 1
+
+	def __str__(self):
+		_data_to_show = ['name', 'type', 'girder', 's', 'x', 'y', 'xp', 'yp']
+		i = 0
+		data_dict = {key: [None] * len(self.elements) for key in _data_to_show}
+		for element in self.elements:
+			for key in ['name', 's', 'x', 'y', 'xp', 'yp']:
+				if key == self.coord:
+					data_dict[key][i] = self.values[i]
+				elif key in ['name', 's']:
+					data_dict[key][i] = element[key]
+				else:
+					data_dict[key][i] = 0.0
+			data_dict['type'][i] = element.type
+			data_dict['girder'][i] = element.girder
+
+			i += 1
+		res_table = DataFrame(data_dict)
+
+		return str(res_table)
+
+	__repr__ = __str__
