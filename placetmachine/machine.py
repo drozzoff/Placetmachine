@@ -1224,7 +1224,7 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def iterate_knob(self, beam: str, knob: Knob, observables, knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
+	def iterate_knob(self, beam: str, knob: Knob, observables: List[str], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
 		Iterate the knob. The knob is iterated in the given range and is reset at the end.
 		
@@ -1262,10 +1262,10 @@ class Machine():
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
 		observable_values, elements_to_modify = [], knob.types_of_elements
-		self.beamline.cache_lattice_data(elements_to_modify)
 		
 		if not hasattr(self, '_CACHE_LOCK'):
 			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
+			self.beamline.cache_lattice_data(elements_to_modify)
 		elif self._CACHE_LOCK['iterate_knob']:
 			# this corresponds to the case when the values from the cache were not uploaded to the lattice
 			# the reason for this could be the interruption of the execution of eval_obs() function
@@ -1273,6 +1273,7 @@ class Machine():
 			self._CACHE_LOCK['iterate_knob'] = False
 		else:
 			self._CACHE_LOCK['iterate_knob'] = False
+			self.beamline.cache_lattice_data(elements_to_modify)
 
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")

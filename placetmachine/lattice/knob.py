@@ -31,13 +31,16 @@ class Knob:
 		name: str, default ""
 			The name of the knob
 		"""
-		self.elements = elements
+		self.elements, self.types_of_elements = elements, []
 		self.name = extra_params.get('name', "")
 		
-		# checking the supported types
+		# checking the supported types and building the types involved
 		for element in self.elements:
 			if element.type not in self._accepted_types:
 				raise TypeError(f"Inappropriate element type. Acceptable are {self._accepted_types}, received '{element.type}'")
+
+			if element.type not in self.types_of_elements:
+				self.types_of_elements.append(element.type)
 		
 		self.coord = coord
 		if self.coord not in self._cached_parameters:

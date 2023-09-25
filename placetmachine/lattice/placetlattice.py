@@ -314,7 +314,7 @@ class Beamline():
 		else:
 			return
 
-	def upload_from_cache(self, types: List[str], clear_cache = False, **extra_params):
+	def upload_from_cache(self, types: List[str], clear_cache: bool = False, **extra_params):
 		"""
 		Restore the cached data for certain elements
 
