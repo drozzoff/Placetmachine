@@ -8,7 +8,7 @@ class Knob:
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 	_accepted_types = ['Quadrupole', 'Cavity']
 
-	def __init__(self, elements: List[Element], coord: str, values: List[float]):
+	def __init__(self, elements: List[Element], coord: str, values: List[float], **extra_params):
 		"""
 		Initialize the Knob
 
@@ -25,8 +25,14 @@ class Knob:
 			modified. It is the same parameter for all the parameters. Eg. 'x'
 		values: List[float]
 			Values of the given coordinates for the given elements to apply as a Knob
+		
+		Additional parameters
+		---------------------
+		name: str, default ""
+			The name of the knob
 		"""
 		self.elements = elements
+		self.name = extra_params.get('name', "")
 		
 		# checking the supported types
 		for element in self.elements:
