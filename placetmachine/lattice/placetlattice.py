@@ -324,7 +324,7 @@ class Beamline():
 			The list containing the types of the elements that the caching is applied to
 			Eg. ['Bpm', 'Cavity']
 		clear_cache: bool, default False
-			If True, cleares the cached beamline
+			If True, clears the cached beamline
 		"""
 		if self._verify_supported_elem_types(types) is not None:
 			for element in self.lattice:
