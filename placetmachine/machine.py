@@ -1,6 +1,6 @@
 from .placet.placetwrap import Placet
 from .lattice.placetlattice import Beamline
-from .util import Knob
+from .lattice.knob import Knob
 
 import os
 from typing import List, Callable
@@ -1104,7 +1104,7 @@ class Machine():
 		track_results.correction = "RF align"
 		return track_results
 
-	def apply_knob(self, knob: Knob, amplitude: float, **extra_params):
+	def apply_knob(self, knob: Knob, amplitude: float):
 		"""
 		Apply the knob and update the beamline offsets
 
@@ -1114,16 +1114,8 @@ class Machine():
 			The given knob
 		amplitude
 			Amplitude to apply
-
-		Additional parameters
-		---------------------
-		filter_types: list(Element), optional
-			The types of elements to apply the misalignments to when invoking the girder misalignment
-			By default, the misalignments are applied to all the elements on the girder
 		"""
-		girders_offset, elements_offset = knob.apply(amplitude)
-		self.misalign_girders(offset_data = girders_offset, filter_types = extra_params.get('filter_types', None))
-		self.misalign_elements(offset_data = elements_offset)
+		knob.apply(amplitude)
 
 	def eval_track_results(self, run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
 		"""
@@ -1232,9 +1224,9 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def iterate_knob(self, beam: str, knob: Knob, observables, knob_range = [-1.0, 0.0, 1.0], **extra_params) -> dict:
+	def iterate_knob(self, beam: str, knob: Knob, observables: List[str], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
-		Iterate the knob
+		Iterate the knob. The knob is iterated in the given range and is reset at the end.
 		
 		Parameters
 		----------
@@ -1270,10 +1262,10 @@ class Machine():
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
 		observable_values, elements_to_modify = [], knob.types_of_elements
-		self.beamline.cache_lattice_data(elements_to_modify)
 		
 		if not hasattr(self, '_CACHE_LOCK'):
 			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
+			self.beamline.cache_lattice_data(elements_to_modify)
 		elif self._CACHE_LOCK['iterate_knob']:
 			# this corresponds to the case when the values from the cache were not uploaded to the lattice
 			# the reason for this could be the interruption of the execution of eval_obs() function
@@ -1281,6 +1273,7 @@ class Machine():
 			self._CACHE_LOCK['iterate_knob'] = False
 		else:
 			self._CACHE_LOCK['iterate_knob'] = False
+			self.beamline.cache_lattice_data(elements_to_modify)
 
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
@@ -1290,7 +1283,7 @@ class Machine():
 			
 			return table
 
-		def eval_obs(knob, amplitude):
+		def eval_obs(knob: Knob, amplitude: float):
 			"""
 			Maybe this function can be used universally, Machine wide.
 
@@ -1369,7 +1362,7 @@ class Machine():
 		return wrapper
 
 	@within_range
-	def knob_scan(self, beam, knob, observable, knob_range, fit_func, **extra_params) -> pd.DataFrame:
+	def knob_scan(self, beam: str, knob: Knob, observable: str, knob_range: List[float], fit_func: Callable, **extra_params) -> pd.DataFrame:
 		"""
 		Scan the knob
 

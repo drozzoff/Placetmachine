@@ -248,7 +248,7 @@ class Beamline():
 
 	def at(self, element_id: int):
 		"""
-		Return the element at a given lcoation
+		Return the element at a given location
 		
 		Parameters
 		----------
@@ -314,7 +314,7 @@ class Beamline():
 		else:
 			return
 
-	def upload_from_cache(self, types: List[str], clear_cache = False, **extra_params):
+	def upload_from_cache(self, types: List[str], clear_cache: bool = False, **extra_params):
 		"""
 		Restore the cached data for certain elements
 
@@ -324,7 +324,7 @@ class Beamline():
 			The list containing the types of the elements that the caching is applied to
 			Eg. ['Bpm', 'Cavity']
 		clear_cache: bool, default False
-			If True, cleares the cached beamline
+			If True, clears the cached beamline
 		"""
 		if self._verify_supported_elem_types(types) is not None:
 			for element in self.lattice:
