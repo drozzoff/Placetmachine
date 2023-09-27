@@ -95,7 +95,7 @@ class Machine():
 		Perform the RF alignment
 	apply_knob(knob: Knob, amplitude: float, **extra_params)
 		Apply the knob and update the beamline offsets
-	eval_track_results(run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float)	
+	eval_track_results(beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float)	
 		Evaluate the beam parameters at the beamline exit.
 	iterate_knob(beam, knob, knob_range = [-1.0, 0.0, 1.0], **extra_params)
 		Iterate the given knob in the given range
@@ -328,7 +328,6 @@ class Machine():
 
 		Additional parameters
 		---------------------
-
 		callback: bool, default True
 			If True creates the callback procedure in Placet by calling
 				Placet.TclCall(script = "callback")
@@ -1117,7 +1116,7 @@ class Machine():
 		"""
 		knob.apply(amplitude)
 
-	def eval_track_results(self, run_track = True, beam: str = None, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
+	def eval_track_results(self, beam: str, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
 		"""
 		Evaluate the beam parameters at the beamline exit.
 		
@@ -1154,19 +1153,13 @@ class Machine():
 
 		Parameters
 		----------
-		run_track: bool, default True
-			If True runs track() before reading the file
-		beam: str, optional
-			The beam to be used for tracking. If run_track == True, must be defined
+		beam: str
+			The beam to be used for tracking.
 		beam_type: str, default "sliced"
 			The type of the beam passed.
 
 		Additional parameters
 		---------------------
-		filename: str, default "temp/particles.dat"
-			The name of the file for the tracking data
-
-			When run_track is False, reads the data directly from the file
 		keep_callback: bool, default False
 			If True, does not change the callback function at the end of the run
 		
@@ -1182,32 +1175,28 @@ class Machine():
 				Particle beam:
 				['E', 'x', 'y', 'z', 'px', 'py']
 
-			When run_track is False -> returns None as emittance value
 		"""
 		if not beam_type in ["sliced", "particle"]:
 			raise ValueError(f"'beam_type' incorrect value. Accepted values are ['sliced', 'particle']. Received '{beam_type}'")
-		_filename, emitty = extra_params.get("filename", os.path.join(self._data_folder_, "particles.dat")), None
-		if run_track:
-			if beam is None:
-				raise ValueError("When 'run_track = True, the 'beam' must be defined.")
+		_filename = os.path.join(self._data_folder_, "particles.dat")
 
-			callback_func, callback_params = self.callback_struct_
+		callback_func, callback_params = self.callback_struct_
 
-			#sliced beam
-			if beam_type == "sliced":
-				if (callback_func.__name__ == self.save_sliced_beam.__name__) and (callback_params == dict(file = _filename)):
-					pass	#if the callback is there, no need to reset it
-				else:
-					self.set_callback(self.save_sliced_beam, file = _filename)
-			if beam_type == "particle":
-				if (callback_func.__name__ == self.save_beam.__name__) and (callback_params == dict(file = _filename)):
-					pass	#if the callback is there, no need to reset it
-				else:
-					self.set_callback(self.save_beam, file = _filename)				
-			track_res = self._track(beam)
-			emitty, emittx = track_res.emitty[0], track_res.emittx[0]
+		#sliced beam
+		if beam_type == "sliced":
+			if (callback_func.__name__ == self.save_sliced_beam.__name__) and (callback_params == dict(file = _filename)):
+				pass	#if the callback is there, no need to reset it
+			else:
+				self.set_callback(self.save_sliced_beam, file = _filename)
+		if beam_type == "particle":
+			if (callback_func.__name__ == self.save_beam.__name__) and (callback_params == dict(file = _filename)):
+				pass	#if the callback is there, no need to reset it
+			else:
+				self.set_callback(self.save_beam, file = _filename)				
+		track_res = self._track(beam)
+		emitty, emittx = track_res.emitty[0], track_res.emittx[0]
 
-		#reading the file, given in 'filename' or generated with track (when run_track = True)
+		# reading the file
 		_columns = []
 		if beam_type == 'sliced':
 			_columns = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx']
@@ -1223,6 +1212,56 @@ class Machine():
 		if not extra_params.get("keep_callback", False):
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
+
+	def eval_obs(self, beam: str, observables: List[str], **extra_params):
+		"""
+		Evaluate the values of the given observables at the end of the tracking.
+
+		The observalbles could be the following:
+			For particle beam:
+			['E', 'x', 'y', 'z', 'px', 'py'] + ['emittx', 'emitty']
+			For macroparticle beam:
+			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 
+			'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 
+			'sigma_ypx'] + ['emittx', 'emitty']
+
+		Parameters
+		----------
+		beam: str
+			The name of the beam to be used
+
+			The beam with such a name should exist in Placet, otherwise Placet would throw an error
+		observables: list(str)
+			The variable to read from the tracking data when performing the scan
+			This value can be one of the:
+			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		
+		Additional parameters
+		---------------------
+		beam_type: str, default "sliced"
+			The type of the beam that is used in the tracking.
+
+			The name of the beam does not indicate what type of the beam is used.
+		Returns
+		-------
+		list:
+			The values of the observables
+		"""
+		obs = []
+		if set(observables).issubset(set(['emittx', 'emitty'])):
+			#using the results of machine.track 
+			track_results = self._track(beam)
+			obs = [float(track_results[observable].values) for observable in observables]
+		else:
+			#running machine.eval_track_results to identify the coordinates etc.
+			track_res, emittx, emitty = self.eval_track_results(beam, extra_params.get('beam_type', "sliced"))
+			for observable in observables:
+				if observable in ['emittx', 'emitty']:
+					obs.append(emitty if observable == 'emitty' else emittx)
+				else:
+					obs.append(list(track_res[observable].values))
+		
+		return obs
 
 	def iterate_knob(self, beam: str, knob: Knob, observables: List[str], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
@@ -1245,6 +1284,8 @@ class Machine():
 
 		Optional parameters
 		-------------------
+		beam_type: str, default "sliced"
+			The type of the beam used for the tracking
 		fit: func
 			Function to fit the data
 			*Only works if the amound of observables is equaly 1.
@@ -1261,7 +1302,7 @@ class Machine():
 		if not set(observables).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
-		observable_values, elements_to_modify = [], knob.types_of_elements
+		observable_values, elements_to_modify, beam_type = [], knob.types_of_elements, extra_params.get('beam_type', "sliced")
 		
 		if not hasattr(self, '_CACHE_LOCK'):
 			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
@@ -1283,7 +1324,7 @@ class Machine():
 			
 			return table
 
-		def eval_obs(knob: Knob, amplitude: float):
+		def _eval_obs(knob: Knob, amplitude: float):
 			"""
 			Maybe this function can be used universally, Machine wide.
 
@@ -1292,19 +1333,8 @@ class Machine():
 			"""
 			self.apply_knob(knob, amplitude)
 			self._CACHE_LOCK['iterate_knob'] = True
-			obs = []
-			if set(observables).issubset(set(['emittx', 'emitty'])):
-				#using the results of machine.track 
-				track_results = self._track(beam)
-				obs = [float(track_results[observable].values) for observable in observables]
-			else:
-				#running machine.eval_track_results to identify the coordinates etc.
-				track_res, emittx, emitty = self.eval_track_results(True, beam)
-				for observable in observables:
-					if observable in ['emittx', 'emitty']:
-						obs.append(emitty if observable == 'emitty' else emittx)
-					else:
-						obs.append(list(track_res[observable].values))
+
+			obs = self.eval_obs(beam, beam_type)
 			
 			self.beamline.upload_from_cache(elements_to_modify)
 			self._CACHE_LOCK['iterate_knob'] = False
@@ -1316,12 +1346,12 @@ class Machine():
 			
 			with Live(table, refresh_per_second = 10):
 				for amplitude in knob_range:
-					obs = eval_obs(knob, amplitude)
+					obs = _eval_obs(knob, amplitude)
 					observable_values.append(obs)
 					table.add_row(str(amplitude), *list(map(lambda x: str(x), obs)))
 		else:
 			for amplitude in knob_range:
-				obs = eval_obs(knob, amplitude)
+				obs = _eval_obs(knob, amplitude)
 				observable_values.append(obs)
 
 		iter_data = json.dumps({'knob_range': list(knob_range), 'obs_data': observable_values})
