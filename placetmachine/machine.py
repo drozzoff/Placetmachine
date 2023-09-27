@@ -754,7 +754,7 @@ class Machine():
 			BPMs reading
 		"""
 		_tmp_filename = os.path.join(self._data_folder_, "bpm_readings.dat")
-		bpms = self.beamline.get_bpms_list()
+		bpms = [element for element in self.beamline.extract(['Bpm'])]
 		self.placet.BpmReadings(file = _tmp_filename)
 		res = pd.DataFrame(columns = ['id', 's', 'x', 'y'])
 
@@ -1462,7 +1462,7 @@ class Machine():
 		strengths_error: float, default 0.0
 			Standard relative deviation of the quadrupole strength
 		"""
-		for quad in self.beamline.get_quads_list():
+		for quad in self.beamline.extract(['Quadrupole']):
 			quad.settings['strength'] += quad.settings['strength'] * random.gauss(0, strength_error)
 
 		self._update_quads_strengths()	
@@ -1482,7 +1482,7 @@ class Machine():
 		grad_error: float default 0.0
 			Standard deviation of the gradient (Absolue value)
 		"""
-		for cav in self.beamline.get_cavs_list():
+		for cav in self.beamline.extract(['Cavity']):
 			cav.settings['phase'] += random.gauss(0, phase_error)
 			cav.settings['gradient'] += random.gauss(0, grad_error)
 
