@@ -421,49 +421,27 @@ class Beamline():
 			
 		return self._bpm_numbers_list_
 
-	def get_cavs_list(self) -> Generator[Cavity, None, None]:
-		"""Get the Cavities from the lattice"""
+	def extract(self, element_types: List[str]) -> Generator[Element, None, None]:
+		"""
+		Get the generator of the elements of the given types
+
+		Parameters
+		----------
+		element_types: str
+			The types of elements to extract. Each entity must exist in Beamline._supported_elements
+		
+		Returns:
+		Generator
+		"""
+		for element_type in element_types:
+			if element_type not in self._supported_elements:
+				raise ValueError(f"The element type '{element_type}' is not supported. Accepting only {self._supported_elements}!")
+
 		for element in self.lattice:
-			if element.type == "Cavity":
+			if element.type in element_types:
 				yield element
 
-	def get_quads_list(self) -> Generator[Quadrupole, None, None]:
-		"""Get the Quadrupoles from the lattice"""
-		for element in self.lattice:
-			if element.type == "Quadrupole":
-				yield element
-
-	def get_bpms_list(self) -> Generator[Bpm, None, None]:
-		"""Get the Bpms from the lattice"""
-		for element in self.lattice:
-			if element.type == "Bpm":
-				yield element
-
-	def get_drifts_list(self) -> Generator[Drift, None, None]:
-		"""Get the Drifts from the lattice"""
-		for element in self.lattice:
-			if element.type == "Drift":
-				yield element
-
-	def get_dipoles_list(self) -> Generator[Dipole, None, None]:
-		"""Get the Dipoles from the lattice"""
-		for element in self.lattice:
-			if element.type == "Dipole":
-				yield element
-
-	def get_sbends_list(self) -> Generator[Sbend, None, None]:
-		"""Get the Sbend from the lattice"""
-		for element in self.lattice:
-			if element.type == "Sbend":
-				yield element
-
-	def get_multipoles_list(self) -> Generator[Multipole, None, None]:
-		"""Get the Multipoles from the lattice"""
-		for element in self.lattice:
-			if element.type == "Multipole":
-				yield element
-
-	def get_girder(self, girder_index) -> Generator[Element, None, None]:
+	def get_girder(self, girder_index: int) -> Generator[Element, None, None]:
 		"""Get the elements on the girder"""
 		for element in self.lattice:
 			if element.girder == girder_index:
