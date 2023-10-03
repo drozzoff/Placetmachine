@@ -46,7 +46,7 @@ class Machine():
 
 	Attributes
 	----------
-	placet: placet_wrap.Placet
+	placet: Placet
 		A Placet object, used for communicating with the Placet process running in the background
 	console: rich.console.Console
 		An object used for the fancy terminal output
@@ -1105,7 +1105,10 @@ class Machine():
 
 	def apply_knob(self, knob: Knob, amplitude: float):
 		"""
-		Apply the knob and update the beamline offsets
+		Apply the knob and update the beamline offsets.
+
+		It is generaly safer to use this function instead of individual Knob.apply. Here, the checks are performed
+		to ensure the elements involved in Knob correspond to the elements in Beamline.
 
 		Parameters
 		----------
@@ -1114,6 +1117,10 @@ class Machine():
 		amplitude
 			Amplitude to apply
 		"""
+		for element in knob.elements:
+			if element not in self.beamline:
+				raise ValueError("One or few elements involved in the given Knob are not present in the beamline!")
+
 		knob.apply(amplitude)
 
 	def eval_track_results(self, beam: str, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
@@ -1224,6 +1231,13 @@ class Machine():
 			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 
 			'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 
 			'sigma_ypx'] + ['emittx', 'emitty']
+
+			The units for the coordinates are:
+				E: GeV
+				s(z), x, y, z: micrometer
+				px, py: microrad,
+				emittx, emitty: nm
+			...
 
 		Parameters
 		----------
