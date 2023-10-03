@@ -1348,7 +1348,7 @@ class Machine():
 			self.apply_knob(knob, amplitude)
 			self._CACHE_LOCK['iterate_knob'] = True
 
-			obs = self.eval_obs(beam, beam_type)
+			obs = self.eval_obs(beam, observables, beam_type = beam_type)
 			
 			self.beamline.upload_from_cache(elements_to_modify)
 			self._CACHE_LOCK['iterate_knob'] = False
