@@ -99,7 +99,7 @@ class Machine():
 		Evaluate the beam parameters at the beamline exit.
 	iterate_knob(beam, knob, knob_range = [-1.0, 0.0, 1.0], **extra_params)
 		Iterate the given knob in the given range
-	knob_scan(beam, knob, knob_range = [-1.0, 0.0, 1.0], **extra_params)
+	scan_knob(beam, knob, knob_range = [-1.0, 0.0, 1.0], **extra_params)
 		Scan the knob in the given range, and if the fit is given, assign the knob to the center best value
 	apply_quads_errors(strength_error = 0.0)
 		Add the strength errors to all the quads
@@ -1406,7 +1406,7 @@ class Machine():
 		return wrapper
 
 	@within_range
-	def knob_scan(self, beam: str, knob: Knob, observable: str, knob_range: List[float], fit_func: Callable, **extra_params) -> pd.DataFrame:
+	def scan_knob(self, beam: str, knob: Knob, observable: str, knob_range: List[float], fit_func: Callable, **extra_params) -> pd.DataFrame:
 		"""
 		Scan the knob
 
@@ -1423,10 +1423,13 @@ class Machine():
 			The list of the knob values to perform the scan
 		observable: str
 			The variable to read from the tracking data when performing the scan
-		fit_func: func(x, y), default parabola_fit
+
+			Possible options include:
+			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 
+			'sigma_pypy', 'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+
+		fit_func: func(x, y)
 			The fit function for the data
-			By default, uses parabola_fit with optimal value corresponding to the center of parabola
-			x - knob values; y - observable
 
 		Extra parameters
 		----------------
@@ -1456,9 +1459,6 @@ class Machine():
 
 		res = {
 			'correction' : knob.name,
-			'errors_seed': self.placet.errors_seed,
-			'beam_seed': self.placet.beam_seed, 
-			'survey': "knob_scan", 
 			'positions_file': None, 
 			'emittx': None, 
 			'emitty': best_obs,
