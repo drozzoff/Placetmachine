@@ -1316,19 +1316,19 @@ class Machine():
 		if not set(observables).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
-		observable_values, elements_to_modify, beam_type = [], knob.types_of_elements, extra_params.get('beam_type', "sliced")
+		observable_values, beam_type = [], extra_params.get('beam_type', "sliced")
 		
 		if not hasattr(self, '_CACHE_LOCK'):
 			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
-			self.beamline.cache_lattice_data(elements_to_modify)
+			self.beamline.cache_lattice_data(knob.elements)
 		elif self._CACHE_LOCK['iterate_knob']:
 			# this corresponds to the case when the values from the cache were not uploaded to the lattice
 			# the reason for this could be the interruption of the execution of eval_obs() function
-			self.beamline.upload_from_cache(elements_to_modify)
+			self.beamline.upload_from_cache(knob.elements)
 			self._CACHE_LOCK['iterate_knob'] = False
 		else:
 			self._CACHE_LOCK['iterate_knob'] = False
-			self.beamline.cache_lattice_data(elements_to_modify)
+			self.beamline.cache_lattice_data(knob.elements)
 
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
@@ -1350,7 +1350,7 @@ class Machine():
 
 			obs = self.eval_obs(beam, observables, beam_type = beam_type)
 			
-			self.beamline.upload_from_cache(elements_to_modify)
+			self.beamline.upload_from_cache(knob.elements)
 			self._CACHE_LOCK['iterate_knob'] = False
 
 			return obs

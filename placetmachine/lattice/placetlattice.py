@@ -129,9 +129,9 @@ class Beamline():
 
 	Methods
 	-------
-	cache_lattice_data(types)
+	cache_lattice_data(elements)
 		Cache up the data for certain types of the elements
-	upload_from_cache(types, clear_cache = False, **extra_params)
+	upload_from_cache(elements, clear_cache = False)
 		Restore the cached data for certain elements
 	read_from_file(filename: str, **extra_params)
 		Read the lattice from the Placet lattice file
@@ -296,42 +296,38 @@ class Beamline():
 				raise ValueError(f"Unsupported element type - {elem_type}")
 		return True
 
-	def cache_lattice_data(self, types: List[str]):
+	def cache_lattice_data(self, elements: List[Element]):
 		"""
 		Cache up the data for certain types of the elements
 		
 		Parameters
 		----------
-		types: list, optional
-			The list containing the types of the elements that the caching is applied to
-			Eg. ['Bpm', 'Cavity']
-			If type is None, not performing any actions
-		"""
-		if self._verify_supported_elem_types(types) is not None:
-			for element in self.lattice:
-				if element.type in types:
-					element.cache_data()
-		else:
-			return
+		elements: List[Element]
+			The list of the elements' references to cache.
+			Each element in the list must be present in the Beamline.
 
-	def upload_from_cache(self, types: List[str], clear_cache: bool = False, **extra_params):
+		"""
+		for element in elements:
+			if element not in self.lattice:
+				raise ValueError(f"Given element is not present in the Beamline!")
+			element.cache_data()
+
+	def upload_from_cache(self, elements: List[Element], clear_cache: bool = False):
 		"""
 		Restore the cached data for certain elements
 
 		Parameters
 		----------
-		types: list
-			The list containing the types of the elements that the caching is applied to
-			Eg. ['Bpm', 'Cavity']
+		elements: List[Element]
+			The list of the elements' references to restore the cache values.
+			Each element in the list must be present in the Beamline.
 		clear_cache: bool, default False
 			If True, clears the cached beamline
 		"""
-		if self._verify_supported_elem_types(types) is not None:
-			for element in self.lattice:
-				if element.type in types:
-					element.use_cached_data(clear_cache)
-		else:
-			return
+		for element in elements:
+			if element not in self.lattice:
+				raise ValueError(f"Given element is not present in the Beamline!")
+			element.use_cached_data(clear_cache)
 
 	def read_from_file(self, filename: str, **extra_params):
 		"""
