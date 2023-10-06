@@ -18,9 +18,9 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Install dependencies
+      - name: Install the package
         run: pip3 install .
 
       - name: Run tests
-        run: python -m unittest discover -s tests
+        run: python3 -m unittest discover -s tests
 
