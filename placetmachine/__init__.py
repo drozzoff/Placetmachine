@@ -11,7 +11,7 @@ from .lattice.multipole import Multipole
 from .lattice.sbend import Sbend
 from .lattice.knob import Knob
 
-from .lattice.placetlattice import Beamline
+from .lattice.lattice import Beamline
 
 __version__ = '0.0.1'
 
