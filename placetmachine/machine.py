@@ -1,6 +1,5 @@
-from .placet.placetwrap import Placet
-from .lattice.lattice import Beamline
-from .lattice.knob import Knob
+from placetmachine import Placet, Beamline
+from placetmachine.lattice import Knob
 
 import os
 from typing import List, Callable
