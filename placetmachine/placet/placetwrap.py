@@ -1,4 +1,4 @@
-from .pyplacet import Placetpy, PlacetCommand
+from placetmachine.placet import Placetpy, PlacetCommand
 
 import pandas as pd
 from functools import wraps

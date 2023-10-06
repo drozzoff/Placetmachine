@@ -1,7 +1,8 @@
-from .communicator import Communicator
+from placetmachine.placet import Communicator
 
 import time
 from functools import wraps
+from typing import Callable
 
 
 class PlacetCommand():
@@ -33,7 +34,7 @@ class PlacetCommand():
 	#options that affect the execution/parsing of the commands
 	optional_parameters = ['timeout', 'additional_lineskip', 'expect_after', 'expect_before', 'no_expect']
 
-	def __init__(self, command, **kwargs):
+	def __init__(self, command: str, **kwargs):
 		"""
 		
 		Parameters
@@ -68,7 +69,7 @@ class PlacetCommand():
 		self.expect_before = kwargs.get('expect_before', True)
 		self.expect_after = kwargs.get('expect_after', False)
 
-	def _additional_lineskip(self, command_type):
+	def _additional_lineskip(self, command_type: str):
 		"""
 		Assign the default value of additional_lineskip to a command.
 
@@ -99,7 +100,7 @@ class PlacetCommand():
 		else:
 			return 0
 
-	def _get_command_type(self, command) -> str:
+	def _get_command_type(self, command: str) -> str:
 		"""
 		Get the type of the command based on the first word in the command.
 
@@ -138,7 +139,7 @@ class Placetpy(Communicator):
 		Run the given command in Placet
 	"""
 	_INTRO_LINES = 19
-	def __init__(self, name = "placet", **kwargs):
+	def __init__(self, name: str = "placet", **kwargs):
 		"""
 		Parameters
 		----------
@@ -169,7 +170,7 @@ class Placetpy(Communicator):
 		self._restart()
 		self.__read_intro()
 
-	def logging(func):
+	def logging(func: Callable) -> Callable:
 		"""Logging decorator used, when debug mode is on"""
 		@wraps(func)
 		def wrapper(self, *args, **kwargs):
@@ -199,7 +200,7 @@ class Placetpy(Communicator):
 
 
 	@logging
-	def run_command(self, command: PlacetCommand, skipline = True):
+	def run_command(self, command: PlacetCommand, skipline: bool = True):
 		"""
 		Run the given command in Placet.
 
