@@ -1,4 +1,4 @@
-from .element import Element
+from placetmachine.lattice.element import Element
 
 
 class Sbend(Element):
