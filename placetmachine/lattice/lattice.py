@@ -4,14 +4,7 @@ import shlex
 from typing import List, Callable, Generator
 import warnings
 
-from .quadrupole import Quadrupole
-from .cavity import Cavity
-from .drift import Drift
-from .bpm import Bpm
-from .dipole import Dipole
-from .multipole import Multipole
-from .sbend import Sbend
-from .element import Element
+from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))

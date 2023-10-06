@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Install the package
+        run: pip3 install .
+
+      - name: Run tests
+        run: python3 -m unittest discover -s tests
+

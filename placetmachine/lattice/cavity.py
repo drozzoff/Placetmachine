@@ -1,5 +1,5 @@
 from numpy import radians, degrees
-from .element import Element
+from placetmachine.lattice.element import Element
 
 
 class Cavity(Element):
