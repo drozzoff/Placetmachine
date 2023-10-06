@@ -1,5 +1,5 @@
 from .placet.placetwrap import Placet
-from .lattice.placetlattice import Beamline
+from .lattice.lattice import Beamline
 from .lattice.knob import Knob
 
 import os
