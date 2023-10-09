@@ -1,4 +1,4 @@
-from placetmachine.lattice.element import Element
+from placetmachine.lattice import Element
 from typing import List
 from pandas import DataFrame
 
