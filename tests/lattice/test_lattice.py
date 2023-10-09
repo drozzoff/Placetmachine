@@ -11,4 +11,4 @@ class ElementElementaryTest(unittest.TestCase):
 
 	def test_append(self):
 
-		
+		pass
