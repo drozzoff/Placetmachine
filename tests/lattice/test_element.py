@@ -1,5 +1,5 @@
 import unittest
-from placetmachine.lattice.element import Element
+from placetmachine.lattice import Element
 
 
 class ElementElementaryTest(unittest.TestCase):
