@@ -126,7 +126,7 @@ class Beamline():
 		Cache up the data for certain types of the elements
 	upload_from_cache(elements, clear_cache = False)
 		Restore the cached data for certain elements
-	read_from_file(filename: str, **extra_params)
+	read_placet_lattice(filename: str, **extra_params)
 		Read the lattice from the Placet lattice file
 	get_girders_number()
 		Get the total number of the girders in the beamline
@@ -331,7 +331,7 @@ class Beamline():
 				raise ValueError(f"Given element is not present in the Beamline!")
 			element.use_cached_data(clear_cache)
 
-	def read_from_file(self, filename: str, **extra_params):
+	def read_placet_lattice(self, filename: str, **extra_params):
 		"""
 		Read the lattice from the Placet lattice file
 
@@ -395,30 +395,6 @@ class Beamline():
 		"""Get the total number of the girders in the beamline"""
 		return self.lattice[-1].girder
 
-	@property
-	def quad_numbers_list(self) -> List[int]:
-		"""Get the list of the Quadrupoles indices"""
-		if not hasattr(self, '_quad_numbers_list_'):
-			self._quad_numbers_list_ = list(map(lambda quad: quad.index, self.get_quads_list()))
-			
-		return self._quad_numbers_list_
-
-	@property
-	def cavs_numbers_list(self) -> List[int]:
-		"""Get the list of the Cavities indices"""
-		if not hasattr(self, '_cav_numbers_list_'):
-			self._cav_numbers_list_ = list(map(lambda cav: cav.index, self.get_cavs_list()))
-			
-		return self._cav_numbers_list_
-	
-	@property
-	def bpms_numbers_list(self) -> List[int]:
-		"""Get the list of the BPMs indices"""
-		if not hasattr(self, '_bpm_numbers_list_'):
-			self._bpm_numbers_list_ = list(map(lambda cav: cav.index, self.get_cavs_list()))
-			
-		return self._bpm_numbers_list_
-
 	def extract(self, element_types: List[str]) -> Generator[Element, None, None]:
 		"""
 		Get the generator of the elements of the given types
@@ -438,6 +414,18 @@ class Beamline():
 		for element in self.lattice:
 			if element.type in element_types:
 				yield element
+	
+	def quad_numbers_list(self) -> List[int]:
+		"""Get the list of the Quadrupoles indices"""
+		return [quad.index for quad in self.extract['Quadrupole']]
+
+	def cavs_numbers_list(self) -> List[int]:
+		"""Get the list of the Cavities indices"""
+		return [quad.index for quad in self.extract['Cavity']]
+	
+	def bpms_numbers_list(self) -> List[int]:
+		"""Get the list of the BPMs indices"""
+		return [quad.index for quad in self.extract['Bpm']]
 
 	def get_girder(self, girder_index: int) -> Generator[Element, None, None]:
 		"""Get the elements on the girder"""
@@ -447,15 +435,15 @@ class Beamline():
 
 	def _get_quads_strengths(self) -> List[float]:
 		"""Get the list of the quadrupoles strengths | Created for the use with Placet.QuadrupoleSetStrengthList() """
-		return list(map(lambda x: x.settings['strength'], self.get_quads_list()))
+		return [quad['strength'] for quad in self.extract['Quadrupole']]
 
 	def _get_cavs_gradients(self) -> List[float]:
 		"""Get the list of the cavs gradients | Created for the use with Placet.CavitySetGradientList() """
-		return list(map(lambda x: x.settings['gradient'], self.get_cavs_list()))
+		return [cav['gradient'] for cav in self.extract['Cavity']]
 
 	def _get_cavs_phases(self) -> List[float]:
 		"""Get the list of the cavs phases | Created for the use with Placet.CavitySetGradientList() """
-		return list(map(lambda x: x.settings['phase'], self.get_cavs_list()))
+		return [cav['phase'] for cav in self.extract['Cavity']]
 
 	'''Misalignment routines'''
 	def misalign_element(self, **extra_params):
