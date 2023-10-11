@@ -101,6 +101,3 @@ class ElementElementaryTest(unittest.TestCase):
 		self.new_element.use_cached_data(True)
 
 		self.assertEqual(self.new_element._cached_data, None)
-
-if __name__ == "__main__":
-	unittest.main()

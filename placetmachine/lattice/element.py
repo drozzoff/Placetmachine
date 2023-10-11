@@ -100,7 +100,8 @@ class Element():
 			If True clears the cache after uploading
 		"""
 		if self._cached_data is None:
-			warnings.warn(f"No data in cache!")
+			warnings.warn(f"No data in cache!", category = RuntimeWarning)
+			return
 		for key in self._cached_parameters:
 			self.settings[key] = self._cached_data[key]
 		if clear_cache:

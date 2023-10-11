@@ -275,6 +275,7 @@ class Beamline():
 		return self.lattice[index]
 	
 	def __iter__(self):
+		"""Return an iteratable object and reset iteration index"""
 		self._iter_index = 0
 		return self
 
@@ -289,7 +290,7 @@ class Beamline():
 		else:
 			raise StopIteration
 
-	def _verify_supported_elem_types(self, types: List[str]):
+	def _verify_supported_elem_types(self, types: List[str] = None):
 		if types is None:
 			return None
 		for elem_type in types:
