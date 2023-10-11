@@ -202,6 +202,9 @@ class Beamline():
 		By default, places the element on the same girder as previous one. 
 		If the previous one is not on the girder or this is the first element, the element is not placet on girder
 
+		Note: append() works by creating by duplicating a given element and then appending it. Thus, the original and 
+			appended element do not share the same reference.
+
 		Parameters
 		----------
 		element: Element
@@ -213,6 +216,8 @@ class Beamline():
 			If True, places the element on a new girder. Otherwise places it on the same girder last element is placed.
 
 			If False and there are no elements in the lattice, does not set any girder number (defaults to None)
+
+			Note: the girders numbering starts from 1.
 		"""
 		new_element = element.duplicate(element)
 		if extra_params.get('new_girder', False):
@@ -222,7 +227,7 @@ class Beamline():
 				girder_id = self.lattice[-1].girder
 				new_element.girder = girder_id + 1
 			else:
-				warnings.warn("Cannot create a new girder when previous elements are not on girders!")
+				warnings.warn("Cannot create a new girder when previous elements are not on girders!", category = RuntimeWarning)
 				new_element.girder = None
 		else:
 			if self.lattice == []:
@@ -253,15 +258,18 @@ class Beamline():
 		Element
 			Element at the given location
 		"""
-		if element_id > len(self.lattice):
-			raise IndexError(f"The number of elements in the lattice {len(self.lattice)}, the id received {element_id}")
-		if element_id < 0:
-			raise IndexError("Element index cannot be negative")
-
 		return self.lattice[element_id]
 
-	def __setitem__(self, index: int, value: Element):
-		self.lattice[index] = value
+	def __setitem__(self, index: int, element: Element):
+		"""
+		Set the given element at the given position
+		
+		The element is copied and placed on the same girder the element before it was.
+		"""
+		new_element = element.duplicate(element)
+		new_element.girder = self.lattice[index].girder
+
+		self.lattice[index] = new_element
 
 	def __getitem__(self, index: int):
 		return self.lattice[index]
