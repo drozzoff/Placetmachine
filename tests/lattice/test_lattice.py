@@ -127,3 +127,43 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(self.test_cavity, new_girder = True)
 		
 		self.assertIs(self.beamline.get_girders_number(), 2)
+
+	def test_extract(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		for quad in self.beamline.extract(['Quadrupole']):
+			self.assertIn(quad, [self.beamline[0], self.beamline[2]])
+		
+		for cav in self.beamline.extract(['Cavity']):
+			self.assertIn(cav, [self.beamline[1], self.beamline[3]])
+
+		with self.assertRaises(ValueError):
+			for cav in self.beamline.extract(['MyElement']):
+				pass
+	
+	def test_number_lists(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		self.assertEqual(self.beamline.quad_numbers_list(), [0, 2])
+		self.assertEqual(self.beamline.cavs_numbers_list(), [1, 3])
+		self.assertEqual(self.beamline.bpms_numbers_list(), [])
+
+	def test_misalign_element(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.misalign_element(element_index = 1, y = 40.0)
+
+		self.assertEqual(self.beamline[0]['y'], 0.0)
+		self.assertEqual(self.beamline[1]['y'], 40.0)

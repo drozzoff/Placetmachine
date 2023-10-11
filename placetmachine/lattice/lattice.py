@@ -435,15 +435,15 @@ class Beamline():
 
 	def _get_quads_strengths(self) -> List[float]:
 		"""Get the list of the quadrupoles strengths | Created for the use with Placet.QuadrupoleSetStrengthList() """
-		return [quad['strength'] for quad in self.extract['Quadrupole']]
+		return [quad['strength'] for quad in self.extract(['Quadrupole'])]
 
 	def _get_cavs_gradients(self) -> List[float]:
 		"""Get the list of the cavs gradients | Created for the use with Placet.CavitySetGradientList() """
-		return [cav['gradient'] for cav in self.extract['Cavity']]
+		return [cav['gradient'] for cav in self.extract(['Cavity'])]
 
 	def _get_cavs_phases(self) -> List[float]:
 		"""Get the list of the cavs phases | Created for the use with Placet.CavitySetGradientList() """
-		return [cav['phase'] for cav in self.extract['Cavity']]
+		return [cav['phase'] for cav in self.extract(['Cavity'])]
 
 	'''Misalignment routines'''
 	def misalign_element(self, **extra_params):

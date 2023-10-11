@@ -23,7 +23,7 @@ class Quadrupole(Element):
 	"tclcall_entrance", "tclcall_exit", "short_range_wake", "strength", "Kn", "type", "hcorrector", "hcorrector_step_size", "vcorrector", "vcorrector_step_size"]
 	_float_params = ["s", "x", "y", "xp", "yp", "roll", "tilt", "tilt_deg", "length", "synrad", "aperture_x", "aperture_y", "aperture_losses", "strength", "Kn", "hcorrector_step_size", "vcorrector_step_size"]
 	_int_params = ["type", "synrad", "thin_lens", "six_dim"]
-	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
+	_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll', 'strength']
 
 	def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None):
 		super(Quadrupole, self).__init__(in_parameters, girder, index, "Quadrupole")
