@@ -1,4 +1,5 @@
 import json
+import warnings
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -99,7 +100,7 @@ class Element():
 			If True clears the cache after uploading
 		"""
 		if self._cached_data is None:
-			raise ValueError("No data in cache")
+			warnings.warn(f"No data in cache!")
 		for key in self._cached_parameters:
 			self.settings[key] = self._cached_data[key]
 		if clear_cache:
