@@ -417,15 +417,15 @@ class Beamline():
 	
 	def quad_numbers_list(self) -> List[int]:
 		"""Get the list of the Quadrupoles indices"""
-		return [quad.index for quad in self.extract['Quadrupole']]
+		return [quad.index for quad in self.extract(['Quadrupole'])]
 
 	def cavs_numbers_list(self) -> List[int]:
 		"""Get the list of the Cavities indices"""
-		return [quad.index for quad in self.extract['Cavity']]
+		return [quad.index for quad in self.extract(['Cavity'])]
 	
 	def bpms_numbers_list(self) -> List[int]:
 		"""Get the list of the BPMs indices"""
-		return [quad.index for quad in self.extract['Bpm']]
+		return [quad.index for quad in self.extract(['Bpm'])]
 
 	def get_girder(self, girder_index: int) -> Generator[Element, None, None]:
 		"""Get the elements on the girder"""
