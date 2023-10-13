@@ -29,7 +29,7 @@ class PlacetCommand():
 					"InterGirderMove", "TestNoCorrection", "RandomReset", "TestSimpleCorrection", "ReadAllPositions", "QuadrupoleSetStrength", "InjectorBeam", "BeamRead", "wake_calc", "SetRfGradientSingle",
 	"make_beam_particles", "BeamSaveAll", "TestMeasuredCorrection", "GetTransferMatrix", "BpmNumberList", "TwissPlotStep", "FirstOrder", "BeamSetToOffset", "ElementSetToOffset",
 	"ElementAddOffset", "BpmReadings", "MoveGirder", "TestFreeCorrection", "BpmRealign", "TestRfAlignment", "QuadrupoleSetStrengthList", "CavitySetGradientList", "CavitySetPhaseList",
-	"ElementSetAttributes", "TclCall", "TwissMain"]
+	"ElementSetAttributes", "TclCall", "TwissMain", "TestIntRegion"]
 
 	#options that affect the execution/parsing of the commands
 	optional_parameters = ['timeout', 'additional_lineskip', 'expect_after', 'expect_before', 'no_expect']

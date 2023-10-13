@@ -345,7 +345,12 @@ class Placet(Placetpy):
 		beam: str
 			Name of the beam to be used for tracking
 		survey: str
-			Type of prealignment survey to be used
+			Type of prealignment survey to be used.
+			Built-in surveys in PLACET are: 
+				["None", "Zero", "Clic", "Nlc", "Atl", "AtlZero", "Atl2", "AtlZero2", "Earth", "EarthField"]*
+				*taken from the PLACET manual
+
+				One can also use any function defined in PLACET prior to the execution of this command
 		emitt_file: str
 			Filename for the results defaults to NULL (no output)
 		bpm_res: float
@@ -693,6 +698,45 @@ class Placet(Placetpy):
 		"""
 		_extra_time, _options_list = 120, ['beam', 'testbeam', 'machines', 'binlength', 'wgt0', 'wgt1', 'pwgt', 'girder', 'bpm_resolution', 'survey', 'emitt_file']
 		self.run_command(self.__construct_command("TestRfAlignment", _options_list, **command_details))
+
+	def TestIntRegion(self, **command_details):
+		"""
+		Run 'TestIntRegio' command in Placet TCL
+
+		Additional parameters
+		---------------------
+		machines: int
+			Number of machines to simulate
+		beam: str
+			Name of the beam to be used for the tracking
+		survey: str
+			Type of the prealignment survey to be used
+		emitt_file: str
+			Filename for the results
+		bpm_res: float
+			BPM resolution
+		filename: str
+			Name of the field map to use for the calculation
+		length: float
+			Total length of the field map in z [m]
+		angle: float
+			Angle between the map and the beamline [rad]
+		step: float
+			Integration step size [m]
+		synrad: int
+			Synchroton radiation emission: 0 OFF (default), 1 ON
+		writefirst: int (?)
+			Write the coordinates of first particle to file singtrk.dat
+		backward: int (?)
+			Track the beam backwards through the lattice
+
+		Returns
+		-------
+		to do
+		"""
+		_options_list = ['machines', 'beam', 'survey', 'emitt_file', 'bpm_res', 'filename', 'length', 'angle', 'step', 'synrad', 'writefirst', 'backward']
+		self.run_command(self.__construct_command("TestRfAlignment", _options_list, **command_details))
+
 
 	def BeamlineNew(self, **command_details):
 		"""
@@ -1388,13 +1432,13 @@ class Placet(Placetpy):
 		"""
 		Run the 'TclCall' command in Placet TCL
 		
-		Sets the callback function for the for the tracking (Entracnce/exit ?)
+		Sets the callback function for the for the tracking (Entrance/exit ?)
 		...
 
 		Additional parameters
 		---------------------
 		script: str
-			The loaction of the script
+			The location of the script
 		"""
 		self.run_command(self.__construct_command("TclCall", ['script'], **command_details))
 

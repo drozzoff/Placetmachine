@@ -295,7 +295,7 @@ class Machine():
 		if lattice_name in self.beamlines_invoked:
 			raise Exception(f"Beamline with the name '{lattice_name}' already exists.")
 
-		self.beamline = Beamline(lattice_name)		
+		self.beamline = Beamline(lattice_name)
 		self.beamline.read_from_file(lattice, debug_mode = extra_params.get('debug_mode', False), parser = _parser, parser_variables = extra_params.get('parser_variables', {}))
 		self.beamlines_invoked.append(lattice_name)
 
