@@ -1,21 +1,21 @@
-from placetmachine import Placet, Beamline
-from placetmachine.lattice import Knob
-
 import os
 from typing import List, Callable
 import json
 import random
-import pandas as pd
-from rich.console import Console
-from rich.errors import LiveError
 from functools import wraps
+
+import pandas as pd
 
 import numpy as np
 
 from rich.table import Table
 from rich.live import Live
+from rich.console import Console
+from rich.errors import LiveError
 
 import tempfile
+from placetmachine import Placet, Beamline, __placet_files_dir__
+from placetmachine.lattice import Knob
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -148,16 +148,14 @@ class Machine():
 		show_intro: bool default True
 			If True, prints the welcome message of Placet at the start
 		"""
-		self.placet = Placet(save_logs = calc_options.get("save_logs", False), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None), show_intro = calc_options.get("show_intro", True))
+		self.placet = Placet(save_logs = calc_options.get("save_logs", False), debug_mode = calc_options.get("debug_mode", False), send_delay = calc_options.get("send_delay", None), 
+					   show_intro = calc_options.get("show_intro", True))
 		self.console_output = calc_options.get("console_output", True)
 
-		#Sourcing the neccesarry scripts
-		dir_path = os.path.dirname(os.path.realpath(__file__))
-
-		self.placet.source(os.path.join(dir_path, "placet_files/clic_basic_single.tcl"), additional_lineskip = 2)
-		self.placet.source(os.path.join(dir_path, "placet_files/clic_beam.tcl"))
-		self.placet.source(os.path.join(dir_path, "placet_files/wake_calc.tcl"))
-		self.placet.source(os.path.join(dir_path, "placet_files/make_beam.tcl"))	#is optional
+		self.placet.source(os.path.join(__placet_files_dir__, "clic_basic_single.tcl"), additional_lineskip = 2)
+		self.placet.source(os.path.join(__placet_files_dir__, "clic_beam.tcl"))
+		self.placet.source(os.path.join(__placet_files_dir__, "wake_calc.tcl"))
+		self.placet.source(os.path.join(__placet_files_dir__, "make_beam.tcl"))	#is optional
 		self.placet.declare_proc(self.empty)
 		self.beamline, self.beams_invoked, self.beamlines_invoked = None, [], []
 
