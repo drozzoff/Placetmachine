@@ -1,5 +1,5 @@
 import unittest
-from placetmachine.lattice.element import Element
+from placetmachine.lattice import Element
 
 
 class ElementElementaryTest(unittest.TestCase):
@@ -83,7 +83,6 @@ class ElementElementaryTest(unittest.TestCase):
 
 		for parameter in ["x", "y", "xp", "yp", "roll"]:
 			self.assertEqual(self.new_element[parameter], test_value)
-	
 
 	def test_use_cached_data2(self):
 
@@ -101,6 +100,3 @@ class ElementElementaryTest(unittest.TestCase):
 		self.new_element.use_cached_data(True)
 
 		self.assertEqual(self.new_element._cached_data, None)
-
-if __name__ == "__main__":
-	unittest.main()
