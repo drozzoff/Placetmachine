@@ -586,7 +586,7 @@ class Beamline():
 		_options = ['x', 'y']
 
 		x, y = extra_params.get('x'), extra_params.get('y')
-		self.misalign_girder_2(x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
+		self.misalign_girder_2(girder = extra_params.get("girder"), x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
 
 	def misalign_articulation_point(self, **extra_params):
 		"""
