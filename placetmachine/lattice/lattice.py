@@ -511,7 +511,7 @@ class Beamline():
 		for element in elements:
 			self.misalign_element(element_index = int(element), **elements[element], **_extract_dict(_options, extra_params))
 
-	def misalign_girder_2(self, **extra_params):
+	def misalign_girder_general(self, **extra_params):
 		"""
 		Misalign the girder by means of moving its end points
 		
@@ -585,8 +585,8 @@ class Beamline():
 		"""
 		_options = ['x', 'y']
 
-		x, y = extra_params.get('x'), extra_params.get('y')
-		self.misalign_girder_2(girder = extra_params.get("girder"), x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
+		x, y = extra_params.get('x', 0.0), extra_params.get('y', 0.0)
+		self.misalign_girder_general(girder = extra_params.get("girder"), x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
 
 	def misalign_articulation_point(self, **extra_params):
 		"""
@@ -615,16 +615,8 @@ class Beamline():
 
 		"""
 		_options = ['x', 'y']
-
-		# Check the correctness of the types
 		filter_types = extra_params.get('filter_types', None)
-		if filter_types is not None:
-			for element in filter_types:
-				if element == 'Girder':
-					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
-				elif not element in self._supported_elements:
-					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
-
+		
 		N_girders = self.get_girders_number()
 
 		girder_left, girder_right = extra_params.get('girder_left', None), extra_params.get('girder_right', None)
@@ -648,7 +640,7 @@ class Beamline():
 
 		if girder_left is not None:
 			# misalign the girder_left from the right
-			self.misalign_girder_2(**{
+			self.misalign_girder_general(**{
 				'girder': girder_left,
 				'x_right': extra_params.get('x', 0.0),
 				'y_right': extra_params.get('y', 0.0),
@@ -656,7 +648,7 @@ class Beamline():
 			})
 
 		if girder_right is not None:
-			self.misalign_girder_2(**{
+			self.misalign_girder_general(**{
 				'girder': girder_right,
 				'x_left': extra_params.get('x', 0.0),
 				'y_left': extra_params.get('y', 0.0),
@@ -665,7 +657,12 @@ class Beamline():
 
 	def misalign_girders(self, **extra_params):
 		"""
-		Misalign the girders according to the dictionary
+		Misalign the girders according to the dictionary.
+
+		Essentially, it is Beamline.misalign_girder() function extended on many girders.
+		That input data should have the same structure as the one passed to Beamline.misalign_girder().
+		
+		Maybe, instead Beamline.misalign_girder() it will be replaced with Beamline.misalign_girder_general().
 
 		Additional parameters
 		---------------------

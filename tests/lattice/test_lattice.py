@@ -1,7 +1,7 @@
 import unittest
 import warnings
 from placetmachine import Beamline
-from placetmachine.lattice import Quadrupole, Cavity
+from placetmachine.lattice import Quadrupole, Cavity, Drift
 
 
 class ElementElementaryTest(unittest.TestCase):
@@ -167,3 +167,323 @@ class ElementElementaryTest(unittest.TestCase):
 
 		self.assertEqual(self.beamline[0]['y'], 0.0)
 		self.assertEqual(self.beamline[1]['y'], 40.0)
+
+	def test_misalign_elements(self):
+
+		offsets = {
+			1: {
+				'x': 0.5,
+				'y': 10.0
+			},
+			2: {
+				'x': -10.0,
+				'y': 15.0
+			}
+		}
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.misalign_elements(offset_data = offsets)
+
+		self.assertEqual(self.beamline[1]['x'], 0.5)
+		self.assertEqual(self.beamline[1]['y'], 10.0)
+
+		self.assertEqual(self.beamline[2]['x'], -10.0)
+		self.assertEqual(self.beamline[2]['y'], 15.0)
+
+		self.assertEqual(self.beamline[3]['x'], 0.0)
+		self.assertEqual(self.beamline[3]['y'], 0.0)
+
+	def test_misalign_girder_general(self):
+
+		# creating a beamline with 1 girder and elements on it that have finite length
+		drift = Drift({
+			"name": "test_drift",
+			"length": 0.5,
+		})
+
+		quad = Quadrupole({
+			"name": 'test_quad',
+			"length": 1.0
+		})
+
+		cavity = Cavity({
+			"name": "test_cav",
+			"length": 2.0
+		})
+		
+		# bulding the girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+		# 1.0 - 0.5 - 2.0 - 0.5 - 1.0 - 5.0 total
+
+		#misaligning the girder
+		x_left, x_right = 5.0, 10.0
+		y_left, y_right = -10.0, 10.0
+
+		self.beamline.misalign_girder_general(girder = 1, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['Quadrupole'])
+
+		self.assertAlmostEqual(self.beamline[0]['x'], 5.5, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[2]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[4]['x'], 9.5, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[0]['y'], -8.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[2]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[4]['y'], 8.0, delta = 1e-5)
+
+		#incorrect type
+		with self.assertRaises(ValueError):
+			self.beamline.misalign_girder_general(girder = 1, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['MyType'])
+
+	def test_misalign_girder(self):
+
+		# creating a beamline with 2 girders
+		drift = Drift({
+			"name": "test_drift",
+			"length": 0.5,
+		})
+
+		quad = Quadrupole({
+			"name": 'test_quad',
+			"length": 1.0
+		})
+
+		cavity = Cavity({
+			"name": "test_cav",
+			"length": 2.0
+		})
+		
+		# bulding the girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+		# 1.0 - 0.5 - 2.0 - 0.5 - 1.0 - 5.0 total
+
+		# building the second girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+
+		x, y = 5.0, -10.0
+
+		self.beamline.misalign_girder(girder = 1, x = x, y = y)
+
+		for i in range(5):
+			self.assertAlmostEqual(self.beamline[i]['x'], x, delta = 1e-5)
+			self.assertAlmostEqual(self.beamline[i]['y'], y, delta = 1e-5)
+		
+		for i in range(5, 10):
+			self.assertEqual(self.beamline[i]['x'], 0.0)
+			self.assertEqual(self.beamline[i]['y'], 0.0)
+
+	def test_misalign_articulation_point_basic(self):
+
+		# creating a beamline with 2 girders
+		drift = Drift({
+			"name": "test_drift",
+			"length": 0.5,
+		})
+
+		quad = Quadrupole({
+			"name": 'test_quad',
+			"length": 1.0
+		})
+
+		cavity = Cavity({
+			"name": "test_cav",
+			"length": 2.0
+		})
+		
+		# bulding the girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+		# 1.0 - 0.5 - 2.0 - 0.5 - 1.0 - 5.0 total
+
+		# building the second girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+
+		x, y = 5.0, -10.0
+		
+		self.beamline.misalign_articulation_point(girder_left = 1, girder_right = 2, x = x, y = y, filter_types = ['Quadrupole'])
+
+		# girder 1
+		self.assertAlmostEqual(self.beamline[0]['x'], 0.5, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[2]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[4]['x'], 4.5, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[0]['y'], -1.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[2]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[4]['y'], -9.0, delta = 1e-5)
+
+		# girder 2
+		self.assertAlmostEqual(self.beamline[5]['x'], 4.5, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[6]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[7]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[8]['x'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[9]['x'], 0.5, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[5]['y'], -9.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[6]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[7]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[8]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[9]['y'], -1.0, delta = 1e-5)
+
+		# incorrect girder ids (< 0 or > N girders)
+		with self.assertRaises(ValueError):
+			self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 1, x = x, y = y, filter_types = ['Quadrupole'])
+
+		with self.assertRaises(ValueError):
+			self.beamline.misalign_articulation_point(girder_left = 2, girder_right = 3, x = x, y = y, filter_types = ['Quadrupole'])
+
+	def test_misalign_articulation_point_sides(self):
+
+		# creating a beamline with 2 girders
+		drift = Drift({
+			"name": "test_drift",
+			"length": 0.5,
+		})
+
+		quad = Quadrupole({
+			"name": 'test_quad',
+			"length": 1.5
+		})
+
+		cavity = Cavity({
+			"name": "test_cav",
+			"length": 2.0
+		})
+		
+		# bulding the girder 1
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		# 1.0 - 0.5
+
+		# building the second girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		# 1.0 - 0.5
+
+		#building the girder 3
+		self.beamline.append(cavity, new_girder = True)
+		self.beamline.append(drift)
+		# 2.0 - 0.5
+
+		x, y = 5.0, -10.0
+
+		self.beamline.misalign_articulation_point(girder_right = 1, x = x, y = y)
+
+		self.beamline.misalign_articulation_point(girder_left = 3, x = x, y = y)
+
+		self.assertAlmostEqual(self.beamline[0]['x'], 3.125, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['x'], 0.625, delta = 1e-5)
+		
+		self.assertAlmostEqual(self.beamline[0]['y'], -6.25, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['y'], -1.25, delta = 1e-5)
+		
+		for i in [2, 3]:
+			self.assertEqual(self.beamline[i]['x'], 0.0)
+			self.assertEqual(self.beamline[i]['y'], 0.0)
+
+		self.assertAlmostEqual(self.beamline[4]['x'], 2.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[5]['x'], 4.5, delta = 1e-5)
+		
+		self.assertAlmostEqual(self.beamline[4]['y'], -4.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[5]['y'], -9.0, delta = 1e-5)
+		
+
+		with self.assertRaises(ValueError):
+			self.beamline.misalign_articulation_point(girder_left = 1, girder_right = 3, x = x, y = y, filter_types = ['Quadrupole'])	
+
+	def test_misalign_girders(self):
+
+		# creating a beamline with 2 girders
+		drift = Drift({
+			"name": "test_drift",
+			"length": 0.5,
+		})
+
+		quad = Quadrupole({
+			"name": 'test_quad',
+			"length": 1.5
+		})
+
+		cavity = Cavity({
+			"name": "test_cav",
+			"length": 2.0
+		})
+		
+		# bulding the girder 1
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		# 1.0 - 0.5
+
+		# building the second girder
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		# 1.0 - 0.5
+
+		#building the girder 3
+		self.beamline.append(cavity, new_girder = True)
+		self.beamline.append(drift)
+		# 2.0 - 0.5
+
+		offset_data = {
+			'1': {
+				'x': 0.5,
+				'y': 2.5
+			},
+			'2': {
+				'x': -5.0
+			}
+
+		}
+
+		self.beamline.misalign_girders(offset_data = offset_data)
+
+		# girder 1
+		self.assertAlmostEqual(self.beamline[0]['x'], 0.5, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['x'], 0.5, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[0]['y'], 2.5, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['y'], 2.5, delta = 1e-5)
+
+		# girder 2
+		self.assertAlmostEqual(self.beamline[2]['x'], -5.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['x'], -5.0, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[2]['y'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['y'], 0.0, delta = 1e-5)
+
+		# girder 3
+		for i in [4, 5]:
+			self.assertAlmostEqual(self.beamline[i]['x'], 0.0, delta = 1e-5)
+			self.assertAlmostEqual(self.beamline[i]['y'], 0.0, delta = 1e-5)
+
+	def test_to_placet(self):
+
+		pass
