@@ -1,12 +1,12 @@
-import pexpect
-import time
-import pandas as pd
 from functools import wraps
 import json
-from typing import Callable
+import time
+import pexpect
+import pandas as pd
+from typing import Callable, List
 
 
-class Communicator(object):
+class Communicator:
 	"""
 	A class used to interact with the process spawned with Pexpect
 	
@@ -113,6 +113,17 @@ class Communicator(object):
 
 		return wrapper_2
 
+	def alive_check(func: Callable) -> Callable:
+		"""Check if the process is alive before running the function"""
+		@wraps(func)
+		def wrapper(self, *args, **kwargs):
+			if self.isalive():
+				return func(self, *args, **kwargs)
+			else:
+				raise Exception(f"The process is dead. Restart it before running '{func.__name__}'.")
+		
+		return wrapper
+
 	def add_send_delay(self, time: float = _DELAY_BEFORE_SEND):
 		"""Add the time delay before each data transfer"""
 		self.process.delaybeforesend = time
@@ -127,6 +138,7 @@ class Communicator(object):
 		self.process.logfile_read = open("log_read.txt", "w")
 
 	@logging
+	@alive_check
 	def writeline(self, command: str, skipline: bool = True, timeout: float = _BASE_TIMEOUT, **kwargs) -> str:
 		"""
 		Send the line to a child process
@@ -203,6 +215,7 @@ class Communicator(object):
 		self.__terminate()
 
 	@logging
+	@alive_check
 	def skipline(self, timeout: float = _BASE_TIMEOUT):
 		"""
 		Skip the line of the child's process output.
@@ -237,6 +250,7 @@ class Communicator(object):
 
 	@logging
 	@__error_seeker
+	@alive_check
 	def readline(self, timeout = _BASE_TIMEOUT) -> str:
 		"""
 		Read the line from the child process.
@@ -256,7 +270,8 @@ class Communicator(object):
 		return self.process.readline()
 
 	@logging
-	def readlines(self, N_lines: int, timeout: float = _BASE_TIMEOUT) -> list:
+	@alive_check
+	def readlines(self, N_lines: int, timeout: float = _BASE_TIMEOUT) -> List[str]:
 		"""
 		Read several lines from the child process.
 		

@@ -197,14 +197,13 @@ class Placetpy(Communicator):
 		
 		return wrapper_2
 
-
-
 	@logging
 	def run_command(self, command: PlacetCommand, skipline: bool = True):
 		"""
 		Run the given command in Placet.
 
-		Does not return any value.
+		Does not return any value. 
+		The output after the execution is up to the user to read with Communicator.writeline()
 
 		Parameters
 		----------
