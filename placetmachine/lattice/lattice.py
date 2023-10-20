@@ -126,7 +126,7 @@ class Beamline():
 		Cache up the data for certain types of the elements
 	upload_from_cache(elements, clear_cache = False)
 		Restore the cached data for certain elements
-	read_from_file(filename: str, **extra_params)
+	read_placet_lattice(filename: str, **extra_params)
 		Read the lattice from the Placet lattice file
 	get_girders_number()
 		Get the total number of the girders in the beamline
@@ -202,6 +202,9 @@ class Beamline():
 		By default, places the element on the same girder as previous one. 
 		If the previous one is not on the girder or this is the first element, the element is not placet on girder
 
+		Note: append() works by creating by duplicating a given element and then appending it. Thus, the original and 
+			appended element do not share the same reference.
+
 		Parameters
 		----------
 		element: Element
@@ -213,6 +216,8 @@ class Beamline():
 			If True, places the element on a new girder. Otherwise places it on the same girder last element is placed.
 
 			If False and there are no elements in the lattice, does not set any girder number (defaults to None)
+
+			Note: the girders numbering starts from 1.
 		"""
 		new_element = element.duplicate(element)
 		if extra_params.get('new_girder', False):
@@ -222,7 +227,7 @@ class Beamline():
 				girder_id = self.lattice[-1].girder
 				new_element.girder = girder_id + 1
 			else:
-				warnings.warn("Cannot create a new girder when previous elements are not on girders!")
+				warnings.warn("Cannot create a new girder when previous elements are not on girders!", category = RuntimeWarning)
 				new_element.girder = None
 		else:
 			if self.lattice == []:
@@ -253,20 +258,24 @@ class Beamline():
 		Element
 			Element at the given location
 		"""
-		if element_id > len(self.lattice):
-			raise IndexError(f"The number of elements in the lattice {len(self.lattice)}, the id received {element_id}")
-		if element_id < 0:
-			raise IndexError("Element index cannot be negative")
-
 		return self.lattice[element_id]
 
-	def __setitem__(self, index: int, value: Element):
-		self.lattice[index] = value
+	def __setitem__(self, index: int, element: Element):
+		"""
+		Set the given element at the given position
+		
+		The element is copied and placed on the same girder the element before it was.
+		"""
+		new_element = element.duplicate(element)
+		new_element.girder = self.lattice[index].girder
+
+		self.lattice[index] = new_element
 
 	def __getitem__(self, index: int):
 		return self.lattice[index]
 	
 	def __iter__(self):
+		"""Return an iteratable object and reset iteration index"""
 		self._iter_index = 0
 		return self
 
@@ -281,7 +290,7 @@ class Beamline():
 		else:
 			raise StopIteration
 
-	def _verify_supported_elem_types(self, types: List[str]):
+	def _verify_supported_elem_types(self, types: List[str] = None):
 		if types is None:
 			return None
 		for elem_type in types:
@@ -322,7 +331,7 @@ class Beamline():
 				raise ValueError(f"Given element is not present in the Beamline!")
 			element.use_cached_data(clear_cache)
 
-	def read_from_file(self, filename: str, **extra_params):
+	def read_placet_lattice(self, filename: str, **extra_params):
 		"""
 		Read the lattice from the Placet lattice file
 
@@ -386,30 +395,6 @@ class Beamline():
 		"""Get the total number of the girders in the beamline"""
 		return self.lattice[-1].girder
 
-	@property
-	def quad_numbers_list(self) -> List[int]:
-		"""Get the list of the Quadrupoles indices"""
-		if not hasattr(self, '_quad_numbers_list_'):
-			self._quad_numbers_list_ = list(map(lambda quad: quad.index, self.get_quads_list()))
-			
-		return self._quad_numbers_list_
-
-	@property
-	def cavs_numbers_list(self) -> List[int]:
-		"""Get the list of the Cavities indices"""
-		if not hasattr(self, '_cav_numbers_list_'):
-			self._cav_numbers_list_ = list(map(lambda cav: cav.index, self.get_cavs_list()))
-			
-		return self._cav_numbers_list_
-	
-	@property
-	def bpms_numbers_list(self) -> List[int]:
-		"""Get the list of the BPMs indices"""
-		if not hasattr(self, '_bpm_numbers_list_'):
-			self._bpm_numbers_list_ = list(map(lambda cav: cav.index, self.get_cavs_list()))
-			
-		return self._bpm_numbers_list_
-
 	def extract(self, element_types: List[str]) -> Generator[Element, None, None]:
 		"""
 		Get the generator of the elements of the given types
@@ -429,6 +414,18 @@ class Beamline():
 		for element in self.lattice:
 			if element.type in element_types:
 				yield element
+	
+	def quad_numbers_list(self) -> List[int]:
+		"""Get the list of the Quadrupoles indices"""
+		return [quad.index for quad in self.extract(['Quadrupole'])]
+
+	def cavs_numbers_list(self) -> List[int]:
+		"""Get the list of the Cavities indices"""
+		return [quad.index for quad in self.extract(['Cavity'])]
+	
+	def bpms_numbers_list(self) -> List[int]:
+		"""Get the list of the BPMs indices"""
+		return [quad.index for quad in self.extract(['Bpm'])]
 
 	def get_girder(self, girder_index: int) -> Generator[Element, None, None]:
 		"""Get the elements on the girder"""
@@ -438,15 +435,15 @@ class Beamline():
 
 	def _get_quads_strengths(self) -> List[float]:
 		"""Get the list of the quadrupoles strengths | Created for the use with Placet.QuadrupoleSetStrengthList() """
-		return list(map(lambda x: x.settings['strength'], self.get_quads_list()))
+		return [quad['strength'] for quad in self.extract(['Quadrupole'])]
 
 	def _get_cavs_gradients(self) -> List[float]:
 		"""Get the list of the cavs gradients | Created for the use with Placet.CavitySetGradientList() """
-		return list(map(lambda x: x.settings['gradient'], self.get_cavs_list()))
+		return [cav['gradient'] for cav in self.extract(['Cavity'])]
 
 	def _get_cavs_phases(self) -> List[float]:
 		"""Get the list of the cavs phases | Created for the use with Placet.CavitySetGradientList() """
-		return list(map(lambda x: x.settings['phase'], self.get_cavs_list()))
+		return [cav['phase'] for cav in self.extract(['Cavity'])]
 
 	'''Misalignment routines'''
 	def misalign_element(self, **extra_params):
@@ -514,7 +511,7 @@ class Beamline():
 		for element in elements:
 			self.misalign_element(element_index = int(element), **elements[element], **_extract_dict(_options, extra_params))
 
-	def misalign_girder_2(self, **extra_params):
+	def misalign_girder_general(self, **extra_params):
 		"""
 		Misalign the girder by means of moving its end points
 		
@@ -588,8 +585,8 @@ class Beamline():
 		"""
 		_options = ['x', 'y']
 
-		x, y = extra_params.get('x'), extra_params.get('y')
-		self.misalign_girder_2(x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
+		x, y = extra_params.get('x', 0.0), extra_params.get('y', 0.0)
+		self.misalign_girder_general(girder = extra_params.get("girder"), x_left = x, x_right = x, y_left = y, y_right = y, filter_types = extra_params.get('filter_types', None))
 
 	def misalign_articulation_point(self, **extra_params):
 		"""
@@ -618,16 +615,8 @@ class Beamline():
 
 		"""
 		_options = ['x', 'y']
-
-		# Check the correctness of the types
 		filter_types = extra_params.get('filter_types', None)
-		if filter_types is not None:
-			for element in filter_types:
-				if element == 'Girder':
-					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
-				elif not element in self._supported_elements:
-					raise ValueError(f"Incorrect element type '{element}'! Accepted types are {self._supported_elements} except 'Girder'!")
-
+		
 		N_girders = self.get_girders_number()
 
 		girder_left, girder_right = extra_params.get('girder_left', None), extra_params.get('girder_right', None)
@@ -651,7 +640,7 @@ class Beamline():
 
 		if girder_left is not None:
 			# misalign the girder_left from the right
-			self.misalign_girder_2(**{
+			self.misalign_girder_general(**{
 				'girder': girder_left,
 				'x_right': extra_params.get('x', 0.0),
 				'y_right': extra_params.get('y', 0.0),
@@ -659,7 +648,7 @@ class Beamline():
 			})
 
 		if girder_right is not None:
-			self.misalign_girder_2(**{
+			self.misalign_girder_general(**{
 				'girder': girder_right,
 				'x_left': extra_params.get('x', 0.0),
 				'y_left': extra_params.get('y', 0.0),
@@ -668,7 +657,12 @@ class Beamline():
 
 	def misalign_girders(self, **extra_params):
 		"""
-		Misalign the girders according to the dictionary
+		Misalign the girders according to the dictionary.
+
+		Essentially, it is Beamline.misalign_girder() function extended on many girders.
+		That input data should have the same structure as the one passed to Beamline.misalign_girder().
+		
+		Maybe, instead Beamline.misalign_girder() it will be replaced with Beamline.misalign_girder_general().
 
 		Additional parameters
 		---------------------

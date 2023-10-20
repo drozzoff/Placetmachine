@@ -7,3 +7,4 @@ from placetmachine.lattice.dipole import Dipole
 from placetmachine.lattice.multipole import Multipole
 from placetmachine.lattice.sbend import Sbend
 from placetmachine.lattice.knob import Knob
+from placetmachine.lattice.lattice import Beamline

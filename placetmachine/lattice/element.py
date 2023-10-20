@@ -1,4 +1,5 @@
 import json
+import warnings
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -80,12 +81,27 @@ class Element():
 		return res
 
 	def cache_data(self):
+		"""
+		Cache the cachable parameters.
+
+		Note: the parameters that can be cached are forcely initiated and assigned to 0.0 when the Element is created.
+		"""
 		self._cached_data = {}
 		for key in self._cached_parameters:
 			self._cached_data[key] = self.settings[key]
 
 	def use_cached_data(self, clear_cache: bool = False):
-		assert self._cached_data is not None, "No data in cache"
+		"""
+		Use the data stored in cache.
+
+		Parameters
+		----------
+		clear_cache: bool, default False
+			If True clears the cache after uploading
+		"""
+		if self._cached_data is None:
+			warnings.warn(f"No data in cache!", category = RuntimeWarning)
+			return
 		for key in self._cached_parameters:
 			self.settings[key] = self._cached_data[key]
 		if clear_cache:
