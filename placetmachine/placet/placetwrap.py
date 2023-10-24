@@ -1,9 +1,8 @@
-from placetmachine.placet import Placetpy, PlacetCommand
-
-import pandas as pd
 from functools import wraps
 from time import sleep, time
 from typing import Callable
+import pandas as pd
+from placetmachine.placet import Placetpy, PlacetCommand
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
