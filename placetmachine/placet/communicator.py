@@ -1,12 +1,45 @@
-import pexpect
-import time
-import pandas as pd
 from functools import wraps
 import json
-from typing import Callable
+import time
+from abc import ABC, abstractmethod
+import pandas as pd
+from typing import Callable, List
+import pexpect
 
 
-class Communicator(object):
+def alive_check(func: Callable) -> Callable:
+	"""
+	Decorator that checks if the child process is alive before interacting with it.
+
+	Used with Communicator.writeline(), Communicator._readline(), and Communicator.readlines().
+	"""
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		if self.isalive():
+			return func(self, *args, **kwargs)
+		else:
+			raise Exception(f"The process is dead. Restart it before running '{func.__name__}'.")
+	
+	return wrapper
+
+def logging(func: Callable) -> Callable:
+	"""
+	Decorator that logs the execution of Communicator.writeline(), Communicator.readline(), and Communicator.readlines().
+	"""
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		if self.debug_mode:
+			exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
+			self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
+			print(f"\t{exec_summ}")
+
+		res = func(self, *args, **kwargs)
+
+		return res
+
+	return wrapper
+
+class Communicator(ABC):
 	"""
 	A class used to interact with the process spawned with Pexpect
 	
@@ -25,16 +58,20 @@ class Communicator(object):
 		Add the time delay before sending the data to child process
 	save_logs()
 		Create the files for logging the terminal in/out-put
-	readline(timeout = _BASE_TIMEOUT)
-		Read the line received from a child process
-	readlines(N_lines, timeout = _BASE_TIMEOUT)
-		Read several lines received from a child process
-	skipline(timeout = _BASE_TIMEOUT)
-		Same to readline, but no return
 	writeline(command, skipline = True, timeout = _BASE_TIMEOUT)
 		Write the line to a child process
+	isalive()
+		Get the status of the child process
 	close()
-		Finish the runnning processes and terminate the child process
+		Terminate the child procss
+	_readline(timeout = _BASE_TIMEOUT)
+		Read the line received from a child process
+	skipline(timeout = _BASE_TIMEOUT)
+		Same to _readline, but no return
+	readlines(N_lines, timeout = _BASE_TIMEOUT)
+		Read several lines received from a child process
+	flush()
+		Flush the child process buffer
 	save_debug_info(filename = "debug_data.pkl")
 		Save the debug data to a file
 
@@ -47,8 +84,6 @@ class Communicator(object):
 	__expect_block = False
 	def __init__(self, process_name: str, **kwargs):
 		"""
-		29.11.2022	- New version of the communicator without the daemon running in the background
-
 		Parameters
 		----------
 		process_name: str
@@ -87,32 +122,6 @@ class Communicator(object):
 
 		self.__init()
 
-	def logging(func: Callable) -> Callable:
-		"""Log the functions running"""
-		@wraps(func)
-		def wrapper(self, *args, **kwargs):
-			start = time.time()
-			res = func(self, *args, **kwargs)
-			run_time = time.time() - start
-			if self.debug_mode:
-				exec_summ = dict(function = func.__name__, arguments = [args, kwargs], run_time = run_time, res = res)
-				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
-			return res
-
-		@wraps(func)
-		def wrapper_2(self, *args, **kwargs):
-			if self.debug_mode:
-				exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
-				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-				print("\t" + str(exec_summ))
-
-			res = func(self, *args, **kwargs)
-
-			return res
-
-		return wrapper_2
-
 	def add_send_delay(self, time: float = _DELAY_BEFORE_SEND):
 		"""Add the time delay before each data transfer"""
 		self.process.delaybeforesend = time
@@ -127,6 +136,7 @@ class Communicator(object):
 		self.process.logfile_read = open("log_read.txt", "w")
 
 	@logging
+	@alive_check
 	def writeline(self, command: str, skipline: bool = True, timeout: float = _BASE_TIMEOUT, **kwargs) -> str:
 		"""
 		Send the line to a child process
@@ -203,41 +213,8 @@ class Communicator(object):
 		self.__terminate()
 
 	@logging
-	def skipline(self, timeout: float = _BASE_TIMEOUT):
-		"""
-		Skip the line of the child's process output.
-		
-		Paramaters
-		----------
-		timeout: float, default Communicator._BASE_TIMEOUT
-			Timeout of the reader before raising the exception.
-			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
-		"""
-		self.readline(timeout)
-
-	def __error_seeker(func: Callable) -> Callable:
-		"""
-		Wrapper for readline().
-
-		Checks if the output does not contain an error.
-
-		If containts "ERROR", throws an exception
-		If containts "WARNING", throws an exception
-		"""
-		@wraps(func)
-		def wrapper(self, timeout: float = None):
-			res = func(self, timeout) if timeout is not None else func(self)
-
-			if "error".casefold() in list(map(lambda x: x.casefold(), res.split())):
-				raise Exception("Process exited with an error message:\n" + res)
-			if "warning".casefold() in list(map(lambda x: x.casefold(), res.split())):
-				raise Exception("Process encountered a warning:\n" + res)
-			return res
-		return wrapper
-
-	@logging
-	@__error_seeker
-	def readline(self, timeout = _BASE_TIMEOUT) -> str:
+	@alive_check
+	def _readline(self, timeout = _BASE_TIMEOUT) -> str:
 		"""
 		Read the line from the child process.
 
@@ -254,9 +231,36 @@ class Communicator(object):
 		"""
 
 		return self.process.readline()
+	
+	@logging
+	@alive_check
+	def skipline(self, timeout: float = _BASE_TIMEOUT):
+		"""
+		Skip the line of the child's process output.
+		
+		Paramaters
+		----------
+		timeout: float, default Communicator._BASE_TIMEOUT
+			Timeout of the reader before raising the exception.
+			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
+		"""
+		self._readline(timeout)
+
+	@abstractmethod
+	def readline(self) -> str:
+		"""
+		Read the line from the child process.
+
+		Returns
+		-------
+		str
+			The line of the data received from the child process.
+		"""
+		pass
 
 	@logging
-	def readlines(self, N_lines: int, timeout: float = _BASE_TIMEOUT) -> list:
+	@alive_check
+	def readlines(self, N_lines: int, timeout: float = _BASE_TIMEOUT) -> List[str]:
 		"""
 		Read several lines from the child process.
 		
@@ -275,7 +279,7 @@ class Communicator(object):
 		"""
 		res = []
 		for i in range(N_lines):
-			res.append(self.readline(timeout))
+			res.append(self._readline(timeout))
 		return res
 
 	def flush(self):

@@ -1,8 +1,7 @@
-from placetmachine.placet import Communicator
-
 import time
 from functools import wraps
 from typing import Callable
+from placetmachine.placet import Communicator
 
 
 class PlacetCommand():
@@ -126,6 +125,44 @@ class PlacetCommand():
 	def __str__(self):
 		return f"PlacetCommand(command = {repr(self.command)})"
 
+def error_seeker(func: Callable) -> Callable:
+	"""
+	Decorator that checks for the words "error"/"warning" in PLACET output
+
+	Checks if the output does not contain an error.
+
+	If containts "ERROR", throws an exception
+	If containts "WARNING", throws an exception
+	"""
+	@wraps(func)
+	def wrapper(self, timeout: float = None):
+		res = func(self, timeout) if timeout is not None else func(self)
+
+		if "error".casefold() in list(map(lambda x: x.casefold(), res.split())):
+			self.process.close()
+			raise Exception("Process exited with an error message:\n" + res)
+		if "warning".casefold() in list(map(lambda x: x.casefold(), res.split())):
+			self.process.close()
+			raise Exception("Process encountered a warning:\n" + res)
+		return res
+	return wrapper
+
+def logging(func: Callable) -> Callable:
+	"""Logging decorator used, when debug mode is on"""
+	@wraps(func)
+	def wrapper(self, *args, **kwargs):
+		if self.debug_mode:
+			exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
+			print(exec_summ)
+			self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
+#				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
+
+		res = func(self, *args, **kwargs)
+		
+		return res
+	
+	return wrapper
+
 class Placetpy(Communicator):	
 	"""
 	A class used to interact with Placet process running in background
@@ -150,7 +187,12 @@ class Placetpy(Communicator):
 		---------------------
 		show_intro: bool default True
 			If True, prints the welcome message of Placet at the start
-		//**//Accepts all the additional parameters that Communicator accepts (Check Communicator) //**//
+		debug_mode: bool, default False
+			If True, runs Communicator in debug mode
+		save_logs: bool, default True
+			If True, invoking save_debug_info()
+		send_delay: float, default Communicator._BUFFER_MAXSIZE
+			The time delay before each data transfer to a child process (sometimes needed for stability)
 		
 		"""
 		super(Placetpy, self).__init__(name, **kwargs)
@@ -170,41 +212,31 @@ class Placetpy(Communicator):
 		self._restart()
 		self.__read_intro()
 
-	def logging(func: Callable) -> Callable:
-		"""Logging decorator used, when debug mode is on"""
-		@wraps(func)
-		def wrapper(self, *args, **kwargs):
-			start = time.time()
-			res = func(self, *args, **kwargs)
-			run_time = time.time() - start
-			if self.debug_mode:
-				exec_summ = dict(function = func.__name__, arguments = [args, kwargs], run_time = run_time, res = res)
-				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-				print(exec_summ)
-			return res
-		
-		@wraps(func)
-		def wrapper_2(self, *args, **kwargs):
-			if self.debug_mode:
-				exec_summ = dict(function = func.__name__, arguments = [args, kwargs])
-				print(exec_summ)
-				self.debug_data = self.debug_data.append(exec_summ, ignore_index = True)
-#				print(json.dumps(exec_summ, indent = 4, sort_keys = True))
+	@error_seeker
+	def readline(self, timeout = Communicator._BASE_TIMEOUT):
+		"""
+		Read the line from PLACET process.
 
-			res = func(self, *args, **kwargs)
-			
-			return res
-		
-		return wrapper_2
+		Parameters
+		----------
+		timeout: float, default Communicator._BASE_TIMEOUT
+			Timeout of the reader before raising the exception.
+			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 
-
+		Returns
+		-------
+		str
+			The line of the data received from the child process.
+		"""
+		return self._readline()
 
 	@logging
 	def run_command(self, command: PlacetCommand, skipline: bool = True):
 		"""
 		Run the given command in Placet.
 
-		Does not return any value.
+		Does not return any value. 
+		The output after the execution is up to the user to read with Communicator.writeline()
 
 		Parameters
 		----------
