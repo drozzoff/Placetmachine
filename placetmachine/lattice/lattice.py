@@ -427,10 +427,22 @@ class Beamline():
 		"""Get the list of the BPMs indices"""
 		return [quad.index for quad in self.extract(['Bpm'])]
 
-	def get_girder(self, girder_index: int) -> Generator[Element, None, None]:
-		"""Get the elements on the girder"""
+	def get_girder(self, girder_index: int, **extra_params) -> Generator[Element, None, None]:
+		"""
+		Get the elements on the girder
+		
+		Parameters
+		----------
+		girder_index: int
+			The girder id, starts from 1
+		
+		Additional parameters
+		---------------------
+		filter_types: list(str), optional
+			The types of elements to extract from the given girder
+		"""
 		for element in self.lattice:
-			if element.girder == girder_index:
+			if element.girder == girder_index and element in extra_params.get("filter_types", self._supported_elements):
 				yield element
 
 	def _get_quads_strengths(self) -> List[float]:
