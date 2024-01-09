@@ -1,11 +1,12 @@
 import json
 import warnings
+from abc import ABC
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
 _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(_set, _dict)}
 
-class Element():
+class Element(ABC):
 	"""
 	Generic class for element handling in the beamline
 

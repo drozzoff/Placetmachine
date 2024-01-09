@@ -442,7 +442,7 @@ class Beamline():
 			The types of elements to extract from the given girder
 		"""
 		for element in self.lattice:
-			if element.girder == girder_index and element in extra_params.get("filter_types", self._supported_elements):
+			if element.girder == girder_index and element.type in extra_params.get("filter_types", self._supported_elements):
 				yield element
 
 	def _get_quads_strengths(self) -> List[float]:

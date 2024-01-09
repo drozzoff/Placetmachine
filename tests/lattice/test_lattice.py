@@ -197,6 +197,57 @@ class ElementElementaryTest(unittest.TestCase):
 		self.assertEqual(self.beamline[3]['x'], 0.0)
 		self.assertEqual(self.beamline[3]['y'], 0.0)
 
+	def test_get_girder(self):
+		#creating a beamline with 3 girders with multiple elements on it
+
+		drift = Drift({
+			"name": "test_drift",
+			"length": 0.5,
+		})
+
+		quad = Quadrupole({
+			"name": 'test_quad',
+			"length": 1.0
+		})
+
+		cavity = Cavity({
+			"name": "test_cav",
+			"length": 2.0
+		})
+
+		# bulding the girder 1
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+
+		# bulding the girder 2
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+
+		# bulding the girder 3
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+		self.beamline.append(drift)
+		self.beamline.append(quad)
+
+		# testing girder 1
+		for element, i in zip(self.beamline.get_girder(1), range(5)):
+			self.assertIs(element, self.beamline[i] )
+
+		#testting girder 2
+		for element, i in zip(self.beamline.get_girder(2), range(5, 11)):
+			self.assertIs(element, self.beamline[i] )			
+
+		#testting girder 3
+		for element, i in zip(self.beamline.get_girder(3), range(10, 16)):
+			self.assertIs(element, self.beamline[i])
+			
 	def test_misalign_girder_general(self):
 
 		# creating a beamline with 1 girder and elements on it that have finite length
