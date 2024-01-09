@@ -11,7 +11,7 @@ def alive_check(func: Callable) -> Callable:
 	"""
 	Decorator that checks if the child process is alive before interacting with it.
 
-	Used with Communicator.writeline(), Communicator._readline(), and Communicator.readlines().
+	Used with `Communicator.writeline()`, `Communicator._readline()`, and `Communicator.readlines()`.
 	"""
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):
@@ -24,7 +24,7 @@ def alive_check(func: Callable) -> Callable:
 
 def logging(func: Callable) -> Callable:
 	"""
-	Decorator that logs the execution of Communicator.writeline(), Communicator.readline(), and Communicator.readlines().
+	Decorator that logs the execution of `Communicator.writeline()`, `Communicator.readline()`, and `Communicator.readlines()`.
 	"""
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):
@@ -41,39 +41,14 @@ def logging(func: Callable) -> Callable:
 
 class Communicator(ABC):
 	"""
-	A class used to interact with the process spawned with Pexpect
+	A class used to interact with the process spawned with `Pexpect`.
 	
-	...
-
 	Attributes
 	----------
-	process: pexpect.spawn
+	process : pexpect.spawn
 		The child process spawned with pexpect
-	debug_mode: bool, default False
+	debug_mode : bool
 		If True, running in debug mode
-
-	Methods
-	-------
-	add_send_delay(time = _DELAY_BEFORE_SEND)
-		Add the time delay before sending the data to child process
-	save_logs()
-		Create the files for logging the terminal in/out-put
-	writeline(command, skipline = True, timeout = _BASE_TIMEOUT)
-		Write the line to a child process
-	isalive()
-		Get the status of the child process
-	close()
-		Terminate the child procss
-	_readline(timeout = _BASE_TIMEOUT)
-		Read the line received from a child process
-	skipline(timeout = _BASE_TIMEOUT)
-		Same to _readline, but no return
-	readlines(N_lines, timeout = _BASE_TIMEOUT)
-		Read several lines received from a child process
-	flush()
-		Flush the child process buffer
-	save_debug_info(filename = "debug_data.pkl")
-		Save the debug data to a file
 
 	"""
 	_BASE_TIMEOUT = 100
@@ -86,17 +61,18 @@ class Communicator(ABC):
 		"""
 		Parameters
 		----------
-		process_name: str
-			name of the child process
+		process_name
+			Name of the child process
 
-		Additional parameters
-		---------------------
-		debug_mode: bool, default False
-			If True, runs Communicator in debug mode
-		save_logs: bool, default True
-			If True, invoking save_debug_info()
-		send_delay: float, default Communicator._BUFFER_MAXSIZE
-			The time delay before each data transfer to a child process (sometimes needed for stability)
+		Other parameters
+		----------------
+		debug_mode : bool
+			If `True` (default is `False`), runs `Communicator` in debug mode. 
+		save_logs : bool
+			If `True` (default is `True`) , invoking `Communicator.save_debug_info()`.
+		send_delay : float
+			The time delay before each data transfer to a child process (sometimes needed for stability).
+			Default is `Communicator._BUFFER_MAXSIZE`.
 		"""
 		self._process_name, self.debug_mode = process_name, kwargs.get('debug_mode', False),
 		self._save_logs = kwargs.get("save_logs", True)
@@ -130,7 +106,7 @@ class Communicator(ABC):
 		"""
 		Open the files to store the log data of a child process
 
-		default names are "log_send.txt" for logfile_send and "log_read.txt" for logfile_read
+		By default, the names are "log_send.txt" for logfile_send and "log_read.txt" for logfile_read.
 		"""
 		self.process.logfile_send = open("log_send.txt", "w")
 		self.process.logfile_read = open("log_read.txt", "w")
@@ -141,42 +117,39 @@ class Communicator(ABC):
 		"""
 		Send the line to a child process
 		
-		[10.03.2023] - Added the expect to search for a prompt given in _TERMINAL_SPECIAL_SYMBOL before invoking
-						`self.process.write()`.
-						Doing so, we make sure that we do not try to write while the process is still busy with the
-						previous command.
-						We set the default timeout of Communicator._BASE_TIMEOUT.
-						Ideally, this should fix the issue, when we run the commands that do not produce any output
-						in the terminal.
+		There is an `process.expect()` call to search for a prompt given in `Communicator._TERMINAL_SPECIAL_SYMBOL` before invoking
+		`self.process.write()`. Doing so, we make sure that we do not try to write while the process is still busy with the
+		previous command. We set the default timeout of `Communicator._BASE_TIMEOUT`.
+		Ideally, this fixes the issue, when we run the commands that do not produce any output
+		in the terminal.
 		
-		The optional parameters 'expect_before' and 'expect_after' used to specify when to use the expect command
-		in between writing the command
-		There has to be always 1 'expect' call after command execution. By default, one 'expect' call is used before
-		writing the command. In certain situations, one would want to do the 'expect' call after the command is written.
-		The parameter __expect_block controls the use of 'expect' commands - making sure, only 1 expect command is 
-		invoked in between commands. But, with 'no_expect' one can skip this limitation.
-		..........
+		The optional parameters `expect_before` and `expect_after` used to specify when to use the expect command
+		in between writing the command.
+		There has to be always 1 `expect` call after command execution. By default, one `expect` call is used before
+		writing the command. In certain situations, one would want to do the `expect` call after the command is written.
+		The parameter `__expect_block` controls the use of `expect` commands - making sure, only 1 expect command is 
+		executed in between 2 commands.
 
 		Parameters
 		----------
-		command: str
+		command
 			Command to execute
-		skipline: bool, default True
+		skipline
 			If True, reads the command that was sent to a child process from child's process output
 			This flag depends on the default running mode of pexpect. By default, it outputs to stdout what was just
 			send to stdin
-		timeout: float, default _BASE_TIMEOUT
+		timeout
 			Timeout of the reader before raising the exception.
-			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
+			*[30.11.2022] - No effect anymore. The parameter is kept for compatibility.*
 		
-		Additional parameters
-		---------------------
-		expect_before: bool default True
-			If True, expect is invoked before writing the command.
-		expect_after: bool default False
-			If True, expect is invoked after writing the command.
-		no_expect: bool, False
-			If True, no expect is invoked, ignoring __expect_block
+		Other parameters
+		----------------
+		expect_before : bool
+			If `True` (default is `True`), `expect()` is invoked before writing the command.
+		expect_after : bool
+			If `True` (default is `False`), `expect()` is invoked after writing the command.
+		no_expect : bool
+			If `True` (default is `False`), no `expect()` is invoked, ignoring `__expect_block`
 
 		Returns
 		-------
@@ -204,25 +177,25 @@ class Communicator(ABC):
 		return self.process.isalive()
 
 	def __terminate(self):
-		"""Terminate the child process"""
+		"""Terminate the child process."""
 		if self.isalive():
 			self.process.terminate()
 
 	def close(self):
-		"""Close all the associated threads running"""
+		"""Close all the associated threads running."""
 		self.__terminate()
 
 	@logging
 	@alive_check
-	def _readline(self, timeout = _BASE_TIMEOUT) -> str:
+	def _readline(self, timeout: float = _BASE_TIMEOUT) -> str:
 		"""
 		Read the line from the child process.
 
 		Parameters
 		----------
-		timeout: float, default Communicator._BASE_TIMEOUT
+		timeout:
 			Timeout of the reader before raising the exception.
-			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
+			*[30.11.2022] - No effect anymore. The parameter is kept for compatibility.*
 
 		Returns
 		-------
@@ -238,11 +211,11 @@ class Communicator(ABC):
 		"""
 		Skip the line of the child's process output.
 		
-		Paramaters
+		Parameters
 		----------
-		timeout: float, default Communicator._BASE_TIMEOUT
+		timeout
 			Timeout of the reader before raising the exception.
-			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
+			*[30.11.2022] - No effect anymore. The parameter is kept for compatibility.*
 		"""
 		self._readline(timeout)
 
@@ -266,9 +239,9 @@ class Communicator(ABC):
 		
 		Parameters
 		----------
-		N_lines: int
+		N_lines
 			Number of lines to read.
-		timeout: float, default Communicator._BASE_TIMEOUT
+		timeout
 			Timeout of the reader before raising the exception.
 			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
 
@@ -292,7 +265,7 @@ class Communicator(ABC):
 		
 		Parameters
 		----------
-		filename: str, default debug_data.pkl
+		filename
 			Name of the file.
 		"""
 		if self.debug_mode:
