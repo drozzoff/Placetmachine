@@ -1,6 +1,4 @@
 from functools import wraps
-import json
-import time
 from abc import ABC, abstractmethod
 import pandas as pd
 from typing import Callable, List
@@ -11,7 +9,9 @@ def alive_check(func: Callable) -> Callable:
 	"""
 	Decorator that checks if the child process is alive before interacting with it.
 
-	Used with `Communicator.writeline()`, `Communicator._readline()`, and `Communicator.readlines()`.
+	Used with [`writeline()`][placetmachine.placet.communicator.Communicator.writeline], 
+	[`readline()`][placetmachine.placet.communicator.Communicator.readline], and 
+	[`readlines()`][placetmachine.placet.communicator.Communicator.readlines].
 	"""
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):
@@ -24,7 +24,9 @@ def alive_check(func: Callable) -> Callable:
 
 def logging(func: Callable) -> Callable:
 	"""
-	Decorator that logs the execution of `Communicator.writeline()`, `Communicator.readline()`, and `Communicator.readlines()`.
+	Decorator that logs the execution of [`writeline()`][placetmachine.placet.communicator.Communicator.writeline], 
+	[`readline()`][placetmachine.placet.communicator.Communicator.readline], and 
+	[`readlines()`][placetmachine.placet.communicator.Communicator.readlines].
 	"""
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):
@@ -41,7 +43,7 @@ def logging(func: Callable) -> Callable:
 
 class Communicator(ABC):
 	"""
-	A class used to interact with the process spawned with `Pexpect`.
+	A class used to interact with the process spawned with [`Pexpect`](https://github.com/pexpect/pexpect).
 	
 	Attributes
 	----------
@@ -69,7 +71,7 @@ class Communicator(ABC):
 		debug_mode : bool
 			If `True` (default is `False`), runs `Communicator` in debug mode. 
 		save_logs : bool
-			If `True` (default is `True`) , invoking `Communicator.save_debug_info()`.
+			If `True` (default is `True`) , invoking [`save_debug_info()`][placetmachine.placet.communicator.Communicator.save_debug_info].
 		send_delay : float
 			The time delay before each data transfer to a child process (sometimes needed for stability).
 			Default is `Communicator._BUFFER_MAXSIZE`.
@@ -99,7 +101,14 @@ class Communicator(ABC):
 		self.__init()
 
 	def add_send_delay(self, time: float = _DELAY_BEFORE_SEND):
-		"""Add the time delay before each data transfer"""
+		"""
+		Add the time delay before each data transfer.
+		
+		Parameters
+		----------
+			time
+				The time delay.
+		"""
 		self.process.delaybeforesend = time
 
 	def save_logs(self):
@@ -115,13 +124,11 @@ class Communicator(ABC):
 	@alive_check
 	def writeline(self, command: str, skipline: bool = True, timeout: float = _BASE_TIMEOUT, **kwargs) -> str:
 		"""
-		Send the line to a child process
+		Send the line to a child process.
 		
-		There is an `process.expect()` call to search for a prompt given in `Communicator._TERMINAL_SPECIAL_SYMBOL` before invoking
-		`self.process.write()`. Doing so, we make sure that we do not try to write while the process is still busy with the
-		previous command. We set the default timeout of `Communicator._BASE_TIMEOUT`.
-		Ideally, this fixes the issue, when we run the commands that do not produce any output
-		in the terminal.
+		There is an `expect` call to search for a prompt defined in `Communicator._TERMINAL_SPECIAL_SYMBOL` (default value is '% ')
+		before writing to a process - `process.write()`. Doing so, we make sure that we do not try to write while the process 
+		is still busy with the previous command. We set the default timeout of `Communicator._BASE_TIMEOUT`.
 		
 		The optional parameters `expect_before` and `expect_after` used to specify when to use the expect command
 		in between writing the command.
@@ -145,11 +152,11 @@ class Communicator(ABC):
 		Other parameters
 		----------------
 		expect_before : bool
-			If `True` (default is `True`), `expect()` is invoked before writing the command.
+			If `True` (default is `True`), `expect` is invoked before writing the command.
 		expect_after : bool
-			If `True` (default is `False`), `expect()` is invoked after writing the command.
+			If `True` (default is `False`), `expect` is invoked after writing the command.
 		no_expect : bool
-			If `True` (default is `False`), no `expect()` is invoked, ignoring `__expect_block`
+			If `True` (default is `False`), no `expect` is invoked, ignoring `__expect_block`
 
 		Returns
 		-------

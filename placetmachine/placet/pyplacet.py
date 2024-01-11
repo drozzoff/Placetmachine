@@ -1,28 +1,24 @@
-import time
 from functools import wraps
-from typing import Callable
+from typing import Callable, Optional
 from placetmachine.placet import Communicator
 
 
 class PlacetCommand():
 	"""
-	A class to to classify the Placet commands
+	A class used to classify the **Placet** commands.
 
 	Attributes
 	----------
-	command: str
+	command : str
 		A line with Placet command, including all the options
-	timeout: float
+	timeout : float
 		The typical time margin for the execution time of the command. 
-
-		Is passed further to Placetpy - if execution takes longer than timeout, throws an exception
-	type: str
+		Is passed further to `Placetpy` - if execution takes longer than timeout, throws an exception
+	type : str
 		The type of the command. Corresponds to the command name, without any options
-	additional_lineskip: int
-		The number of lines that the command produces when executed. Most of the time
+	additional_lineskip : int
+		The number of lines that the command produces when executed.
 	
-	[23.11.2022] - Gotta revise the list of commands - some are missing. The solution is to check every time if command is in the commands list.
-
 	"""
 	command_types = ["custom", "set", "BeamlineNew", "BeamlineSet", "source", "puts", "BeamDump", "ElementGetAttribute", "WriteGirderLength", "SurveyErrorSet", "Clic", "Zero", "SaveAllPositions", 
 					"InterGirderMove", "TestNoCorrection", "RandomReset", "TestSimpleCorrection", "ReadAllPositions", "QuadrupoleSetStrength", "InjectorBeam", "BeamRead", "wake_calc", "SetRfGradientSingle",
@@ -35,30 +31,28 @@ class PlacetCommand():
 
 	def __init__(self, command: str, **kwargs):
 		"""
-		
 		Parameters
 		----------
-		command: str
-			The command including all the options as a string
+		command
+			The command including all the options as a string.
 		
-		Additional parameters
-		---------------------
-		timeout: float
-			A timeout for the command execution in Placet
-		type: str
-			A command name without any parameters
-		additional_lineskip: int
-			The number of lines of the Placet output to skip after writing the command
-
-			Each command type has its additional_lineskip associated with it. The value passed here will overwrite it.
-		
-		expect_before: bool default True
-			If True, expect command is invoked before 'writing' the command.
-		expect_after: bool default False
-			If True, expect command is invoked after 'writing' the command.
-		no_expect: bool default False
-			If True, expect command for the command prompt is not invoked neither before or after doing 'write'.
-			Overwrites 'expect_before' and 'expect_after'.
+		Other parameters
+		----------------
+		timeout : Optional[float]
+			A timeout for the command execution in Placet.
+		type : str
+			A command type. Correspons to the command name without any parameters.
+			If not provided, is evaluated automatically.
+		additional_lineskip : int
+			The number of lines of the Placet output to skip after writing the command.
+			If not provided, is evaluated automatically based on the type of a command.
+		expect_before : bool
+			If `True` (default is `True`), `expect` command is invoked before 'writing' the command.
+		expect_after : bool
+			If `True` (default is `False`), `expect` command is invoked after 'writing' the command.
+		no_expect : bool
+			If `True` (default is `False`), `expect` command for the command prompt is not invoked neither before or after doing 'writing'.
+			Overwrites `expect_before` and `expect_after` parameters.
 		"""
 		self.command = command
 		self.timeout = kwargs.get('timeout', None)
@@ -68,7 +62,7 @@ class PlacetCommand():
 		self.expect_before = kwargs.get('expect_before', True)
 		self.expect_after = kwargs.get('expect_after', False)
 
-	def _additional_lineskip(self, command_type: str):
+	def _additional_lineskip(self, command_type: str) -> int:
 		"""
 		Assign the default value of additional_lineskip to a command.
 
@@ -76,10 +70,11 @@ class PlacetCommand():
 		
 		Parameters
 		----------
-		command_type: str
-			The command type
+		command_type
+			The command type.
 
 		Returns
+		-------
 		int
 			The value of the additional_lineskip.
 		"""
@@ -105,7 +100,7 @@ class PlacetCommand():
 
 		Parameters
 		----------
-		command: str
+		command
 			The full command, including parameters
 		
 		Returns
@@ -127,12 +122,12 @@ class PlacetCommand():
 
 def error_seeker(func: Callable) -> Callable:
 	"""
-	Decorator that checks for the words "error"/"warning" in PLACET output
+	Decorator that checks for the words "error"/"warning" in PLACET output.
 
-	Checks if the output does not contain an error.
+	Checks the output of the decorated function.
 
-	If containts "ERROR", throws an exception
-	If containts "WARNING", throws an exception
+	If containts "ERROR", throws an exception.
+	If containts "WARNING", throws an exception.
 	"""
 	@wraps(func)
 	def wrapper(self, timeout: float = None):
@@ -148,7 +143,12 @@ def error_seeker(func: Callable) -> Callable:
 	return wrapper
 
 def logging(func: Callable) -> Callable:
-	"""Logging decorator used, when debug mode is on"""
+	"""
+	Logging decorator. 
+	
+	By default does not do anything. When debug mode is invoked prints the functions'
+	execution summary
+	"""
 	@wraps(func)
 	def wrapper(self, *args, **kwargs):
 		if self.debug_mode:
@@ -165,35 +165,30 @@ def logging(func: Callable) -> Callable:
 
 class Placetpy(Communicator):	
 	"""
-	A class used to interact with Placet process running in background
+	A class used to interact with **Placet** process running in background.
 
-	Extends Communicator to run Placet and Placet commands
-	...
-	
-	Methods
-	-------
-	run_command(command, skipline = True)
-		Run the given command in Placet
+	Extends [`Communicator`][placetmachine.placet.communicator.Communicator] to run **Placet**
+	and its commands of the proper format.
 	"""
 	_INTRO_LINES = 19
 	def __init__(self, name: str = "placet", **kwargs):
 		"""
 		Parameters
 		----------
-		name: string default placet
-			The name of the process to start. Should be the command starting Placet interactive shell
+		name
+			The name of the process to start. Should be the command starting **Placet** interactive shell.
 
-		Additional parameters
-		---------------------
-		show_intro: bool default True
-			If True, prints the welcome message of Placet at the start
-		debug_mode: bool, default False
-			If True, runs Communicator in debug mode
-		save_logs: bool, default True
-			If True, invoking save_debug_info()
-		send_delay: float, default Communicator._BUFFER_MAXSIZE
-			The time delay before each data transfer to a child process (sometimes needed for stability)
-		
+		Other parameters
+		----------------
+		show_intro : bool
+			If `True` (defauls is `True`), prints the welcome message of Placet at the start.
+		debug_mode : bool
+			If `True` (default is `False`), runs `Placetpy` in debug mode. 
+		save_logs : bool
+			If `True` (default is `True`) , invoking [`save_debug_info()`][placetmachine.placet.pyplacet.Placetpy.save_debug_info].
+		send_delay : float
+			The time delay before each data transfer to a child process (sometimes needed for stability).
+			Default is `Placetpy._BUFFER_MAXSIZE`.
 		"""
 		super(Placetpy, self).__init__(name, **kwargs)
 		self._show_intro = kwargs.get("show_intro", True)
@@ -208,20 +203,20 @@ class Placetpy(Communicator):
 				print(tmp, end = "")
 
 	def restart(self):
-		"""Restart the child process"""
+		"""Restart the child process."""
 		self._restart()
 		self.__read_intro()
 
 	@error_seeker
-	def readline(self, timeout = Communicator._BASE_TIMEOUT):
+	def readline(self, timeout: float = Communicator._BASE_TIMEOUT):
 		"""
-		Read the line from PLACET process.
+		Read the line from **Placet** process.
 
 		Parameters
 		----------
-		timeout: float, default Communicator._BASE_TIMEOUT
+		timeout
 			Timeout of the reader before raising the exception.
-			[30.11.2022] - No effect anymore. The parameter is kept for compatibility.
+			*No effect anymore. The parameter is kept for compatibility.*
 
 		Returns
 		-------
@@ -233,18 +228,19 @@ class Placetpy(Communicator):
 	@logging
 	def run_command(self, command: PlacetCommand, skipline: bool = True):
 		"""
-		Run the given command in Placet.
+		Run the given command in **Placet**.
 
-		Does not return any value. 
-		The output after the execution is up to the user to read with Communicator.writeline()
+		**Does not return any value.**
+		The output after the execution is up to the user to read with [`readline()`][placetmachine.placet.pyplacet.Placetpy.readline]
+		or [`readlines()`][placetmachine.placet.pyplacet.Placetpy.readlines].
 
 		Parameters
 		----------
-		command: PlacetCommand
+		command
 			The command to pass to Placet.
-			Has to be of PlacetCommand type
-		skipline: bool, default True
-			If True invokes skipline() to read the written command from the buffer
+		skipline
+			If `True` invokes [`skipline()`][placetmachine.placet.pyplacet.Placetpy.skipline] to read the command back from the buffer.
+			This option is needed when the process writes the command it 'writes' into the out buffer.
 		"""
 		opt = {
 			'no_expect': command.no_expect,
