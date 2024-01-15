@@ -1,9 +1,8 @@
 from pandas import DataFrame
 import re
 import shlex
-from typing import List, Callable, Generator
+from typing import List, Callable, Generator, Optional
 import warnings
-
 from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element
 
 
@@ -12,40 +11,82 @@ _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(
 
 class AdvancedParser:
 	"""
-	A class to do the parsing of the PLACET lattice.
+	A class to do the advances parsing of the Placet lattice.
 
 	Can perform the following measures:
-		- Read and remember values that are set. Eg.:
-			% set tmp 5
-		- Put the value instead of the variable. Eg.:
-			% .. -strength expr [0.5*$e0] .. -> % .. -strength expr [0.5*190.0] ..
-			% .. -e0 $e_initial .. -> .. -e0 190.0 ..
-		- Evaluate the values inside of the expr call. Eg.:
-			% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
-		- Remove the comments part from the line
-			% .. -strength 95.0 # text.. -> .. -strength 95.0
+	
+	- Read and remember values that are set.
+
+	    `% set tmp 5`
+
+	- Put the value instead of the variable.
+	    1. `% .. -strength expr [0.5*$e0] .. ` -> `% .. -strength expr [0.5*190.0] .. `
+	    2. `% .. -e0 $e_initial .. ` -> ` .. -e0 190.0 .. `
+	- Evaluate the values inside of the `expr` call.
+
+	    `% .. -strength expr [0.5*190.0] .. ` -> `% .. -strength 95.0 .. `
+
+	- Remove the comments part from the line.
+
+	    `% .. -strength 95.0 # text.. ` -> `% .. -strength 95.0 `
 
 	Attributes
 	----------
+	variables : dict
+		Contains the values associated with the variables.
+
+		Can be declared upon `AdvanceParser` instance initiation. It also gets
+		automatically extended in the parsing process.
 
 	"""
 	def __init__(self, **variables_list):
-		"""Taking the variables list a"""
+		"""
+		Accepts any keyword arguments in `variables_list`. These values are going to be kept in `variables` attribute.
+
+		Can be used to globally modify certain parameters in the beamline, eg. energy (`e0`).
+		"""
 		self.variables = variables_list
 
 		#making sure, everyhting is str:
 		self.variables = {key: str(self.variables[key]) for key in self.variables}
 
-	def replace_variables(self, var):
-		"""Get the variable from the memory. If does not exist, set to '0'"""
+	def replace_variables(self, var: str) -> str:
+		"""
+		Replace the input variable by the corresponding value stored in the 
+		memory (`variables` attribute).
+		
+		If variable does not exist, sets it to `'0'`.
+
+		Parameters
+		----------
+		var
+			The variable to transform.
+		
+		Returns
+		-------
+		str
+			The value corresponding to the variable.
+		"""
 		if var not in self.variables:
 			warnings.warn(f"Variable '{var}' is missing. It is assigned to '0'.")
 			self.variables[var] = "0"
 
 		return self.variables[var]
 
-	def evaluate_expression(self, match):
-		"""Evaluate the expression from inside of a Tcl expr []"""
+	def evaluate_expression(self, match: str) -> str:
+		"""
+		Evaluate the expression from inside of a Tcl form `expr [..]`.
+
+		Parameters
+		----------
+		match
+			An expression to evaluate.
+		
+		Returns
+		-------
+		str
+			Evaluated value.
+		"""
 		parameter = match.group(1)
 		expression_with_vars = match.group(2)
 		
@@ -55,25 +96,36 @@ class AdvancedParser:
 		result = eval(expression)
 		return f"{parameter} {result}"
 
-	def parse(self, line: str):
+	def parse(self, line: str) -> str:
 		"""
-		Parse the line.
+		Parse the line. Returns the line after applied transformations.
 
-		Currently, can perform the following measures:
-			- Read and remember values that are set. Eg.:
-				% set tmp 5
-			- Put the value instead of the variable. Eg.:
-				% .. -strength expr [0.5*$e0] .. -> % .. -strength expr [0.5*190.0] ..
-				% .. -e0 $e_initial .. -> .. -e0 190.0 ..
-			- Evaluate the values inside of the expr call. Eg.:
-				% .. -strength expr [0.5*190.0] .. -> .. -strength 95.0 ..
-			- Remove the comments part from the line
-				% .. -strength 95.0 # text.. -> .. -strength 95.0
-		..........
+		Automatically performs the following:
+	
+		- Read and remember values that are set.
+
+		    `% set tmp 5`
+
+		- Put the value instead of the variable.
+		    1. `% .. -strength expr [0.5*$e0] .. ` -> `% .. -strength expr [0.5*190.0] .. `
+		    2. `% .. -e0 $e_initial .. ` -> ` .. -e0 190.0 .. `
+		- Evaluate the values inside of the `expr` call.
+
+		    `% .. -strength expr [0.5*190.0] .. ` -> `% .. -strength 95.0 .. `
+
+		- Remove the comments part from the line.
+
+		    `% .. -strength 95.0 # text.. ` -> `% .. -strength 95.0 `
+
 		Parameters
 		----------
-		line: str
-			The string line to parse
+		line
+			The string line to parse.
+		
+		Returns
+		-------
+		str
+			The parsed line.
 		"""
 		# Remove the comments
 		line = re.sub(r'#.*', '', line)
@@ -92,74 +144,37 @@ class AdvancedParser:
 		
 		return line
 
-class Beamline():
+class Beamline:
 	"""
-	A class used to store the lattice
+	A class used to store the beamline lattice.
 
-	Fully compatible with Placet and can be imported.
+	Fully compatible with **Placet** and can be imported from **Placet** lattice.
+
+	The element types it supports:
+	```
+	["Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
+	```
 	
+	The class `Beamline` is iterative and elements in the lattice in the beamline
+	can be accessed as in the normal `list`. For examples see: [][]
+	
+	**Parsers:**
+	There are 2 parsers in the `Beamline` that allow to parse the Placet lattice:
+	```
+	["default", "advanced"]
+	```
+
+	- The `"default"` expects the lattice to be well structured with no variables or expressions.
+	
+	- The `"advanced"` can parse the variables, expressions and keep the variables in memory.
+		See [AdvancedParser][placetmachine.lattice.lattice.AdvancedParser].
+
 	Attributes
 	----------
-	name: str
+	name : str
 		Name of the beamline.
-	lattice: list, default []
+	lattice : List[Element]
 		The list of the elements forming the beamline.
-
-		The accepted elements are Bpm, Cavity, Quadrupole, Drift
-	girders: dict
-		The dict containing the following info:
-		{
-			'girder1': [elems on girder1]
-			'girder2': [elems on girder2]
-			..
-		}
-	quad_numbers_list: list
-		The list with the quadrupoles indices
-	cavity_numbers_list: list
-		The list with the cavities indices
-	bpm_numbers_list: list
-		The list with the bpms indices
-
-	Methods
-	-------
-	cache_lattice_data(elements)
-		Cache up the data for certain types of the elements
-	upload_from_cache(elements, clear_cache = False)
-		Restore the cached data for certain elements
-	read_placet_lattice(filename: str, **extra_params)
-		Read the lattice from the Placet lattice file
-	get_girders_number()
-		Get the total number of the girders in the beamline
-	quad_numbers_list()
-		Get the list of the Quadrupoles indices
-	cavs_numbers_list()
-		Get the list of the Cavities indices
-	bpms_numbers_list()
-		Get the list of the BPMs indices
-	get_cavs_list()
-		Get the list of the Cavities in the beamline
-	get_quads_list()
-		Get the list of the Quadrupoles in the beamline
-	get_bpms_list()
-		Get the list of the Bpms in the beamline
-	get_drifts_list()
-		Get the list of the Drifts in the beamline
-	get_dipoles_list()
-		Get the list of the dipoles in the beamline
-	get_sbends_list()
-		Get the list of the dipoles in the beamline
-	get_multipoles_list()
-		Get the list of the dipoles in the beamline
-	get_girder(girder_index)
-		Get the list of the elements on the girder
-	to_placet(filename = None)
-		Convert the lattice to a Placet readable format
-	read_misalignments(filename, **extra_params)
-		Read the lattice misalignments from a file (same format Placet uses)
-	save_misalignments(filename, **extra_params)
-		Save the lattice misalingments to a file (same format Placet uses)
-	parse_beamline()
-		Parse the Placet lattice file and read it to Beamline.lattice
 	"""
 
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
@@ -169,7 +184,7 @@ class Beamline():
 		"""
 		Parameters
 		----------
-		name: str
+		name
 			Name of the beamline.
 		"""
 		self.name, self.lattice = name, []
@@ -200,24 +215,27 @@ class Beamline():
 		Append a given element at the end of the lattice.
 
 		By default, places the element on the same girder as previous one. 
-		If the previous one is not on the girder or this is the first element, the element is not placet on girder
+		If the previous element is not on the girder or this is the first element, 
+		the element is not placed on girder.
 
-		Note: append() works by creating by duplicating a given element and then appending it. Thus, the original and 
-			appended element do not share the same reference.
+		**`append()` works by duplicating a given element and then appending it. 
+		Thus, the original and the appended element do not share the same reference**.
+
+		Also, the **girders numbering starts from 1**.
 
 		Parameters
 		----------
-		element: Element
-			Element to append at the end of the sequence
+		element : Element
+			Element to append at the end of the sequence.
 		
-		Additional parameters
-		---------------------
-		new_girder: bool, default False
-			If True, places the element on a new girder. Otherwise places it on the same girder last element is placed.
+		Other parameters
+		----------------
+		new_girder : bool
+			If `True` (default is `False`), places the element on a new girder. 
+			Otherwise places it on the same girder last element is placed.
 
-			If False and there are no elements in the lattice, does not set any girder number (defaults to None)
-
-			Note: the girders numbering starts from 1.
+			If `False` and there are no elements in the lattice, does not set any girder number 
+			(defaults to `None`).
 		"""
 		new_element = element.duplicate(element)
 		if extra_params.get('new_girder', False):
@@ -244,28 +262,28 @@ class Beamline():
 		
 		self.lattice.append(new_element)
 
-	def at(self, element_id: int):
+	def at(self, element_id: int) -> Element:
 		"""
-		Return the element at a given location
+		Return the element at a given location.
 		
 		Parameters
 		----------
-		element_id: int
+		element_id
 			The id of the element
 		
 		Returns
 		-------
 		Element
-			Element at the given location
+			Element at the given location.
 		"""
-		return self.lattice[element_id]
+		return self.lattice.at(element_id)
 
 	def __setitem__(self, index: int, element: Element):
-		"""
-		Set the given element at the given position
-		
-		The element is copied and placed on the same girder the element before it was.
-		"""
+		#
+		# Set the given element at the given position
+		#
+		# The element is copied and placed on the same girder the element before it was.
+		#
 		new_element = element.duplicate(element)
 		new_element.girder = self.lattice[index].girder
 
@@ -275,7 +293,9 @@ class Beamline():
 		return self.lattice[index]
 	
 	def __iter__(self):
-		"""Return an iteratable object and reset iteration index"""
+		#
+		# Return an iteratable object and reset iteration index
+		#
 		self._iter_index = 0
 		return self
 
@@ -290,7 +310,7 @@ class Beamline():
 		else:
 			raise StopIteration
 
-	def _verify_supported_elem_types(self, types: List[str] = None):
+	def _verify_supported_elem_types(self, types: Optional[List[str]] = None):
 		if types is None:
 			return None
 		for elem_type in types:
@@ -300,14 +320,13 @@ class Beamline():
 
 	def cache_lattice_data(self, elements: List[Element]):
 		"""
-		Cache up the data for certain types of the elements
+		Cache up the data for certain elements.
 		
 		Parameters
 		----------
-		elements: List[Element]
+		elements
 			The list of the elements' references to cache.
 			Each element in the list must be present in the Beamline.
-
 		"""
 		for element in elements:
 			if element not in self.lattice:
@@ -316,15 +335,15 @@ class Beamline():
 
 	def upload_from_cache(self, elements: List[Element], clear_cache: bool = False):
 		"""
-		Restore the cached data for certain elements
+		Restore the cached data for certain elements.
 
 		Parameters
 		----------
-		elements: List[Element]
+		elements
 			The list of the elements' references to restore the cache values.
-			Each element in the list must be present in the Beamline.
-		clear_cache: bool, default False
-			If True, clears the cached beamline
+			Each element in the list must be present in the `Beamline`.
+		clear_cache
+			If `True`, clears the cached data.
 		"""
 		for element in elements:
 			if element not in self.lattice:
@@ -333,23 +352,24 @@ class Beamline():
 
 	def read_placet_lattice(self, filename: str, **extra_params):
 		"""
-		Read the lattice from the Placet lattice file
+		Read the lattice from the Placet lattice file.
 
 		Girders numbering starts from 1.
-		Evaluates the longitudinal coordinates while parsing the lattice. The coordinate s corresponds to the element exit.
+		Evaluates the longitudinal coordinates while parsing the lattice. The coordinate `s` corresponds 
+		to the element exit.
 
 		Parameters
 		----------
-		filename: str
-			Name of the file with the lattice
+		filename
+			Name of the file with the lattice.
 
-		Additional parameters
-		---------------------
-		debug_mode: bool default False
-			If True, prints all the information it reads and processes
-		parser: str default "default"
-			Type of parser to be used. See Beamline._parsers
-		parser_variables: {}
+		Other parameters
+		----------------
+		debug_mode : bool
+			If True (default is `False`), prints all the information it reads and processes.
+		parser : str
+			Type of parser to be used. The available optics are `"default"` (default one) and `"advanced"`.
+		parser_variables : {}
 			The dict with the variables for the 'advanced parser'.
 		"""
 		parser = extra_params.get('parser', "default")
@@ -392,20 +412,29 @@ class Beamline():
 				self.lattice.append(element)
 
 	def get_girders_number(self) -> int:
-		"""Get the total number of the girders in the beamline"""
+		"""
+		Get the total number of the girders in the beamline
+		
+		Returns
+		-------
+		int
+			The total number of girders in the lattice.
+		"""
 		return self.lattice[-1].girder
 
 	def extract(self, element_types: List[str]) -> Generator[Element, None, None]:
 		"""
-		Get the generator of the elements of the given types
+		Extract certain element type from the lattice.
 
 		Parameters
 		----------
-		element_types: str
-			The types of elements to extract. Each entity must exist in Beamline._supported_elements
+		element_types
+			The types of elements to extract.
 		
-		Returns:
-		Generator
+		Yields
+		------
+		Element
+			Element that satisfy the selection criteria.
 		"""
 		for element_type in element_types:
 			if element_type not in self._supported_elements:
@@ -429,17 +458,22 @@ class Beamline():
 
 	def get_girder(self, girder_index: int, **extra_params) -> Generator[Element, None, None]:
 		"""
-		Get the elements on the girder
+		Get the element(s) located on the given girder.
 		
 		Parameters
 		----------
-		girder_index: int
-			The girder id, starts from 1
+		girder_index
+			The girder id. The girder numbering starts from 1.
 		
-		Additional parameters
-		---------------------
-		filter_types: list(str), optional
-			The types of elements to extract from the given girder
+		Other parameters
+		----------------
+		filter_types : Optional[List[str]]
+			The types of elements to extract from the given girder.
+		
+		Yields
+		------
+		Element
+			Element extracted from the girder.
 		"""
 		for element in self.lattice:
 			if element.girder == girder_index and element.type in extra_params.get("filter_types", self._supported_elements):
@@ -462,24 +496,20 @@ class Beamline():
 		"""
 		Apply the geometrical misalignments to the element given by the element_index.
 
-		An alternative is to individually apply the misalignment
-			>>> for element in beamline:
-			>>> 	element.settings['x'] += delta_x
-		
-		Additional parameters
-		---------------------
-		element_index: int
-			The id of the element in the lattice
-		x: float default 0.0
-			The horizontal offset in micrometers
-		xp: float default 0.0
-			The horizontal angle in micrometers/m
-		y: float default 0.0
-			The vertical offset in micrometers
-		yp: float default 0.0
-			The vertical angle in micrometers/m
-		roll: float default 0.0
-			The roll angle in microrad
+		Other parameters
+		----------------
+		element_index : int
+			The id of the element in the lattice. **Required**
+		x : float
+			The horizontal offset in micrometers. Default is `0.0`.
+		xp : float
+			The horizontal angle in micrometers/m. Default is `0.0`.
+		y : float
+			The vertical offset in micrometers. Default is `0.0`.
+		yp : float
+			The vertical angle in micrometers/m. Default is `0.0`.
+		roll : float
+			The roll angle in microrad. Default is `0.0`.
 
 		"""
 		_options = ['x', 'xp', 'y', 'yp', 'roll']
@@ -498,21 +528,24 @@ class Beamline():
 		"""
 		Apply the geometrical misalignments to several elements
 
-		Additional parameters
-		---------------------
-		offsets_data: dict
-			The dictionary with the elements offsets in the following format
-			{
-				'element_id1': {
-					'x': ..
-					'y': ..
+		Other parameters
+		----------------
+		offsets_data : dict
+			The dictionary with the elements offsets in the following format:
+			```
+				{
+					'element_id1': {
+						'x': ..
+						'y': ..
+						..
+					}
+					'element_id2': {
+						..
+					}
 					..
 				}
-				'element_id2':{
-					..
-				}
-				..
-			}
+			```
+			**Required**
 		"""
 		_options = []
 		
@@ -525,23 +558,23 @@ class Beamline():
 
 	def misalign_girder_general(self, **extra_params):
 		"""
-		Misalign the girder by means of moving its end points
+		Misalign the girder by means of moving its end points.
 		
-		Additional parameters
-		---------------------
-		girder: int
-			The id of the girder
-		x_right: float default 0.0
-			The horizontal offset in micrometers of right end-point
-		y_right: float default 0.0
-			The vertical offset in micrometers of the right end-point
-		x_left: float default 0.0
-			The horizontal offset in micrometers of left end-point
-		y_left: float default 0.0
-			The vertical offset in micrometers of the left end-point
-		filter_types: list(Element), optional
-			The types of elements to apply the misalignments to
-			By default, the misalignments are applied to all the elements on the girder
+		Other parameters
+		----------------
+		girder : int
+			The id of the girder. **Required**
+		x_right : float
+			The horizontal offset in micrometers of right end-point. Default is `0.0`.
+		y_right : float
+			The vertical offset in micrometers of the right end-point. Default is `0.0`.
+		x_left : float
+			The horizontal offset in micrometers of left end-point. Default is `0.0`.
+		y_left : float
+			The vertical offset in micrometers of the left end-point. Default is `0.0`.
+		filter_types : Optional[List[str]]
+			The types of elements to apply the misalignments to.
+			By default, the misalignments are applied to all the elements on the girder.
 		"""
 		# Check the correctness of the types
 		filter_types = extra_params.get('filter_types', None)
@@ -579,20 +612,20 @@ class Beamline():
 
 	def misalign_girder(self, **extra_params):
 		"""
-		Offset the girder along with the elements on it.
+		Offset the girder transversaly together with the elements on it.
 
 		All the elements on the girder are equally misaligned.
 
-		Additional parameters
-		---------------------
-		girder: int
-			The id of the girder
-		filter_types: list(Element), optional
-			The types of elements to apply the misalignments to
-			By default, the misalignments are applied to all the elements on the girder
-		x: float default 0.0
+		Other parameters
+		----------------
+		girder : int
+			The girder ID.
+		filter_types : Optional[List(str)]
+			The types of elements to apply the misalignments to.
+			By default, the misalignments are applied to all the elements on the girder.
+		x : float
 			The horizontal offset in micrometers
-		y: float default 0.0
+		y : float
 			The vertical offset in micrometers
 		"""
 		_options = ['x', 'y']
@@ -604,27 +637,26 @@ class Beamline():
 		"""
 		Offset the articulation point either between 2 girders or at the beamline start/end.
 
-		The girders and elements on them are misalligned accordingly.
+		The girders and elements on them are misalligned accordingly (wrt the geometry of the girder).
 
-		Additional parameters
-		---------------------
-		girder_left: int, optional
-			The id of the girder to the left of the articulation point
-		girder_right: int, optional
-			The id of the girder to the roght of the articulation point
-		x: float, default 0.0
-			The horizontal offset in micrometers
-		y: float, default 0.0
-			The vertical offset in micrometers
-		filter_types: list(Element), optional
-			The types of elements to apply the misalignments to
-			By default, the misalignments are applied to all the elements on the girder
-			
-		There is an option to provide the ids of the girders to the right and to the left of the articulation point.
-		That require girder_right - girder_left = 1, otherwise an exception will be raised.
+		There is an option to provide the ids of the girders to the right and to the left of the articulation point. That 
+		require `girder_right` - `girder_left` to be equal 1, otherwise an exception will be raised.
 
-		It is possible to provide only 1 id either of the right or the left one. This also works for the start/end of the beamline
+		It is possible to provide only 1 id either of the right or the left one. This also works for the start/end of the beamline.
 
+		Other parameters
+		----------------
+		girder_left : Optional[int]
+			The ID of the girder to the left of the articulation point.
+		girder_right : Optional[int]
+			The ID of the girder to the right of the articulation point.
+		x : float
+			The horizontal offset in micrometers. Default is `0.0`.
+		y : float
+			The vertical offset in micrometers. Default is `0.0`.
+		filter_types : Optional[List[str]]
+			The types of elements to apply the misalignments to.
+			By default, the misalignments are applied to all the elements on the girder.
 		"""
 		_options = ['x', 'y']
 		filter_types = extra_params.get('filter_types', None)
@@ -671,15 +703,16 @@ class Beamline():
 		"""
 		Misalign the girders according to the dictionary.
 
-		Essentially, it is Beamline.misalign_girder() function extended on many girders.
-		That input data should have the same structure as the one passed to Beamline.misalign_girder().
+		Essentially, it is [`Beamline.misalign_girder`][placetmachine.lattice.lattice.Beamline.misalign_girder] function extended on many girders.
+		That means the input data should have the same structure as the one passed to [`Beamline.misalign_girder`][placetmachine.lattice.lattice.Beamline.misalign_girder].
 		
-		Maybe, instead Beamline.misalign_girder() it will be replaced with Beamline.misalign_girder_general().
+		*Maybe, instead Beamline.misalign_girder() it will be replaced with Beamline.misalign_girder_general().*
 
-		Additional parameters
-		---------------------
-		offsets_data: dict
-			The dictionary with the girders offsets in the following format
+		Other parameters
+		----------------
+		offsets_data : dict
+			The dictionary with the girders offsets in the following format:
+			```
 			{
 				'girder_id1': {
 					'x': ..
@@ -691,9 +724,10 @@ class Beamline():
 				}
 				..
 			}
-		filter_types: list(Element), optional
-			The types of elements to apply the misalignments to
-			By default, the misalignments are applied to all the elements on the girder
+			```
+		filter_types : Optional[List[str]]
+			The types of elements to apply the misalignments to.
+			By default, the misalignments are applied to all the elements on the girder.
 		"""
 		if not 'offset_data' in extra_params:
 			raise Exception("'offset_data' is missing")
@@ -704,13 +738,13 @@ class Beamline():
 		for girder in girders:
 			self.misalign_girder(girder = int(girder), **girders[girder], **_extract_dict(_options, extra_params))
 
-	def to_placet(self, filename: str = None) -> str:
+	def to_placet(self, filename: Optional[str] = None) -> str:
 		"""
-		Write the lattice in Placet readable format
+		Write the lattice in Placet readable format.
 		
-		Paremeters
+		Parameters
 		----------
-		filename: str, optional
+		filename
 			The name of the file to write the Placet lattice to.
 
 		Returns
@@ -735,22 +769,22 @@ class Beamline():
 	"""misallignments handling"""
 	def read_misalignments(self, filename: str, **extra_params):
 		"""
-		Read the misalignments from the file
+		Read the misalignments from the file.
 
-		The structure of the file should correspond to the lattice in the memory
+		The structure of the file should correspond to the lattice in the memory. Otherwise
+		Placet is going to produce errors.
 		
-		Paremeters
+		Parameters
 		----------
-		filename: str
-			Name of the file with the misalignment.
+		filename
+			Name of the file with the misalignments.
 
-		Additional parameters
-		---------------------
-		cav_bpm: bool
-
-		cav_grad_phas: bool
-			
-
+		Other parameters
+		----------------
+		cav_bpm : bool
+			Check Placet manual.
+		cav_grad_phas : bool
+			Check Placet manual.
 		"""
 		if self.lattice == []:
 			raise ValueError("Empty lattice")
@@ -797,22 +831,21 @@ class Beamline():
 
 	def save_misalignments(self, filename: str, **extra_params):
 		"""
-		Write the misalignments to a file
+		Write the misalignments to a file.
 
-		The structure of the file is the same to what is produced with Placet.SaveAllPositions
+		The structure of the file is the same to what is produced with [`Placet.SaveAllPositions`][placetmachine.placet.placetwrap.Placet.SaveAllPositions].
 		
-		Paremeters
+		Parameters
 		----------
-		filename: str
+		filename
 			Name of the file with the misalignment.
 
-		Additional parameters
-		---------------------
-		cav_bpm: bool
-
-		cav_grad_phas: bool
-			
-
+		Other parameters
+		----------------
+		cav_bpm : bool
+			Check Placet manual.
+		cav_grad_phas : bool
+			Check Placet manual.
 		"""
 		if self.lattice == []:
 			raise ValueError("Empty lattice")
@@ -823,7 +856,7 @@ class Beamline():
 					res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
 
 					if element.type == "Quadrupole":
-						res += f" {element.settings['roll']}"
+						res += f" {element.settisngs['roll']}"
 
 					if element.type == "Cavity":
 						if extra_params.get('cav_bpm', True) and extra_params.get('cav_grad_phas', True):
@@ -834,25 +867,25 @@ class Beamline():
 				res += "\n"
 			f.write(res)
 
-def parse_line(data: str, girder_index: int = None, index: int = None):
+def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[int] = None):
 	"""
-	Parse the line of the file with PLACET elements.
+	Parse the line of the file with Placet elements.
 
 	Parameters
 	----------
-	data: str
-		The line from the PLACET file
-	girder_index: optional
-		The girder number of the current element
-	index: optional
-		The current element's id
+	data
+		The line from the PLACET file.
+	girder_index
+		The girder number of the current element.
+	index
+		The current element's id.
 	
 	Returns
 	-------
-	Element_type, Element
-		Element_type is either a value from Beamline._supported_elements, 'Girder' or None. None is returned when the line 
-		does not contain any element (comment, set command, etc.)
-		Element is the object of the corresponding type, if exists. In other case (girder, etc.) returns None.
+	tuple(Optional[str], Optional[Element])
+		The first value is either a value from `Beamline._supported_elements`, `"Girder"` or `None`. 
+		`None` is returned when the line does not contain any element (for example it is a comment, set command, etc.)
+		[`Element`][placetmachine.lattice.element.Element] is the object of the corresponding type, if exists. In other case (girder, etc.) returns None.
 	"""
 	if data == '':
 		return None, None

@@ -1,35 +1,45 @@
-from placetmachine.lattice import Element
 from typing import List
 from pandas import DataFrame
+from placetmachine.lattice import Element
 
 
 class Knob:
+	"""
+	A class used to create a Knob.
+
+	A knob is a certain change in the beamline (elements offsets, strengths change, etc.)
+	that is applied to modify change conditions like beam waist, dispersion or something
+	more complex.
+
+	So far the elements' types accepted for the knobs creation are [`Quadrupole`][placetmachine.lattice.quadrupole.Quadrupole]
+	and [`Cavity`][placetmachine.lattice.cavity.Cavity].
+
+	The `Knob` is going to store the references of the [`Element`][placetmachine.lattice.element.Element]s provided and use them to 
+	apply the changes. Thus changes to the elements here are going to change the originals.
+	"""
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 	_accepted_types = ['Quadrupole', 'Cavity']
 
 	def __init__(self, elements: List[Element], coord: str, values: List[float], **extra_params):
 		"""
-		Initialize the Knob
-
 		Parameters
 		----------
-		elements: List[Element]
-			List of elements to be used for this Knob
+		elements
+			List of elements to be used for this `Knob`.
+			Elements provided here must be the elements that are the part of the Beamline.
+		coord
+			Coordinate that to be used for modifications.
 
-			Elements provided here should be the elements that are the part of the Beamline.
-		coord: str
-			Coordinate that to be used for modifications
-
-			So far, we implement the simple model of the Knob, where only 1 parameter is 
-			modified. It is the same parameter for all the parameters. Eg. 'x'
-		values: List[float]
-			Values of the given coordinates for the given elements to apply as a Knob
+			**!!** *So far, we implement the simple model of the Knob, where only 1 parameter is 
+			modified. It is the same parameter for all the parameters, Eg. `x`.*
+		values
+			Values of the given coordinates for the given elements to apply as a Knob.
 		
-		Additional parameters
-		---------------------
-		name: str, default ""
-			The name of the knob
+		Other parameters
+		----------------
+		name : str
+			The name of the knob. If not provided, defaults to "".
 		"""
 		self.elements, self.types_of_elements = elements, []
 		self.name = extra_params.get('name', "")
@@ -52,14 +62,14 @@ class Knob:
 		
 	def apply(self, amplitude: float):
 		"""
-		Apply the knob
+		Apply the knob.
 
-		This function is going to apply modifications to the lattice associated with this Knob
+		This function is going to apply modifications to the elements associated with the Knob.
 
 		Parameters
 		----------
-		amplitude: float
-			Amplitude of the knob to apply
+		amplitude : float
+			Amplitude of the knob to apply.
 		"""
 		i = 0
 		for element in self.elements:
