@@ -1,6 +1,7 @@
 import json
 import warnings
 from abc import ABC
+from typing import Optional
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -8,36 +9,34 @@ _extract_dict = lambda _set, _dict: {key: _dict[key] for key in _extract_subset(
 
 class Element(ABC):
 	"""
-	Generic class for element handling in the beamline
+	Generic class for element handling in the beamline.
 
 	Attributes
 	----------
-	settings: dict
+	settings : Optional[dict]
 		Dictionary containing the element settings. 
-	girder: int
+	girder : Optional[int] 
 		The girder id, the element is on. This parameter is only relevant when being the part of the lattice.
-	type: str, optional
+	type : Optional[str]
 		The type of the element.
-	Methods
-	-------
-	to_placet()
-		Produce the string of the element in Placet readable format
+	index : Optional[int]
+		ID of the element
 	"""
 	parameters = []
 	_float_params = []
 	_int_params = []
 	_cached_parameters = []
 	
-	def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None, elem_type: str = None):
+	def __init__(self, in_parameters: Optional[dict] = None, girder: Optional[int] = None, index: Optional[int] = None, elem_type: Optional[str] = None):
 		"""
 		Parameters
 		----------
-		in_parameters: dict
-			The dict with input Element parameters
-		girder: int, optional
-			The number of the girder element is placed
-		index: int, optional
-			The index of the element in the lattice
+		in_parameters
+			The dict with input settings.
+		girder
+			The number of the girder element is placed.
+		index
+			The index of the element in the lattice.
 		"""
 		if in_parameters is None:
 			in_parameters = {}
@@ -68,13 +67,21 @@ class Element(ABC):
 		
 		return self.settings[key]
 
-	def __setitem__(self, key:str, value):
+	def __setitem__(self, key : str, value):
 		if key not in self.parameters:
 			raise KeyError(f"Element does not have a '{key}' property!")
 		
 		self.settings[key] = value
 
 	def to_placet(self) -> str:
+		"""
+		Convert the element to a Placet format.
+
+		Returns
+		-------
+		str
+			A string line containing the element description in Placet format.
+		"""
 		res = self.type
 		_to_str = lambda x: f"\"{x}\"" if isinstance(x, str) else x
 		for key in self.settings:
@@ -97,8 +104,8 @@ class Element(ABC):
 
 		Parameters
 		----------
-		clear_cache: bool, default False
-			If True clears the cache after uploading
+		clear_cache
+			If True clears the cache after uploading.
 		"""
 		if self._cached_data is None:
 			warnings.warn(f"No data in cache!", category = RuntimeWarning)
