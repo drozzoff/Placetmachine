@@ -106,8 +106,8 @@ class Communicator(ABC):
 		
 		Parameters
 		----------
-			time
-				The time delay.
+		time
+			The time delay.
 		"""
 		self.process.delaybeforesend = time
 

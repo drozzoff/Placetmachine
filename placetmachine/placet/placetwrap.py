@@ -1054,7 +1054,7 @@ class Placet(Placetpy):
 			Vertical sbend angle error [micro radian].
 		sbend_roll : float
 			Sbend roll around longitudinal axis [micro radian].
-			
+		
 		Other arguments accepted are inherited from `PlacetCommand`. See the list [optional parameters][placetmachine.placet.pyplacet.PlacetCommand].
 		"""
 		_options_list = ['quadrupole_x', 'quadrupole_y', 'quadrupole_xp', 'quadrupole_yp', 'quadrupole_roll', 'cavity_x', 'cavity_realign_x', 'cavity_y', 'cavity_realign_y', 
@@ -1190,8 +1190,9 @@ class Placet(Placetpy):
 
 		Other parameters
 		----------------
-		seed: int
+		seed : int
 			The seed number to set.
+		
 		Other arguments accepted are inherited from `PlacetCommand`. See the list [optional parameters][placetmachine.placet.pyplacet.PlacetCommand].
 		"""
 		_options_list = ['seed']
@@ -1258,8 +1259,8 @@ class Placet(Placetpy):
 			Vertical alpha at entrance (required).
 		emitt_y : float
 			Vertical emittance at entrance (required).
-		beamload: None
-			Spline containing the longtudinal beam loading. (?)
+		beamload : int
+			Spline containing the longtudinal beam loading.
 
 		Other arguments accepted are inherited from `PlacetCommand`. See the list [optional parameters][placetmachine.placet.pyplacet.PlacetCommand].
 		"""
@@ -1417,8 +1418,8 @@ class Placet(Placetpy):
 
 		Not sure if it even works. Last checks showed it produces a blank file.
 
-		Parameters
-		----------
+		Other parameters
+		----------------
 		file : str
 			The name of the file to write the Twiss.
 
