@@ -1,3 +1,6 @@
+"""
+	This is a module to control the beamline and separate elements settings.
+"""
 from placetmachine.lattice.element import Element
 from placetmachine.lattice.quadrupole import Quadrupole
 from placetmachine.lattice.cavity import Cavity
