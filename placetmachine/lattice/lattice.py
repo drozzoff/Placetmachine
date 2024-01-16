@@ -156,7 +156,7 @@ class Beamline:
 	```
 	
 	The class `Beamline` is iterative and elements in the lattice in the beamline
-	can be accessed as in the normal `list`. For examples see: [][]
+	can be accessed as in the normal `list`.
 	
 	**Parsers:**
 	There are 2 parsers in the `Beamline` that allow to parse the Placet lattice:
@@ -531,7 +531,8 @@ class Beamline:
 		Other parameters
 		----------------
 		offsets_data : dict
-			The dictionary with the elements offsets in the following format:
+			**[Required]** The dictionary with the elements offsets 
+			in the following format:
 			```
 				{
 					'element_id1': {
@@ -545,7 +546,6 @@ class Beamline:
 					..
 				}
 			```
-			**Required**
 		"""
 		_options = []
 		
@@ -624,9 +624,9 @@ class Beamline:
 			The types of elements to apply the misalignments to.
 			By default, the misalignments are applied to all the elements on the girder.
 		x : float
-			The horizontal offset in micrometers
+			The horizontal offset in micrometers.
 		y : float
-			The vertical offset in micrometers
+			The vertical offset in micrometers.
 		"""
 		_options = ['x', 'y']
 
@@ -856,7 +856,7 @@ class Beamline:
 					res += f"{element.settings['y']} {element.settings['yp']} {element.settings['x']} {element.settings['xp']}"
 
 					if element.type == "Quadrupole":
-						res += f" {element.settisngs['roll']}"
+						res += f" {element.settings['roll']}"
 
 					if element.type == "Cavity":
 						if extra_params.get('cav_bpm', True) and extra_params.get('cav_grad_phas', True):

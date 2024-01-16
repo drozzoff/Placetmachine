@@ -148,10 +148,10 @@ class Placet(Placetpy):
 		step : float
 			Step size to be taken for the calculation. If less than 0 the parameters will be plotted only in the centres of the quadrupoles.
 		start : int
-			First particle for twiss computation. (?)
+			**(?)** First particle for twiss computation.
 		end : int
-			Last particle for twiss computation. (?)
-		list : list
+			**(?)** Last particle for twiss computation.
+		list : List[int]
 			Save the twiss parameters only at the selected elements.
 		
 		Other arguments accepted are inherited from `PlacetCommand`. See the list [optional parameters][placetmachine.placet.pyplacet.PlacetCommand].
@@ -212,14 +212,19 @@ class Placet(Placetpy):
 		self.run_command(self.__construct_command("set " + variable + " " + str(value), [], **command_details))
 		return value
 
-	def set_list(self, name, **command_details):
+	def set_list(self, name: str, **command_details):
 		"""
 		Declare the dictionary in Placet
 
-		*not used*
+		Paramaters
+		----------
+		name
+			Name of the dictionary.
+
+		All the keyword variables provided are going to be declared int the dictionary in Placet.
 		"""
 		for key in command_details:
-			self.set(name + "(" + key + ")", command_details[key])
+			self.set(f"{name}({key})", command_details[key])
 
 	def puts(self, variable: str, **command_details) -> str:
 		"""
@@ -283,6 +288,13 @@ class Placet(Placetpy):
 			Name of the beam to be used for tracking. **Required**
 		survey : str
 			Type of prealignment survey to be used. Default is `None`.
+			It could be either built-in surveys from Placet, like 
+			```
+			["None", "Zero", "Clic", "Nlc", "Atl", "AtlZero", "Atl2", "AtlZero2,
+			"Earth"]
+			``` 
+			or any procedure that was declared in Placet prior to the current
+			function call.
 		emitt_file : str
 			Filename for the results' file. Defaults to NULL (no output).
 		bpm_res : float
