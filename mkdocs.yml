@@ -55,3 +55,4 @@ nav:
     - Machine: machine.md
   - 'Examples':
     - Example 1: examples/example1.md
+  - Main: index.md 
