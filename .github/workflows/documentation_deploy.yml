@@ -3,7 +3,7 @@ name: Deployment
 on:
   push:
     branches:
-      - master 
+      - PPI-106 
 
 permissions:
   contents: write
