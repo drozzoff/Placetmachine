@@ -13,8 +13,6 @@ plugins:
   - search
   - autorefs
   - mkdocstrings:
-      watch:
-        - placetmachine
       handlers:
         python:
           options:

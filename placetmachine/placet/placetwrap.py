@@ -216,7 +216,7 @@ class Placet(Placetpy):
 		"""
 		Declare the dictionary in Placet
 
-		Paramaters
+		Parameters
 		----------
 		name
 			Name of the dictionary.

@@ -3,7 +3,7 @@ name: Deployment
 on:
   push:
     branches:
-      - master 
+      - master
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: 3.7
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
       - uses: actions/cache@v3
         with:
@@ -27,6 +27,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip3 install mkdocs-material
-      - run: pip3 install mkdocstrings
+      - run: pip3 install mkdocs-material mkdocstrings mkdocstrings-python
       - run: mkdocs gh-deploy --force

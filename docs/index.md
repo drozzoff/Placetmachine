@@ -1,3 +1,2 @@
 # placetmachine Documenation
 
-::: placetmachine.placet
