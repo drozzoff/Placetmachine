@@ -16,10 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Wait for Unit-Tests to succeed
-        id: wait-for-unit-tests
-        uses: actions/github-script@v5
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
