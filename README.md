@@ -12,3 +12,6 @@ The package features the Placet interfaced with Python and the class extending i
 The package should be installed and available as `placetmachine`.
 
 **It requires a PLACET installation (https://gitlab.cern.ch/clic-software/placet)!**
+
+# Documentation
+For the details, visit the MkDocs generated [documentation](https://drozzoff.github.io/Placetmachine/).
