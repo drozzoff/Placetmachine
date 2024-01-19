@@ -865,7 +865,6 @@ class Machine():
 
 
 	@update_readings
-	@verify_survey
 	def eval_orbit(self, beam: str) -> pd.DataFrame:
 		"""
 		Evaluate the beam orbit based on the BPM readings.
