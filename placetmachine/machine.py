@@ -94,18 +94,34 @@ def update_readings(func: Callable):
 	return wrapper
 
 def verify_survey(func: Callable):
-	"""Decorator used for verifying the correctness of the survey parameter passed to the track/correct routines"""
+	"""
+	Decorator used for verifying the correctness of the survey parameter passed to the track/correct routines
+	
+	It is important that the decorated function has the following signature:
+	```
+	result = func(self, beam, survey, **kwargs)
+	```
+	"""
 	@wraps(func)
 	def wrapper(self, beam, survey = None, **kwargs):
-		alignment = None
+		alignment, result = None, None
 		if survey is None:
+			# Default behaviour - No survey, we use current beamline misalignments
 			_filename = os.path.join(self._data_folder_, "position_tmp.dat")
 			self.beamline.save_misalignments(_filename, cav_bpm = True, cav_grad_phas = True)
 			self.placet.declare_proc(self.from_file, file = _filename, cav_bpm = 1, cav_grad_phas = 1)
 			alignment = "from_file"
+			result = func(self, beam, alignment, **kwargs)
+		elif survey in Placet.surveys:
+			# One of the Placet built-in surveys
+			result = func(self, beam, survey, **kwargs)
+
+			# syncing the offsets in `Machine.beamline` with Placet
+			self._update_lattice_misalignments(cav_bpm = 1, cav_grad_phas = 1)
 		else:
-			raise ValueError(f"'{survey}' - incorrect survey. Accepted values are: {Machine.surveys}.")			
-		return func(self, beam, alignment, **kwargs)
+			raise ValueError(f"'{survey}' - incorrect survey. Accepted values are: {Machine.surveys + Placet.surveys}.")			
+		
+		return result
 	return wrapper
 
 def add_beamline_to_final_dataframe(func: Callable):
@@ -704,7 +720,7 @@ class Machine():
 		return beam_name
 
 	@term_logging
-	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: int = 1234, **extra_params) -> str:
+	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: Optional[int] = None, **extra_params) -> str:
 		"""
 		Generate the macroparticle (sliced) beam.
 		
@@ -723,7 +739,8 @@ class Machine():
 		grad
 			Accelerating gradient offset.
 		beam_seed
-			The seed number of the random number distribution.
+			The seed number of the random number distribution. If not given a random
+			number in the range [1, 1000000] is taken.
 		
 		Other parameters
 		---------------------
@@ -765,6 +782,9 @@ class Machine():
 			if not value in extra_params:
 				raise Exception(f"The parameter '{value}' is missing!")
 
+		if beam_seed is None:
+			beam_seed = random.randint(1, 1000000)
+		
 		self.placet.RandomReset(seed = beam_seed)
 
 		beam_setup = {
@@ -840,6 +860,15 @@ class Machine():
 		of [`Placet.TestNoCorrection()`][placetmachine.placet.placetwrap.Placet.TestNoCorrection]
 		the default survey is set to `"from_file"` and the file used is the one produced for the
 		current state of `self.beamline`.
+
+		**[!!]** Be aware that Placet internally does not generate random numbers, but rather 
+		takes pseudo random numbers from the sequence, uniquely defined by a seed value. So, if
+		you run your `Machine` program with a Placet built-in surveys there is alway a chance you
+		are going to get the same offsets sequence. To make sure that misalignments are different
+		one has to run [`Placet.RandomReset`][placetmachine.placet.placetwrap.Placet.RandomReset]
+		before the tracking with surveys is invoked. In
+		[`Machine.assign_errors()`][placetmachine.machine.Machine.assign_errors] for example, this
+		is invoked by default (set to a random value) if the `error_seed` parameter is not declared.
 
 		Parameters
 		----------
