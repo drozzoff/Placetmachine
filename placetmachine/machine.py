@@ -1843,3 +1843,11 @@ class Machine():
 	def _update_cavs_gradients(self, **extra_params):
 		"""Synchronize the cavs phase in self.beamline with Placet"""
 		self.placet.CavitySetGradientList(self.beamline._get_quads_strengths())
+
+	def random_reset(self, seed: Optional[int] = None):
+		"""
+		Reset the random seed in Placet.
+
+		Runs [`Placet.RandomReset()`][placetmachine.placet.placetwrap.Placet.RandomReset].
+		"""
+		self.placet.RandomReset(seed = seed if seed is not None else random.randint(1, 1000000))
