@@ -67,9 +67,13 @@ class Placet(Placetpy):
 
 	_exec_params = PlacetCommand.optional_parameters
 
-	survey_erorrs = ['quadrupole_x', 'quadrupole_y', 'quadrupole_xp', 'quadrupole_yp', 'quadrupole_roll', 'cavity_x', 'cavity_realign_x', 'cavity_y', 'cavity_realign_y', 
-		'cavity_xp', 'cavity_yp', 'cavity_dipole_x', 'cavity_dipole_y', 'piece_x', 'piece_xp', 'piece_y', 'piece_yp', 'bpm_x', 'bpm_y', 'bpm_xp', 'bpm_yp', 'bpm_roll',
+	survey_erorrs = ['quadrupole_x', 'quadrupole_y', 'quadrupole_xp', 'quadrupole_yp', 
+		'quadrupole_roll', 'cavity_x', 'cavity_realign_x', 'cavity_y', 'cavity_realign_y', 
+		'cavity_xp', 'cavity_yp', 'cavity_dipole_x', 'cavity_dipole_y', 'piece_x', 'piece_xp', 
+		'piece_y', 'piece_yp', 'bpm_x', 'bpm_y', 'bpm_xp', 'bpm_yp', 'bpm_roll',
 		'sbend_x', 'sbend_y', 'sbend_xp', 'sbend_yp', 'sbend_roll']
+
+	surveys = ["None", "Zero", "Clic", "Nlc", "Atl", "AtlZero", "Atl2", "AtlZero2", "Earth"]
 
 	def __repr__(self):
 		return f"Placet(debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}, show_intro = {self._show_intro})"
@@ -294,7 +298,8 @@ class Placet(Placetpy):
 			"Earth"]
 			``` 
 			or any procedure that was declared in Placet prior to the current
-			function call.
+			function call. The list of Placet built-in surveys can be accessed
+			at `Placet.surveys`.
 		emitt_file : str
 			Filename for the results' file. Defaults to NULL (no output).
 		bpm_res : float

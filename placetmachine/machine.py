@@ -94,20 +94,34 @@ def update_readings(func: Callable):
 	return wrapper
 
 def verify_survey(func: Callable):
-	"""Decorator used for verifying the correctness of the survey parameter passed to the track/correct routines"""
+	"""
+	Decorator used for verifying the correctness of the survey parameter passed to the track/correct routines
+	
+	It is important that the decorated function has the following signature:
+	```
+	result = func(self, beam, survey, **kwargs)
+	```
+	"""
 	@wraps(func)
 	def wrapper(self, beam, survey = None, **kwargs):
-		alignment = None
+		alignment, result = None, None
 		if survey is None:
+			# Default behaviour - No survey, we use current beamline misalignments
 			_filename = os.path.join(self._data_folder_, "position_tmp.dat")
 			self.beamline.save_misalignments(_filename, cav_bpm = True, cav_grad_phas = True)
 			self.placet.declare_proc(self.from_file, file = _filename, cav_bpm = 1, cav_grad_phas = 1)
 			alignment = "from_file"
-		elif survey in Machine.surveys:
-			alignment = survey
+			result = func(self, beam, alignment, **kwargs)
+		elif survey in Placet.surveys:
+			# One of the Placet built-in surveys
+			result = func(self, beam, survey, **kwargs)
+
+			# syncing the offsets in `Machine.beamline` with Placet
+			self._update_lattice_misalignments(cav_bpm = 1, cav_grad_phas = 1)
 		else:
-			raise ValueError(f"Incorrect survey. Accepted values are {Machine.surveys} or None")			
-		return func(self, beam, alignment, **kwargs)
+			raise ValueError(f"'{survey}' - incorrect survey. Accepted values are: {Machine.surveys + Placet.surveys}.")			
+		
+		return result
 	return wrapper
 
 def add_beamline_to_final_dataframe(func: Callable):
@@ -164,7 +178,9 @@ class Machine():
 		The name of the folder where the temporary files produced by **Placet** are stored.
 	"""
 
-	surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", "misalign_girder", "misalign_girders"]
+	misalignment_surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", 
+			"misalign_girder", "misalign_girders"]
+	surveys = [None]
 	callbacks = ["save_sliced_beam", "save_beam", "empty"]
 
 	def __init__(self, **calc_options):
@@ -431,8 +447,8 @@ class Machine():
 		Uses provided `survey` along with the static errors given as keyword arguments.
 		The `survey` acts as an instruction on how to misalign the lattice.
 
-		There are several options to misalign the beamline using different built-int surveys
-		from Placet:
+		There are several options to misalign the beamline using different built-int 
+		misalignment surveys (accessed through `Machine.misalignment_surveys`):
 		```
 		["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", 
 		"misalign_girder", "misalign_girders"]
@@ -494,7 +510,7 @@ class Machine():
 		Other keyword arguments accepted are the parameters of the 
 		[`Placet.InterGirderMove()`][placetmachine.placet.placetwrap.Placet.InterGirderMove].
 		"""
-		if not survey in (self.surveys + [None]):
+		if not survey in (self.misalignment_surveys + [None]):
 			raise ValueError("survey is not recognized")
 
 		if survey == "default_clic":
@@ -704,7 +720,7 @@ class Machine():
 		return beam_name
 
 	@term_logging
-	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: int = 1234, **extra_params) -> str:
+	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: Optional[int] = None, **extra_params) -> str:
 		"""
 		Generate the macroparticle (sliced) beam.
 		
@@ -723,7 +739,8 @@ class Machine():
 		grad
 			Accelerating gradient offset.
 		beam_seed
-			The seed number of the random number distribution.
+			The seed number of the random number distribution. If not given a random
+			number in the range [1, 1000000] is taken.
 		
 		Other parameters
 		---------------------
@@ -765,6 +782,9 @@ class Machine():
 			if not value in extra_params:
 				raise Exception(f"The parameter '{value}' is missing!")
 
+		if beam_seed is None:
+			beam_seed = random.randint(1, 1000000)
+		
 		self.placet.RandomReset(seed = beam_seed)
 
 		beam_setup = {
@@ -841,18 +861,30 @@ class Machine():
 		the default survey is set to `"from_file"` and the file used is the one produced for the
 		current state of `self.beamline`.
 
+		**[!!]** Be aware that Placet internally does not generate random numbers, but rather 
+		takes pseudo random numbers from the sequence, uniquely defined by a seed value. So, if
+		you run your `Machine` program with a Placet built-in surveys there is alway a chance you
+		are going to get the same offsets sequence. To make sure that misalignments are different
+		one has to run [`Placet.RandomReset`][placetmachine.placet.placetwrap.Placet.RandomReset]
+		before the tracking with surveys. In
+		[`Machine.assign_errors()`][placetmachine.machine.Machine.assign_errors] for example, this
+		is invoked by default (set to a random value) if the `error_seed` parameter is not declared.
+
 		Parameters
 		----------
 		beam
 			The name of the beam.
 		survey: str, optional
-			The type of survey to be used. One has to define the procedure in Placet in order to use it.
+			The type of survey to be used. So far the accepted options are:
+			```
+			[None, "None", "Zero", "Clic", "Nlc", "Atl", 
+			"AtlZero", "Atl2", "AtlZero2, "Earth"]
+			```
 			
-			if survey is `None` - uses the current alignment in self.beamline and runs using alignment "from_file" (default)
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
-			
-			!!Mostly kept for compatibility, better not be used and have a default beaviour.
-			The misalignments could be added separately in Machine.asisgn_errors().
+			- If survey is `None` (**default**) - uses the current beamline alignment from 
+			`self.beamline`.
+			- The rest value are Placet built-in surveys. After it is used, the alignment
+			in `self.beamline` is going to be updated with new values generated by a survey.
 
 		Returns
 		-------
@@ -868,8 +900,7 @@ class Machine():
 
 
 	@update_readings
-	@verify_survey
-	def eval_orbit(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
+	def eval_orbit(self, beam: str) -> pd.DataFrame:
 		"""
 		Evaluate the beam orbit based on the BPM readings.
 
@@ -877,14 +908,6 @@ class Machine():
 		----------
 		beam : str
 			The name of the beam.
-		survey: str, optional
-			The type of survey to be used. One has to define the procedure in Placet in order to use it.
-			
-			if survey is `None` - uses the current alignment in self.beamline and runs using alignment "from_file" (default)
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
-			
-			!!Mostly kept for compatibility, better not be used and have a default beaviour.
-			The misalignments could be added separately in Machine.asisgn_errors().
 
 		Returns
 		-------
@@ -991,13 +1014,16 @@ class Machine():
 		beam
 			The name of the beam used for correction
 		survey
-			The type of survey to be used. One has to define the procedure in Placet in order to use it.
+			The type of survey to be used. So far the accepted options are:
+			```
+			[None, "None", "Zero", "Clic", "Nlc", "Atl", 
+			"AtlZero", "Atl2", "AtlZero2, "Earth"]
+			```
 			
-			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file"
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
-			
-			!!Mostly kept for compatibility, better not be used and have a default beaviour.
-			The misalignments could be added separately in Machine.asisgn_errors()
+			- If survey is `None` (**default**) - uses the current beamline alignment from 
+			`self.beamline`.
+			- The rest value are Placet built-in surveys. After it is used, the alignment
+			in `self.beamline` is going to be updated with new values generated by a survey.
 		
 		Other arguments accepted are inherited from 
 		[`Placet.TestSimpleCorrection()`][placetmachine.placet.placetwrap.Placet.TestSimpleCorrection],
@@ -1060,13 +1086,16 @@ class Machine():
 		beam
 			The name of the beam used for correction
 		survey
-			The type of survey to be used. One has to define the procedure in Placet in order to use it.
+			The type of survey to be used. So far the accepted options are:
+			```
+			[None, "None", "Zero", "Clic", "Nlc", "Atl", 
+			"AtlZero", "Atl2", "AtlZero2, "Earth"]
+			```
 			
-			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file"
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it		
-			
-			!!Mostly kept for compatibility, better not be used and have a default beaviour.
-			The misalignments could be added separately in Machine.asisgn_errors()
+			- If survey is `None` (**default**) - uses the current beamline alignment from 
+			`self.beamline`.
+			- The rest value are Placet built-in surveys. After it is used, the alignment
+			in `self.beamline` is going to be updated with new values generated by a survey.
 
 		Other parameters
 		----------------
@@ -1127,10 +1156,16 @@ class Machine():
 		beam
 			The name of the beam used for correction
 		survey
-			The type of survey to be used. One has to define the procedure in Placet in order to use it.
+			The type of survey to be used. So far the accepted options are:
+			```
+			[None, "None", "Zero", "Clic", "Nlc", "Atl", 
+			"AtlZero", "Atl2", "AtlZero2, "Earth"]
+			```
 			
-			if survey is None - uses the current alignment in self.beamline and runs using alignment "from_file"
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it		
+			- If survey is `None` (**default**) - uses the current beamline alignment from 
+			`self.beamline`.
+			- The rest value are Placet built-in surveys. After it is used, the alignment
+			in `self.beamline` is going to be updated with new values generated by a survey.
 		
 		Other arguments accepted are inherited from 
 		[`Placet.TestRfAlignment()`][placetmachine.placet.placetwrap.Placet.TestRfAlignment],
@@ -1855,3 +1890,11 @@ class Machine():
 	def _update_cavs_gradients(self, **extra_params):
 		"""Synchronize the cavs phase in self.beamline with Placet"""
 		self.placet.CavitySetGradientList(self.beamline._get_quads_strengths())
+
+	def random_reset(self, seed: Optional[int] = None):
+		"""
+		Reset the random seed in Placet.
+
+		Runs [`Placet.RandomReset()`][placetmachine.placet.placetwrap.Placet.RandomReset].
+		"""
+		self.placet.RandomReset(seed = seed if seed is not None else random.randint(1, 1000000))
