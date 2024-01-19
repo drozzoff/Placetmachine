@@ -1,10 +1,7 @@
-name: Deployment
+name: Documentation-Deployment
 
 on:
-  workflow_run:
-    workflows: ["Unit-Tests"]
-    types:
-      - completed
+  push:
     branches:
       - master
 
@@ -17,6 +14,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check Unit-Tests Workflow
+        id: check
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const { data: runs } = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              branch: 'master',
+              status: 'completed',
+              per_page: 1
+            });
+            if (!runs.workflow_runs.length || runs.workflow_runs[0].conclusion !== 'success') {
+              throw new Error('Recent Unit-Tests workflow run was not successful.');
+            }
+
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
