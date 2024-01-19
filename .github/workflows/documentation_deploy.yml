@@ -1,10 +1,7 @@
 name: Documentation-Deployment
 
 on:
-  workflow_run:
-    workflows: ["Unit-Tests"]
-    types:
-      - completed
+  push:
     branches:
       - master
 
@@ -16,6 +13,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Wait for Unit-Tests to succeed
+        id: wait-for-unit-tests
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const commitSha = context.sha;
+            let runId;
+            while(true) {
+              const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                workflow_id: 'ci.yml',
+                status: 'completed'
+              });
+              const run = runs.data.workflow_runs.find(r => r.head_sha === commitSha && r.name === 'Unit-Tests');
+              if (run && run.conclusion === 'success') {
+                runId = run.id;
+                break;
+              }
+              // Check every 3 seconds
+              await new Promise(r => setTimeout(r, 3000));
+            }
+            return { runId };
+
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
