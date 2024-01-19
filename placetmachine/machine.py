@@ -103,10 +103,8 @@ def verify_survey(func: Callable):
 			self.beamline.save_misalignments(_filename, cav_bpm = True, cav_grad_phas = True)
 			self.placet.declare_proc(self.from_file, file = _filename, cav_bpm = 1, cav_grad_phas = 1)
 			alignment = "from_file"
-		elif survey in Machine.surveys:
-			alignment = survey
 		else:
-			raise ValueError(f"Incorrect survey. Accepted values are {Machine.surveys} or None")			
+			raise ValueError(f"'{survey}' - incorrect survey. Accepted values are: {Machine.surveys}.")			
 		return func(self, beam, alignment, **kwargs)
 	return wrapper
 
@@ -164,7 +162,9 @@ class Machine():
 		The name of the folder where the temporary files produced by **Placet** are stored.
 	"""
 
-	surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", "misalign_girder", "misalign_girders"]
+	misalignment_surveys = ["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", 
+			"misalign_girder", "misalign_girders"]
+	surveys = [None]
 	callbacks = ["save_sliced_beam", "save_beam", "empty"]
 
 	def __init__(self, **calc_options):
@@ -431,8 +431,8 @@ class Machine():
 		Uses provided `survey` along with the static errors given as keyword arguments.
 		The `survey` acts as an instruction on how to misalign the lattice.
 
-		There are several options to misalign the beamline using different built-int surveys
-		from Placet:
+		There are several options to misalign the beamline using different built-int 
+		misalignment surveys (accessed through `Machine.misalignment_surveys`):
 		```
 		["default_clic", "from_file", "empty", "misalign_element", "misalign_elements", 
 		"misalign_girder", "misalign_girders"]
@@ -494,7 +494,7 @@ class Machine():
 		Other keyword arguments accepted are the parameters of the 
 		[`Placet.InterGirderMove()`][placetmachine.placet.placetwrap.Placet.InterGirderMove].
 		"""
-		if not survey in (self.surveys + [None]):
+		if not survey in (self.misalignment_surveys + [None]):
 			raise ValueError("survey is not recognized")
 
 		if survey == "default_clic":
@@ -848,11 +848,8 @@ class Machine():
 		survey: str, optional
 			The type of survey to be used. One has to define the procedure in Placet in order to use it.
 			
-			if survey is `None` - uses the current alignment in self.beamline and runs using alignment "from_file" (default)
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
-			
-			!!Mostly kept for compatibility, better not be used and have a default beaviour.
-			The misalignments could be added separately in Machine.asisgn_errors().
+			if survey is `None` - uses the current alignment in self.beamline and runs using alignment 
+			"from_file" (default). Other options are not yet available.
 
 		Returns
 		-------
@@ -869,7 +866,7 @@ class Machine():
 
 	@update_readings
 	@verify_survey
-	def eval_orbit(self, beam: str, survey: str = None, **extra_params) -> pd.DataFrame:
+	def eval_orbit(self, beam: str) -> pd.DataFrame:
 		"""
 		Evaluate the beam orbit based on the BPM readings.
 
@@ -877,14 +874,6 @@ class Machine():
 		----------
 		beam : str
 			The name of the beam.
-		survey: str, optional
-			The type of survey to be used. One has to define the procedure in Placet in order to use it.
-			
-			if survey is `None` - uses the current alignment in self.beamline and runs using alignment "from_file" (default)
-			If the survey is given (One of "default_clic", "from_file", "empty") - distributes the elements according to it
-			
-			!!Mostly kept for compatibility, better not be used and have a default beaviour.
-			The misalignments could be added separately in Machine.asisgn_errors().
 
 		Returns
 		-------
