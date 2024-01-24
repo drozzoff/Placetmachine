@@ -1,9 +1,11 @@
 # Placetmachine
-The package features the Placet interfaced with Python and the class extending its functionality
+The package features the Placet interfaced with Python and the class extending its functionality.
+
+[![Coverage Status](https://coveralls.io/repos/github/drozzoff/Placetmachine/badge.svg?branch=PPI-108)](https://coveralls.io/github/drozzoff/Placetmachine?branch=PPI-108)
 
 # Package installation
 
-1. Clone the repository to your local machine
+1. Clone the repository to your local machine.
 
 2. When in the folder run:
 ```
