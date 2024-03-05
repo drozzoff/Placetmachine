@@ -40,8 +40,8 @@ beam_parameters =  {
 
 main_beam = clic.make_beam_many("main_beam", 200, 200, **beam_parameters)
 
-track_res, __, __ = clic.eval_track_results(True, main_beam, 'particle')
-x = track_res.x.values
-y = track_res.y.values
+res = clic.eval_obs(main_beam, ['x', 'y'], beam_type = 'particle')
+
+x, y = res[0], res[1]
 
 print(f"sigma_x = {rms(x) * 1e3} nm, sigma_y = {rms(y) * 1e3} nm")
