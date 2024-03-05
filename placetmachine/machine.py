@@ -1305,7 +1305,7 @@ class Machine():
 				pass	#if the callback is there, no need to reset it
 			else:
 				self.set_callback(self.save_beam, file = _filename)				
-		track_res = self._track(beam)
+		track_res = self.track(beam)
 		emitty, emittx = track_res.emitty[0], track_res.emittx[0]
 
 		# reading the file
@@ -1381,7 +1381,7 @@ class Machine():
 		obs = []
 		if set(observables).issubset(set(['emittx', 'emitty'])):
 			#using the results of machine.track 
-			track_results = self._track(beam)
+			track_results = self.track(beam)
 			obs = [float(track_results[observable].values) for observable in observables]
 		else:
 			#running machine.eval_track_results to identify the coordinates etc.
