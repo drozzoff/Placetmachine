@@ -733,7 +733,8 @@ class Machine():
 		particles_distribution.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
 
 		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))
-
+		self.beams_invoked.append(beam_name)
+		
 		return beam_name
 
 	@term_logging
