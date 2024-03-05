@@ -134,10 +134,10 @@ def verify_beam(func: Callable):
 	result = func(self, beam, survey, **kwargs)
 	```
 	"""
-	def wrapper(self, beam, survey = None, **kwargs):
+	def wrapper(self, beam, *args, **kwargs):
 		if not beam in self.beams_invoked:
 			raise ValueError(f"Beam '{beam}' does not exist!")
-		return func(self, beam, survey, **kwargs)
+		return func(self, beam, *args, **kwargs)
 	
 	return wrapper
 
@@ -734,7 +734,7 @@ class Machine():
 
 		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))
 		self.beams_invoked.append(beam_name)
-		
+
 		return beam_name
 
 	@term_logging
@@ -761,7 +761,7 @@ class Machine():
 			number in the range [1, 1000000] is taken.
 		
 		Other parameters
-		---------------------
+		----------------
 		sigma_z : float
 			**[Required]** Bunch length in micrometers. 
 		charge : float
@@ -842,6 +842,22 @@ class Machine():
 		beam : str
 			The name of the beam.
 
+		Other parameters
+		----------------
+		x : float
+			Horizontal offset in micrometers.
+		y : float
+			Vertical offset in micrometers.
+		angle_x : float
+			Horizontal angle in microradians.
+		angle_y : float
+			Vertical angle in microradians.
+		rotate : float
+			Roll angle in radians. It is added after the offsets.
+		start : int
+			First particle to offset.
+		end : int
+			Last particle to offset.
 		"""
 		self.placet.BeamAddOffset(**dict(extra_params, beam = beam))
 
