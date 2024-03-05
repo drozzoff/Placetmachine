@@ -814,6 +814,18 @@ class Machine():
 
 		return beam_name
 
+	def offset_beam(self, beam: str, **extra_params):
+		"""
+		Add the transverse offset, transverse angle or roll angle to the beam.
+
+		Parameters
+		----------
+		beam : str
+			The name of the beam.
+
+		"""
+		self.placet.BeamAddOffset(**dict(extra_params, beam = beam))
+
 	def _get_bpm_readings(self) -> pd.DataFrame:
 		"""
 		Evaluate the BPMs reading and return them as a DataFrame.

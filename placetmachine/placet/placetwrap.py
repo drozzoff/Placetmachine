@@ -1642,6 +1642,39 @@ class Placet(Placetpy):
 
 		self.run_command(self.__construct_command("BpmRealign", _options_list, **command_details))
 
+	def BeamAddOffset(self, **command_details):
+		"""
+		Run the `BeamAddOffset` command in Placet TCL.
+
+		Modifies the beam by either applying the offsets, angles, or rotating it.
+
+		Parameters that are not specified are not modified.
+
+		Other parameters
+		----------------
+		beam : str
+			The name of the beam to modify. 
+			
+			There is no check to verify that such a beam exists.
+		x : float
+			Horizontal offset in micrometers.
+		y : float
+			Vertical offset in micrometers.
+		angle_x : float
+			Horizontal angle in microradians.
+		angle_y : float
+			Vertical angle in microradians.
+		rotate : float
+			Roll angle in radians. It is added after the offsets.
+		start : int
+			First particle to offset.
+		end : int
+			Last particle to offset.
+		"""
+		_options_list = ['beam', 'x', 'y', 'angle_x', 'angle_y', 'rotate', 'start', 'end']
+
+		self.run_command(self.__construct_command("BeamAddOffset", _options_list, **command_details))
+
 	"""Custom commands"""
 	def get_element_transverse_matrix(self, index : int, **command_details) -> List[float]:
 		"""
