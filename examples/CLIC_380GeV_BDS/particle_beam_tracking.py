@@ -40,7 +40,7 @@ beam_parameters =  {
 
 main_beam = clic.make_beam_many("main_beam", 200, 200, **beam_parameters)
 
-track_res, __, __ = clic.eval_track_results(True, main_beam, 'particle')
+track_res, __, __ = clic.eval_track_results(main_beam, 'particle')
 x = track_res.x.values
 y = track_res.y.values
 
