@@ -124,6 +124,23 @@ def verify_survey(func: Callable):
 		return result
 	return wrapper
 
+def verify_beam(func: Callable):
+	"""
+	Decorator used to verify the beam used in the tracking/correction routines exist and was created
+	within the current `Machine` instance.
+	
+	It is important that the decorated function has the following signature:
+	```
+	result = func(self, beam, survey, **kwargs)
+	```
+	"""
+	def wrapper(self, beam, survey = None, **kwargs):
+		if not beam in self.beams_invoked:
+			raise ValueError(f"Beam '{beam}' does not exist!")
+		return func(self, beam, survey, **kwargs)
+	
+	return wrapper
+
 def add_beamline_to_final_dataframe(func: Callable):
 	"""Decorator used to add the Beamline name used in the tracking/correction"""
 	@wraps(func)
@@ -814,6 +831,7 @@ class Machine():
 
 		return beam_name
 
+	@verify_beam
 	def offset_beam(self, beam: str, **extra_params):
 		"""
 		Add the transverse offset, transverse angle or roll angle to the beam.
@@ -850,6 +868,7 @@ class Machine():
 
 	@add_beamline_to_final_dataframe
 	@verify_survey
+	@verify_beam
 	def _track(self, beam: str, survey: str = None) -> pd.DataFrame:
 		"""Perform the tracking without applying any corrections. For internal use only."""
 		return self.placet.TestNoCorrection(beam = beam, machines = 1, survey = survey, timeout = 100)
@@ -930,6 +949,7 @@ class Machine():
 		return self._get_bpm_readings()
 
 	@term_logging
+	@verify_beam
 	def eval_twiss(self, beam: str, **extra_params) -> pd.DataFrame:
 		"""
 		Evaluate the Twiss parameters along the lattice.
@@ -1014,6 +1034,7 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
+	@verify_beam
 	def one_2_one(self, beam: str, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the one-to-one (1-2-1) alignment.
@@ -1057,6 +1078,7 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
+	@verify_beam
 	def DFS(self, beam: str, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the Dispersion Free Steering or DFS.
@@ -1155,6 +1177,7 @@ class Machine():
 
 	@term_logging
 	@verify_survey
+	@verify_beam
 	def RF_align(self, beam: str, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the accelerating structures alignment (RF alignment).
