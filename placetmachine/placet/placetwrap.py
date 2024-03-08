@@ -1654,7 +1654,6 @@ class Placet(Placetpy):
 		----------------
 		beam : str
 			The name of the beam to modify. 
-			
 			There is no check to verify that such a beam exists.
 		x : float
 			Horizontal offset in micrometers.
