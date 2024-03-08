@@ -601,7 +601,7 @@ class Machine():
 		"""
 		if self.beamlines_invoked == []:
 			raise Exception("No beamlines created, cannot create a beam. Create the beamline first")
-		for beam in self.beamlines_invoked:
+		for beam in self.beams_invoked:
 			if beam_name == beam.name:
 				raise ValueError(f"Beam with the name '{beam_name}' already exists! The beam you want to create should have a different name")	
 

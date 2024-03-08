@@ -98,7 +98,22 @@ def make_beam_particles(e_design: float, e_spread: float, n_particles: int, **ex
 
 class Beam:
 	"""
-	A class to handle the beams in Placet.
+	A class to handle the beams in **Placet**.
+
+	Attributes
+	----------
+	name : str
+		The name of the beam.
+	placet : Placet
+		The `Placet` object to control the beam creation in **Placet**.
+	beam_type : str
+		The type of beam. The possible options are:
+		```
+		["sliced", "partice", None]
+		```
+	
+	_data_folder_ : str
+		The name of the folder where the temporary files produced by **Placet** are stored.
 	"""
 	def __init__(self, beam_name: str, placet: Placet, beam_type: Optional[str] = None):
 		"""
@@ -114,7 +129,7 @@ class Beam:
 			First 2 are valid options for Placet, `None` is for testing only.
 		"""
 		self.name, self.placet = beam_name, placet
-		if beam_type in ["sliced", "partice", None]:
+		if beam_type in ["sliced", "particle", None]:
 			self.beam_type = beam_type
 		else:
 			raise ValueError(f"Incorrect beam type - '{beam_type}'")
