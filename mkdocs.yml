@@ -50,6 +50,8 @@ nav:
       - Bpm: lattice/bpm.md
       - Knob: lattice/knob.md
       - Beamline: lattice/lattice.md
+    - 'Beam module':
+      - Beam: beam/beam.md
     - Machine: machine.md
   - 'Examples':
     - Example 1: examples/example1.md
