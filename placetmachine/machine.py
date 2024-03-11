@@ -850,7 +850,7 @@ class Machine():
 
 				twiss_current = {
 						"id": int(data_list[0]),
-						"type": self.beamline.at(int(data_list[0])).type,
+						"type": self.beamline[int(data_list[0])].type,
 						"s": data_list[1],
 						"betx": data_list[5],
 						"bety": data_list[9],
