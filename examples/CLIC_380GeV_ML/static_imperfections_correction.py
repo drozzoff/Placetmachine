@@ -73,9 +73,9 @@ dfs_options = {
     'binlength': 36, 
     'binoverlap': 18,
     'bpm_resolution': 0.1,
-    'beam1': beam1,
-    'cbeam0': cbeam0,
-    'cbeam1': cbeam1
+    'beam1': beam1.name,
+    'cbeam0': cbeam0.name,
+    'cbeam1': cbeam1.name
 }
 
 dfs = clic.DFS(main_beam, **dict(dfs_options))

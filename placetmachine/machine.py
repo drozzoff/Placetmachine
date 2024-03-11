@@ -12,6 +12,7 @@ from rich.live import Live
 import tempfile
 from placetmachine import Placet, Beamline
 from placetmachine.lattice import Knob
+from placetmachine.beam import Beam
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -134,9 +135,10 @@ def verify_beam(func: Callable):
 	result = func(self, beam, survey, **kwargs)
 	```
 	"""
+	@wraps(func)
 	def wrapper(self, beam, *args, **kwargs):
 		if not beam in self.beams_invoked:
-			raise ValueError(f"Beam '{beam}' does not exist!")
+			raise ValueError(f"Beam with a name '{beam.name}' does not exist!")
 		return func(self, beam, *args, **kwargs)
 	
 	return wrapper
@@ -185,8 +187,8 @@ class Machine():
 		An object used for the fancy terminal output.
 	beamline : Optional[Beamline]
 		An object storing the beamline info.
-	beams_invoked : List[str]
-		An object storing the names of the beams that were created within current `Machine`.
+	beams_invoked : List[Beam]
+		An object storing the beams that were created within current `Machine`.
 	beamlines_invoked : List[str]
 		An object storing the names of the beamlines that were created within the current `Machine`.
 	callback_struct_ : tuple(Callable, dict)
@@ -547,101 +549,12 @@ class Machine():
 		# TO DO
 		# extend for other surveys.
 
-	def make_beam_particles(self, e_design: float, e_spread: float, n_particles: int, **extra_params) -> pd.DataFrame:
-		"""
-		Generate the particles distribution for the particle beam creation. 
-		**Does not generate the beam!**
-
-		Equivalent to the procedure of the same name in Placet file 'make_beam.tcl'.
-		
-		Parameters
-		----------
-		e_design
-			The beam design energy in [GeV].
-		e_spread
-			The beam energy spread in [%].
-		n_particles
-			Number of particles in the beam.
-
-		Other parameters
-		----------------
-		sigma_z : float
-			Bunch length in micrometers.
-		beta_x : float
-			Horizontal beta-function.
-		beta_y : float
-			Vertical beta-function.
-		alpha_x : float
-			Horizontal alpha-function.
-		alpha_y : float
-			Vertical alpha-function.
-		emitt_x : float
-			Horizontal normalized emittance.
-		emitt_y : float
-			Vertical normalized emittance.
-
-		Returns
-		-------
-		DataFrame
-			The particles' coordinates.
-		"""
-		_options_list = ['sigma_z', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y']
-		for value in _options_list:
-			if not value in extra_params:
-				raise Exception(f"The parameter '{value}' is missing!")
-
-		emittance_x = extra_params.get('emitt_x') * 1e-7 * 0.511e-3 / e_design
-		emittance_y = extra_params.get('emitt_y') * 1e-7 * 0.511e-3 / e_design
-
-		sigma_x = np.sqrt(emittance_x * extra_params.get('beta_x')) * 1e6
-		sigma_y = np.sqrt(emittance_y * extra_params.get('beta_y')) * 1e6
-		sigma_px = np.sqrt(emittance_x / extra_params.get('beta_x')) * 1e6
-		sigma_py = np.sqrt(emittance_y / extra_params.get('beta_y')) * 1e6
-		sigma_z = extra_params.get('sigma_z')
-		sigma_E = 0.01 * np.abs(e_spread)
-
-		e, x, y, z, px, py = [], [], [], [], [], []
-		if e_spread < 0:
-			for i in range(n_particles):
-				e.append(e_design * (1.0 + sigma_E * (random.uniform(0, 1) - 0.5)))
-				z_tmp = random.gauss(0, sigma_z)
-				while np.abs(z_tmp) >= 3 * sigma_z:
-					z_tmp = random.gauss(0, sigma_z)
-				z.append(z_tmp)
-
-				x.append(random.gauss(0, sigma_x))
-				y.append(random.gauss(0, sigma_y))
-
-				px.append(random.gauss(0, sigma_px) - extra_params.get('alpha_x') * x[-1] * sigma_px / sigma_x)
-				py.append(random.gauss(0, sigma_py) - extra_params.get('alpha_y') * x[-1] * sigma_py / sigma_y)
-		else:
-			for i in range(n_particles):
-				e_offset = random.gauss(0, sigma_E)
-				while np.abs(e_offset) >= 3 * sigma_E:
-					e_offset = random.gauss(0, sigma_E)
-				e.append(e_design * (1.0 + e_offset))
-
-				z_tmp = random.gauss(0, sigma_z)
-				while np.abs(z_tmp) >= 3 * sigma_z:
-					z_tmp = random.gauss(0, sigma_z)
-				z.append(z_tmp)
-
-				x.append(random.gauss(0, sigma_x))
-				y.append(random.gauss(0, sigma_y))
-
-				px.append(random.gauss(0, sigma_px) - extra_params.get('alpha_x') * x[-1] * sigma_px / sigma_x)
-				py.append(random.gauss(0, sigma_py) - extra_params.get('alpha_y') * x[-1] * sigma_py / sigma_y)
-
-		particle_coordinates = pd.DataFrame({'E': e, 'x': x, 'y': y, 'z': z, 'px': px, 'py': py})
-		particle_coordinates = particle_coordinates.sort_values('z')
-
-		return particle_coordinates
-
 	@term_logging
-	def make_beam_many(self, beam_name: str, n_slice: int, n: int, **extra_params) -> str:
+	def make_beam_many(self, beam_name: str, n_slice: int, n: int, **extra_params) -> Beam:
 		"""
 		Generate the particle beam.
 		
+		Wraps [`Beam.make_beam_many()`][placetmachine.beam.beam.Beam.make_beam_many].
 		Similar to `make_beam_many` from "make_beam.tcl" in Placet but rewritten in Python.
 		
 		Practically could pass the whole beam_setup to the function. Keep the same structure as in Placet.
@@ -688,60 +601,23 @@ class Machine():
 		"""
 		if self.beamlines_invoked == []:
 			raise Exception("No beamlines created, cannot create a beam. Create the beamline first")
-		if beam_name in self.beams_invoked:
-			raise ValueError(f"Beam with the name '{beam_name}' already exists!")
+		for beam in self.beams_invoked:
+			if beam_name == beam.name:
+				raise ValueError(f"Beam with the name '{beam_name}' already exists! The beam you want to create should have a different name")	
 
-		_options_list = ['sigma_z', 'charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'n_total']
-		for value in _options_list:
-			if not value in extra_params:
-				raise Exception(f"The parameter '{value}' is missing!")
+		particle_beam = Beam(beam_name, self.placet, "particle")
+		particle_beam.make_beam_many(n_slice, n, **extra_params)
 
-		beam_setup = {
-			'bunches': 1,
-			'macroparticles': n,
-			'particles': extra_params.get('n_total'),
-			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
-			'ecut': 3.0,
-			'e0': extra_params.get('e_initial'),
-			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
-			'chargelist': "{1.0}",
-			'charge': 1.0,
-			'phase': 0.0,
-			'overlapp': -390 * 0.3 / 1.3,	#no idea
-			'distance': 0.3 / 1.3,			#bunch distance, no idea what it is
-			'alpha_y': extra_params.get('alpha_y'),
-			'beta_y': extra_params.get('beta_y'),
-			'emitt_y': extra_params.get('emitt_y'),
-			'alpha_x': extra_params.get('alpha_x'),
-			'beta_x': extra_params.get('beta_x'),
-			'emitt_x': extra_params.get('emitt_x')
-		}
-		self.placet.InjectorBeam(beam_name, **beam_setup)
+		self.beams_invoked.append(particle_beam)
 
-		self.placet.SetRfGradientSingle(beam_name, 0, "{1.0 0.0 0.0}")
-		
-		particle_beam_setup = {
-			'alpha_y': extra_params.get('alpha_y'),
-			'beta_y': extra_params.get('beta_y'),
-			'emitt_y': extra_params.get('emitt_y'),
-			'alpha_x': extra_params.get('alpha_x'),
-			'beta_x': extra_params.get('beta_x'),
-			'emitt_x': extra_params.get('emitt_x'),
-			'sigma_z': extra_params.get('sigma_z')
-		}
-		particles_distribution = self.make_beam_particles(extra_params.get('e_initial'), extra_params.get('e_spread'), n_slice * n, **particle_beam_setup)
-		particles_distribution.to_csv(os.path.join(self._data_folder_, "particles.in"), sep = ' ', index = False, header = False)
-
-		self.placet.BeamRead(beam = beam_name, file = os.path.join(self._data_folder_, "particles.in"))
-		self.beams_invoked.append(beam_name)
-
-		return beam_name
+		return particle_beam
 
 	@term_logging
-	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: Optional[int] = None, **extra_params) -> str:
+	def make_beam_slice_energy_gradient(self, beam_name: str, n_slice: int, n_macroparticles: int, eng: float, grad: float, beam_seed: Optional[int] = None, **extra_params) -> Beam:
 		"""
 		Generate the macroparticle (sliced) beam.
 		
+		Wraps [`Beam.make_beam_slice_energy_gradient()`][placetmachine.beam.beam.Beam.make_beam_slice_energy_gradient].
 		Similar to `make_beam_slice_energy_gradient`from "make_beam.tcl" in Placet but rewritten in Python.
 
 		Parameters
@@ -792,74 +668,16 @@ class Machine():
 		"""
 		if self.beamlines_invoked == []:
 			raise Exception("No beamlines created, cannot create a beam. Create the beamline first")
-		if beam_name in self.beams_invoked:
-			raise ValueError(f"Beam with the name '{beam_name}' already exists!")
+		for beam in self.beams_invoked:
+			if beam_name == beam.name:
+				raise ValueError(f"Beam with the name '{beam_name}' already exists! The beam you want to create should have a different name")	
 
-		_options_list = ['charge', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'emitt_x', 'emitt_y', 'e_spread', 'e_initial', 'sigma_z', 'n_total']
-		for value in _options_list:
-			if not value in extra_params:
-				raise Exception(f"The parameter '{value}' is missing!")
+		sliced_beam = Beam(beam_name, self.placet, "sliced")
+		sliced_beam.make_beam_slice_energy_gradient(n_slice, n_macroparticles, eng, grad, beam_seed, **extra_params)
 
-		if beam_seed is None:
-			beam_seed = random.randint(1, 1000000)
-		
-		self.placet.RandomReset(seed = beam_seed)
+		self.beams_invoked.append(sliced_beam)
 
-		beam_setup = {
-			'bunches': 1,
-			'macroparticles': n_macroparticles,
-			'particles': extra_params.get('n_total'),
-			'energyspread': 0.01 * extra_params.get('e_spread') * extra_params.get('e_initial'),
-			'ecut': 3.0,
-			'e0': eng * extra_params.get('e_initial'),
-			'file': self.placet.wake_calc(os.path.join(self._data_folder_, "wake.dat"), extra_params.get('charge'), -3,  3, extra_params.get('sigma_z'), n_slice),
-			'chargelist': "{1.0}",
-			'charge': 1.0,
-			'phase': 0.0,
-			'overlapp': -390 * 0.3 / 1.3,	#no idea
-			'distance': 0.3 / 1.3,			#bunch distance, no idea what it is
-			'alpha_y': extra_params.get('alpha_y'),
-			'beta_y': extra_params.get('beta_y'),
-			'emitt_y': extra_params.get('emitt_y'),
-			'alpha_x': extra_params.get('alpha_x'),
-			'beta_x': extra_params.get('beta_x'),
-			'emitt_x': extra_params.get('emitt_x')
-		}
-		self.placet.InjectorBeam(beam_name, **beam_setup)
-		
-		self.placet.SetRfGradientSingle(beam_name, 0, "{" + str(grad) +  " 0.0 0.0}")
-		self.beams_invoked.append(beam_name)
-
-		return beam_name
-
-	@verify_beam
-	def offset_beam(self, beam: str, **extra_params):
-		"""
-		Add the transverse offset, transverse angle or roll angle to the beam.
-
-		Parameters
-		----------
-		beam : str
-			The name of the beam.
-
-		Other parameters
-		----------------
-		x : float
-			Horizontal offset in micrometers.
-		y : float
-			Vertical offset in micrometers.
-		angle_x : float
-			Horizontal angle in microradians.
-		angle_y : float
-			Vertical angle in microradians.
-		rotate : float
-			Roll angle in radians. It is added after the offsets.
-		start : int
-			First particle to offset.
-		end : int
-			Last particle to offset.
-		"""
-		self.placet.BeamAddOffset(**dict(extra_params, beam = beam))
+		return sliced_beam
 
 	def _get_bpm_readings(self) -> pd.DataFrame:
 		"""
@@ -886,12 +704,12 @@ class Machine():
 	@add_beamline_to_final_dataframe
 	@verify_survey
 	@verify_beam
-	def _track(self, beam: str, survey: str = None) -> pd.DataFrame:
+	def _track(self, beam: Beam, survey: str = None) -> pd.DataFrame:
 		"""Perform the tracking without applying any corrections. For internal use only."""
-		return self.placet.TestNoCorrection(beam = beam, machines = 1, survey = survey, timeout = 100)
+		return self.placet.TestNoCorrection(beam = beam.name, machines = 1, survey = survey, timeout = 100)
 
 	@term_logging
-	def track(self, beam: str, survey: Optional[str] = None) -> pd.DataFrame:
+	def track(self, beam: Beam, survey: Optional[str] = None) -> pd.DataFrame:
 		"""
 		Perform the tracking without applying any corrections.
 
@@ -921,8 +739,8 @@ class Machine():
 		Parameters
 		----------
 		beam
-			The name of the beam.
-		survey: str, optional
+			The beam to use.
+		survey
 			The type of survey to be used. So far the accepted options are:
 			```
 			[None, "None", "Zero", "Clic", "Nlc", "Atl", 
@@ -948,14 +766,14 @@ class Machine():
 
 
 	@update_readings
-	def eval_orbit(self, beam: str) -> pd.DataFrame:
+	def eval_orbit(self, beam: Beam) -> pd.DataFrame:
 		"""
 		Evaluate the beam orbit based on the BPM readings.
 
 		Parameters
 		----------
-		beam : str
-			The name of the beam.
+		beam
+			The beam to use.
 
 		Returns
 		-------
@@ -967,7 +785,7 @@ class Machine():
 
 	@term_logging
 	@verify_beam
-	def eval_twiss(self, beam: str, **extra_params) -> pd.DataFrame:
+	def eval_twiss(self, beam: Beam, **extra_params) -> pd.DataFrame:
 		"""
 		Evaluate the Twiss parameters along the lattice.
 
@@ -981,7 +799,7 @@ class Machine():
 		Parameters
 		----------
 		beam
-			Name of the beam to use for the calculation.
+			The beam to use.
 
 		Other parameters
 		----------------
@@ -1015,7 +833,7 @@ class Machine():
 			_twiss_file = extra_params.get('file_read_only')
 		else:
 			_twiss_file = os.path.join(self._data_folder_, "twiss.dat")
-			self.placet.TwissPlotStep(**dict(extra_params, file = _twiss_file, beam = beam))
+			self.placet.TwissPlotStep(**dict(extra_params, file = _twiss_file, beam = beam.name))
 			
 		res = pd.DataFrame(columns = ["id", "type", "s", "betx", "bety", 'alfx', 'alfy', 'Dx', 'Dy', 'E'])
 		
@@ -1032,7 +850,7 @@ class Machine():
 
 				twiss_current = {
 						"id": int(data_list[0]),
-						"type": self.beamline.at(int(data_list[0])).type,
+						"type": self.beamline[int(data_list[0])].type,
 						"s": data_list[1],
 						"betx": data_list[5],
 						"bety": data_list[9],
@@ -1052,7 +870,7 @@ class Machine():
 	@update_misalignments
 	@verify_survey
 	@verify_beam
-	def one_2_one(self, beam: str, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
+	def one_2_one(self, beam: Beam, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the one-to-one (1-2-1) alignment.
 
@@ -1062,7 +880,7 @@ class Machine():
 		Parameters
 		----------
 		beam
-			The name of the beam used for correction
+			The beam to use.
 		survey
 			The type of survey to be used. So far the accepted options are:
 			```
@@ -1089,14 +907,14 @@ class Machine():
 			['correction', 'beam', 'beamline', 'survey', 'positions_file', 'emittx', 'emitty']
 			```
 		"""
-		return self.placet.TestSimpleCorrection(**dict(extra_params, beam = beam, machines = 1, survey = survey, timeout = 100))
+		return self.placet.TestSimpleCorrection(**dict(extra_params, beam = beam.name, machines = 1, survey = survey, timeout = 100))
 
 	@term_logging
 	@add_beamline_to_final_dataframe
 	@update_misalignments
 	@verify_survey
 	@verify_beam
-	def DFS(self, beam: str, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
+	def DFS(self, beam: Beam, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the Dispersion Free Steering or DFS.
 		
@@ -1135,7 +953,7 @@ class Machine():
 		Parameters
 		----------
 		beam
-			The name of the beam used for correction
+			The beam to use.
 		survey
 			The type of survey to be used. So far the accepted options are:
 			```
@@ -1161,7 +979,7 @@ class Machine():
 		Returns
 		-------
 		DataFrame
-			The tracking summary
+			The tracking summary.
 
 			The comlumns of the resulting DataFrame:
 			```
@@ -1169,7 +987,7 @@ class Machine():
 			```
 		"""
 		dfs_default_options = {
-			'beam0': beam,
+			'beam0': beam.name,
 			'survey': survey,
 			'machines': 1,
 			'timeout': 1000,
@@ -1189,13 +1007,13 @@ class Machine():
 		return res
 
 	@update_misalignments
-	def _RF_align(self, beam: str, survey: str = None, **extra_params):
-		self.placet.TestRfAlignment(**dict(extra_params, beam = beam, survey = survey, machines = 1))
+	def _RF_align(self, beam: Beam, survey: str = None, **extra_params):
+		self.placet.TestRfAlignment(**dict(extra_params, beam = beam.name, survey = survey, machines = 1))
 
 	@term_logging
 	@verify_survey
 	@verify_beam
-	def RF_align(self, beam: str, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
+	def RF_align(self, beam: Beam, survey: Optional[str] = None, **extra_params) -> pd.DataFrame:
 		"""
 		Perform the accelerating structures alignment (RF alignment).
 
@@ -1206,7 +1024,7 @@ class Machine():
 		Parameters
 		----------
 		beam
-			The name of the beam used for correction
+			The beam to use.
 		survey
 			The type of survey to be used. So far the accepted options are:
 			```
@@ -1262,7 +1080,8 @@ class Machine():
 
 		knob.apply(amplitude)
 
-	def eval_track_results(self, beam: str, beam_type: str = "sliced", **extra_params) -> (pd.DataFrame, float, float):
+	@verify_beam
+	def eval_track_results(self, beam: Beam, **extra_params) -> (pd.DataFrame, float, float):
 		"""
 		Evaluate the beam parameters at the beamline exit.
 		
@@ -1307,12 +1126,7 @@ class Machine():
 		Parameters
 		----------
 		beam
-			The beam to be used for tracking.
-		beam_type
-			The type of the beam passed. Accepted options are
-			```
-			["sliced", "particle"]
-			```
+			The beam to use.
 
 		Other parameters
 		----------------
@@ -1340,6 +1154,7 @@ class Machine():
 			```
 
 		"""
+		beam_type = beam.beam_type
 		if not beam_type in ["sliced", "particle"]:
 			raise ValueError(f"'beam_type' incorrect value. Accepted values are ['sliced', 'particle']. Received '{beam_type}'")
 		_filename = os.path.join(self._data_folder_, "particles.dat")
@@ -1377,7 +1192,7 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def eval_obs(self, beam: str, observables: List[str], **extra_params) -> List[float]:
+	def eval_obs(self, beam: Beam, observables: List[str]) -> List[float]:
 		"""
 		Evaluate the requested observables for the current state of `self.beamline`.
 
@@ -1404,9 +1219,7 @@ class Machine():
 		Parameters
 		----------
 		beam
-			The name of the beam to be used.
-
-			The beam with such a name should already exist in Placet.
+			The beam to use.
 		observables
 			The variables to read from the tracking data when performing the scan.
 			It can consist of:
@@ -1415,15 +1228,6 @@ class Machine():
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
-
-		Other parameters
-		----------------
-		beam_type : str
-			The type of the beam passed. Accepted options are
-			```
-			["sliced", "particle"]
-			```
-			Default is `"sliced"`.
 			
 		Returns
 		-------
@@ -1437,7 +1241,7 @@ class Machine():
 			obs = [float(track_results[observable].values) for observable in observables]
 		else:
 			#running machine.eval_track_results to identify the coordinates etc.
-			track_res, emittx, emitty = self.eval_track_results(beam, extra_params.get('beam_type', "sliced"))
+			track_res, emittx, emitty = self.eval_track_results(beam)
 			for observable in observables:
 				if observable in ['emittx', 'emitty']:
 					obs.append(emitty if observable == 'emitty' else emittx)
@@ -1446,7 +1250,7 @@ class Machine():
 		
 		return obs
 
-	def iterate_knob(self, beam: str, knob: Knob, observables: List[str], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
+	def iterate_knob(self, beam: Beam, knob: Knob, observables: List[str], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
 		Iterate the given knob in the given range and get the iteration summary.
 		
@@ -1469,12 +1273,6 @@ class Machine():
 
 		Other parameters
 		----------------
-		beam_type : str
-			The type of the beam passed. Accepted options are
-			```
-			["sliced", "particle"]
-			```
-			Default is `"sliced"`.
 		fit : Callable
 			Function to fit the data.
 			**!!** Only works if the amound of observables is equaly **1**.
@@ -1492,7 +1290,7 @@ class Machine():
 		if not set(observables).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
-		observable_values, beam_type = [], extra_params.get('beam_type', "sliced")
+		observable_values = []
 		
 		if not hasattr(self, '_CACHE_LOCK'):
 			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
@@ -1524,7 +1322,7 @@ class Machine():
 			self.apply_knob(knob, amplitude)
 			self._CACHE_LOCK['iterate_knob'] = True
 
-			obs = self.eval_obs(beam, observables, beam_type = beam_type)
+			obs = self.eval_obs(beam, observables)
 			
 			self.beamline.upload_from_cache(knob.elements)
 			self._CACHE_LOCK['iterate_knob'] = False
@@ -1570,7 +1368,7 @@ class Machine():
 			return {'scan_log': iter_data, 'fitted_value': None, 'best_obs': None}
 
 	@within_range
-	def scan_knob(self, beam: str, knob: Knob, observable: str, knob_range: List[float], fit_func: Callable, **extra_params) -> pd.DataFrame:
+	def scan_knob(self, beam: Beam, knob: Knob, observable: str, knob_range: List[float], fit_func: Callable, **extra_params) -> pd.DataFrame:
 		"""
 		Scan the given knob in the given range, apply the fit function and set the 
 		knob value to the optimum.

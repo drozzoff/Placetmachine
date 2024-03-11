@@ -40,7 +40,7 @@ beam_parameters =  {
 
 main_beam = clic.make_beam_many("main_beam", 200, 200, **beam_parameters)
 
-res = clic.eval_obs(main_beam, ['x', 'y'], beam_type = 'particle')
+res = clic.eval_obs(main_beam, ['x', 'y'])
 
 x, y = res[0], res[1]
 

@@ -262,22 +262,6 @@ class Beamline:
 		
 		self.lattice.append(new_element)
 
-	def at(self, element_id: int) -> Element:
-		"""
-		Return the element at a given location.
-		
-		Parameters
-		----------
-		element_id
-			The id of the element
-		
-		Returns
-		-------
-		Element
-			Element at the given location.
-		"""
-		return self.lattice.at(element_id)
-
 	def __setitem__(self, index: int, element: Element):
 		#
 		# Set the given element at the given position
