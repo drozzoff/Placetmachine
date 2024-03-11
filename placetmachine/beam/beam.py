@@ -100,6 +100,11 @@ class Beam:
 	"""
 	A class to handle the beams in **Placet**.
 
+	The default routine to create the particle beam is 
+	[`Beam.make_beam_many()`][placetmachine.beam.beam.Beam.make_beam_many].
+	The default routine to create the sliced beam is 
+	[`Beam.make_beam_slice_energy_gradient()`][placetmachine.beam.beam.Beam.make_beam_slice_energy_gradient].
+
 	Attributes
 	----------
 	name : str
@@ -111,7 +116,6 @@ class Beam:
 		```
 		["sliced", "partice", None]
 		```
-	
 	_data_folder_ : str
 		The name of the folder where the temporary files produced by **Placet** are stored.
 	"""
@@ -318,7 +322,7 @@ class Beam:
 	def offset_beam(self, **extra_params):
 		"""
 		Add the transverse offset, transverse angle or roll angle to the 
-		currentbeam.
+		current beam.
 
 		Other parameters
 		----------------
