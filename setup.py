@@ -16,7 +16,7 @@ setup(
 	python_requires = ">=3.7",
 	license = "MIT",
 	
-	packages = ["placetmachine", "placetmachine.placet", "placetmachine.lattice"],
+	packages = ["placetmachine", "placetmachine.placet", "placetmachine.lattice", "placetmachine.beam"],
 	package_data = {
 		'placetmachine': ["placet_files/*"]
 	},

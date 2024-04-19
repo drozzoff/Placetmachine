@@ -1,4 +1,4 @@
-from placetmachine.placet.placetwrap import Placet
+from placetmachine.placet import Placet
 from placetmachine.util import CoordTransformation
 from placetmachine.lattice import Beamline, Knob
 from placetmachine.machine import Machine
