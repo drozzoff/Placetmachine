@@ -1193,7 +1193,7 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def eval_obs(self, beam: Beam, observables: List[str]) -> List[float]:
+	def eval_obs(self, beam: Beam, observables: List[str], **extra_params) -> List[float]:
 		"""
 		Evaluate the requested observables for the current state of `self.beamline`.
 
@@ -1229,7 +1229,12 @@ class Machine():
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
-			
+		
+		Other parameters
+		----------------
+		suppress_output : bool
+			If `True` (default is `False`) suppresses the log message in regards of the tracking.
+		
 		Returns
 		-------
 		List[float]
@@ -1238,7 +1243,7 @@ class Machine():
 		obs = []
 		if set(observables).issubset(set(['emittx', 'emitty'])):
 			#using the results of machine.track 
-			track_results = self.track(beam)
+			track_results = self.track(beam) if not extra_params.get('suppress_output', False) else self._track(beam)
 			obs = [float(track_results[observable].values) for observable in observables]
 		else:
 			#running machine.eval_track_results to identify the coordinates etc.
@@ -1323,7 +1328,7 @@ class Machine():
 			self.apply_knob(knob, amplitude)
 			self._CACHE_LOCK['iterate_knob'] = True
 
-			obs = self.eval_obs(beam, observables)
+			obs = self.eval_obs(beam, observables, suppress_output = True)
 			
 			self.beamline.upload_from_cache(knob.elements)
 			self._CACHE_LOCK['iterate_knob'] = False
