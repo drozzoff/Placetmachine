@@ -240,7 +240,8 @@ class Machine():
 		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)}"
 
 	def __str__(self):
-		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {self.beams_invoked})"
+		beams_names_compiled = list(map(lambda x: x.name, self.beams_invoked))
+		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {beams_names_compiled})"
 
 	def _setup_data_folder(self):
 		"""Set the temporary folder in tmp/ folder"""
@@ -1192,7 +1193,7 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def eval_obs(self, beam: Beam, observables: List[str]) -> List[float]:
+	def eval_obs(self, beam: Beam, observables: List[str], **extra_params) -> List[float]:
 		"""
 		Evaluate the requested observables for the current state of `self.beamline`.
 
@@ -1228,7 +1229,12 @@ class Machine():
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
-			
+		
+		Other parameters
+		----------------
+		suppress_output : bool
+			If `True` (default is `False`) suppresses the log message in regards of the tracking.
+		
 		Returns
 		-------
 		List[float]
@@ -1237,7 +1243,7 @@ class Machine():
 		obs = []
 		if set(observables).issubset(set(['emittx', 'emitty'])):
 			#using the results of machine.track 
-			track_results = self.track(beam)
+			track_results = self.track(beam) if not extra_params.get('suppress_output', False) else self._track(beam)
 			obs = [float(track_results[observable].values) for observable in observables]
 		else:
 			#running machine.eval_track_results to identify the coordinates etc.
@@ -1322,7 +1328,7 @@ class Machine():
 			self.apply_knob(knob, amplitude)
 			self._CACHE_LOCK['iterate_knob'] = True
 
-			obs = self.eval_obs(beam, observables)
+			obs = self.eval_obs(beam, observables, suppress_output = True)
 			
 			self.beamline.upload_from_cache(knob.elements)
 			self._CACHE_LOCK['iterate_knob'] = False
