@@ -240,7 +240,8 @@ class Machine():
 		return f"Machine(debug_mode = {self.placet.debug_mode}, save_logs = {self.placet._save_logs}, send_delay = {self.placet._send_delay}, console_output = {self.console_output}) && beamline = {repr(self.beamline)}"
 
 	def __str__(self):
-		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {self.beams_invoked})"
+		beams_names_compiled = list(map(lambda x: x.name, self.beams_invoked))
+		return f"Machine(placet = {self.placet}, beamline = {self.beamline}, beams available = {beams_names_compiled})"
 
 	def _setup_data_folder(self):
 		"""Set the temporary folder in tmp/ folder"""
