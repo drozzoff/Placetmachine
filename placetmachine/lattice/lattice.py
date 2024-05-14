@@ -312,8 +312,9 @@ class Beamline:
 			The list of the elements' references to cache.
 			Each element in the list must be present in the Beamline.
 		"""
+		lattice_set = set(self.lattice)
 		for element in elements:
-			if element not in self.lattice:
+			if element not in lattice_set:
 				raise ValueError(f"Given element is not present in the Beamline!")
 			element.cache_data()
 
