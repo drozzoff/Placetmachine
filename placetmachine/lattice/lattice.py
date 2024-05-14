@@ -3,7 +3,7 @@ import re
 import shlex
 from typing import List, Callable, Generator, Optional
 import warnings
-from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element
+from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element, Knob
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -175,6 +175,8 @@ class Beamline:
 		Name of the beamline.
 	lattice : List[Element]
 		The list of the elements forming the beamline.
+	adjusted_knobs : List[Knob]
+		The list of the knobs references that are associated with the `Beamline`
 	"""
 
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
@@ -187,7 +189,7 @@ class Beamline:
 		name
 			Name of the beamline.
 		"""
-		self.name, self.lattice = name, []
+		self.name, self.lattice, self.adjusted_knobs = name, [], []
 
 	def __repr__(self):
 		return f"Beamline('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
@@ -302,6 +304,22 @@ class Beamline:
 				raise ValueError(f"Unsupported element type - {elem_type}")
 		return True
 
+	def adjust_knob(self, knob: Knob):
+		"""
+		Adjust an existing knob to the lattice.
+
+		The elements included in the knob should exist in the lattice.
+
+		Parameters
+		----------
+		knob
+			The knob to adjust to the lattice.
+		"""
+		if knob in self.adjusted_knobs:
+			raise warnings.warn(f"The knob already exist!")
+		else:
+			self.adjusted_knobs.append(knob)
+
 	def cache_lattice_data(self, elements: List[Element]):
 		"""
 		Cache up the data for certain elements.
@@ -312,8 +330,9 @@ class Beamline:
 			The list of the elements' references to cache.
 			Each element in the list must be present in the Beamline.
 		"""
+		lattice_set = set(self.lattice)
 		for element in elements:
-			if element not in self.lattice:
+			if element not in lattice_set:
 				raise ValueError(f"Given element is not present in the Beamline!")
 			element.cache_data()
 
@@ -329,8 +348,9 @@ class Beamline:
 		clear_cache
 			If `True`, clears the cached data.
 		"""
+		lattice_set = set(self.lattice)
 		for element in elements:
-			if element not in self.lattice:
+			if element not in lattice_set:
 				raise ValueError(f"Given element is not present in the Beamline!")
 			element.use_cached_data(clear_cache)
 
