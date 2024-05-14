@@ -1075,10 +1075,8 @@ class Machine():
 		amplitude
 			Amplitude to apply.
 		"""
-		beamline_set = set(self.beamline)
-		for element in knob.elements:
-			if element not in beamline_set:
-				raise ValueError("One or few elements involved in the given Knob are not present in the beamline!")
+		if knob not in self.beamline.adjusted_knobs:
+			raise ValueError("The knob provided does not exist!")
 		knob.apply(amplitude)
 
 	@verify_beam
