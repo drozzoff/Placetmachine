@@ -329,8 +329,9 @@ class Beamline:
 		clear_cache
 			If `True`, clears the cached data.
 		"""
+		lattice_set = set(self.lattice)
 		for element in elements:
-			if element not in self.lattice:
+			if element not in lattice_set:
 				raise ValueError(f"Given element is not present in the Beamline!")
 			element.use_cached_data(clear_cache)
 
