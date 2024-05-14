@@ -71,10 +71,8 @@ class Knob:
 		amplitude : float
 			Amplitude of the knob to apply.
 		"""
-		i = 0
-		for element in self.elements:
+		for element, i in (self.elements, range(len(self.values))):
 			element[self.coord] += self.values[i] * amplitude
-			i += 1
 
 	def __str__(self):
 		_data_to_show = ['name', 'type', 'girder', 's', 'x', 'y', 'xp', 'yp']
