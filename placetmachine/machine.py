@@ -1,5 +1,5 @@
 import os
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Union
 import json
 import random
 import pandas as pd
@@ -1191,7 +1191,7 @@ class Machine():
 			self.set_callback(self.empty)
 		return data_res, emittx, emitty
 
-	def eval_obs(self, beam: Beam, observables: List[str], **extra_params) -> List[float]:
+	def eval_obs(self, beam: Beam, observables: Union[str, List[str]], **extra_params) -> Union[float, List[float]]:
 		"""
 		Evaluate the requested observables for the current state of `self.beamline`.
 
@@ -1227,7 +1227,8 @@ class Machine():
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
-		
+			When more than 1 observable is needed, they should be passed as a list.
+
 		Other parameters
 		----------------
 		suppress_output : bool
@@ -1238,6 +1239,11 @@ class Machine():
 		List[float]
 			The values of the observables.
 		"""
+		single_observable = False
+		if isinstance(observables, str):
+			observables = [observables]
+			single_observable = True
+	
 		obs = []
 		if set(observables).issubset(set(['emittx', 'emitty'])):
 			#using the results of machine.track 
@@ -1252,9 +1258,12 @@ class Machine():
 				else:
 					obs.append(list(track_res[observable].values))
 		
+		if single_observable:
+			return obs[0]
+		
 		return obs
 
-	def iterate_knob(self, beam: Beam, knob: Knob, observables: List[str], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
+	def iterate_knob(self, beam: Beam, knob: Knob, observables: Union[str, List[str]], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
 		Iterate the given knob in the given range and get the iteration summary.
 		
@@ -1266,12 +1275,13 @@ class Machine():
 			The knob to perform scan on.
 		observables
 			The variables to read from the tracking data when performing the scan.
-			It can consist of:
+			It can consist of any combination of:
 			```
 			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
+			When more than 1 observable is needed, they should be passed as a list.
 		knob_range
 			The list of the knob values to perform the scan.
 
@@ -1289,9 +1299,10 @@ class Machine():
 		dict
 			The scan summary.
 		"""
-		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 
-					   'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
-		if not set(observables).issubset(set(_obs_values)):
+		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
+				'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 
+				'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		if not set(list(observables)).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
 		observable_values = []
@@ -1418,7 +1429,7 @@ class Machine():
 		"""
 		_options = ['plot', 'evaluate_optimal']
 
-		fit_data = self.iterate_knob(beam, knob, [observable], knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
+		fit_data = self.iterate_knob(beam, knob, observable, knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
 
 		self.apply_knob(knob, fit_data['fitted_value'])
 
