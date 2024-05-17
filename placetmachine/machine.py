@@ -1275,12 +1275,13 @@ class Machine():
 			The knob to perform scan on.
 		observables
 			The variables to read from the tracking data when performing the scan.
-			It can consist of:
+			It can consist of any combination of:
 			```
 			['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
+			When more than 1 observable is needed, they should be passed as a list.
 		knob_range
 			The list of the knob values to perform the scan.
 
@@ -1298,9 +1299,10 @@ class Machine():
 		dict
 			The scan summary.
 		"""
-		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 
-					   'sigma_xy', 'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
-		if not set(observables).issubset(set(_obs_values)):
+		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
+				'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 
+				'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		if not set(list(observables)).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
 		observable_values = []
