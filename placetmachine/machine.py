@@ -1227,7 +1227,7 @@ class Machine():
 			'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 
 			'sigma_xpy', 'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
 			```
-			When more than 1 observable is needed, they should be passed as a list.  
+			When more than 1 observable is needed, they should be passed as a list.
 
 		Other parameters
 		----------------
