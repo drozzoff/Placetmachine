@@ -1429,7 +1429,7 @@ class Machine():
 		"""
 		_options = ['plot', 'evaluate_optimal']
 
-		fit_data = self.iterate_knob(beam, knob, [observable], knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
+		fit_data = self.iterate_knob(beam, knob, observable, knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
 
 		self.apply_knob(knob, fit_data['fitted_value'])
 
