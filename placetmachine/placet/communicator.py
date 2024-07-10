@@ -48,9 +48,9 @@ class Communicator(ABC):
 	Attributes
 	----------
 	process : pexpect.spawn
-		The child process spawned with pexpect
+		The child process spawned with pexpect.
 	debug_mode : bool
-		If True, running in debug mode
+		If True, running in debug mode.
 
 	"""
 	_BASE_TIMEOUT = 100
@@ -76,7 +76,8 @@ class Communicator(ABC):
 			The time delay before each data transfer to a child process (sometimes needed for stability).
 			Default is `Communicator._BUFFER_MAXSIZE`.
 		"""
-		self._process_name, self.debug_mode = process_name, kwargs.get('debug_mode', False),
+		self._debug_mode = kwargs.get('debug_mode', False)
+		self._process_name = process_name
 		self._save_logs = kwargs.get("save_logs", True)
 		self._send_delay = kwargs.get('send_delay', self._DELAY_BEFORE_SEND)
 		self.__init()
@@ -84,14 +85,62 @@ class Communicator(ABC):
 	def __init(self):
 		self.process = pexpect.spawnu(self._process_name, timeout = None, encoding = 'utf-8')
 
-		if self.debug_mode:
-			print(f"Debug mode is on. Running the process {self._process_name}, debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}")
-			self.debug_data = pd.DataFrame(columns = ['function', 'arguments', 'run_time', "res"])
+		self.__debug_init()
 
-		if self._save_logs or self.debug_mode:
-			self.save_logs()
+		self.__save_logs()
 
 		self.add_send_delay(self._send_delay)
+
+	def __debug_init(self):
+		if self.debug_mode:
+			print(f"Debug mode is on. Running the process '{self._process_name}', debug_mode = {self.debug_mode}, save_logs = {self._save_logs}, send_delay = {self._send_delay}")
+			self.debug_data = pd.DataFrame(columns = ['function', 'arguments', 'run_time', "res"])
+
+	def __save_logs(self):
+		"""
+		Open the files to store the log data of a child process
+
+		By default, the names are "log_send.txt" for logfile_send and "log_read.txt" for logfile_read.
+		"""
+		if self.save_logs:
+			print(f"Saving the log files. Default send file is 'log_send.txt', default read file is 'log_read.txt'.")
+			self.process.logfile_send = open("log_send.txt", "w")
+			self.process.logfile_read = open("log_read.txt", "w")
+		else:
+			self.process.logfile_send = None
+			self.process.logfile_read = None
+	
+	@property
+	def debug_mode(self) -> bool:
+		return self._debug_mode
+
+	@debug_mode.setter
+	def debug_mode(self, value: bool):
+		if self._debug_mode == False and value == True:
+			# debug mode being switched on
+			self._debug_mode = value
+			self.__debug_init()
+		if self._debug_mode == True and value == False:
+			# debug mode being switched off
+			print("Debug mode is switched off")
+			self._debug_mode = value
+	
+	@property
+	def save_logs(self) -> bool:
+		return self._save_logs
+
+	@save_logs.setter
+	def save_logs(self, value: bool):
+		if self._save_logs == False and value == True:
+			# swtiching on the logging
+			self._save_logs = value
+			self.__save_logs()
+		if self._save_logs == True and value == False:
+			# switching off the logging
+			print(f"Switching off the file logging.")
+			self._save_logs = value
+			self.__save_logs()
+
 
 	def _restart(self):
 		"""Restart the child process"""
@@ -110,15 +159,6 @@ class Communicator(ABC):
 			The time delay.
 		"""
 		self.process.delaybeforesend = time
-
-	def save_logs(self):
-		"""
-		Open the files to store the log data of a child process
-
-		By default, the names are "log_send.txt" for logfile_send and "log_read.txt" for logfile_read.
-		"""
-		self.process.logfile_send = open("log_send.txt", "w")
-		self.process.logfile_read = open("log_read.txt", "w")
 
 	@logging
 	@alive_check
