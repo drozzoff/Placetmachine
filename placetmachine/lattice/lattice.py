@@ -463,7 +463,7 @@ class Beamline:
 		"""
 		return self.lattice[-1].girder
 
-	def extract(self, element_types: List[str]) -> Generator[Element, None, None]:
+	def extract(self, element_types: Union[str, List[str]]) -> Generator[Element, None, None]:
 		"""
 		Extract certain element type from the lattice.
 
@@ -477,6 +477,10 @@ class Beamline:
 		Element
 			Element that satisfy the selection criteria.
 		"""
+
+		if isinstance(element_types, str):
+			element_types = [element_types]
+			
 		for element_type in element_types:
 			if element_type not in self._supported_elements:
 				raise ValueError(f"The element type '{element_type}' is not supported. Accepting only {self._supported_elements}!")

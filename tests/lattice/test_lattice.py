@@ -200,14 +200,14 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(self.test_quad)
 		self.beamline.append(self.test_cavity)
 
-		for quad in self.beamline.extract(['Quadrupole']):
+		for quad in self.beamline.extract('Quadrupole'):
 			self.assertIn(quad, [self.beamline[0], self.beamline[2]])
 		
-		for cav in self.beamline.extract(['Cavity']):
+		for cav in self.beamline.extract('Cavity'):
 			self.assertIn(cav, [self.beamline[1], self.beamline[3]])
 
 		with self.assertRaises(ValueError):
-			for cav in self.beamline.extract(['MyElement']):
+			for cav in self.beamline.extract('MyElement'):
 				pass
 	
 	def test_number_lists(self):
