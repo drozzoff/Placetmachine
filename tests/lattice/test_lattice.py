@@ -107,6 +107,71 @@ class ElementElementaryTest(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			self.beamline.cache_lattice_data([test_element])
 
+	def test_realign_elements(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		for j, parameter in enumerate(self.beamline._alignment_parameters):
+			i = j + 1
+			self.beamline[0][parameter] = i if (i % 2) == 0 else -i
+			self.beamline[1][parameter] = 2 * i if (i % 2) == 0 else -2 * i
+
+		self.beamline.realign_elements()
+
+		for parameter in self.beamline._alignment_parameters:
+			self.assertEqual(self.beamline[0][parameter], 0.0)
+			self.assertEqual(self.beamline[1][parameter], 0.0)
+		
+	def test_realign_elements2(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		for j, parameter in enumerate(self.beamline._alignment_parameters):
+			i = j + 1
+			self.beamline[0][parameter] = i if (i % 2) == 0 else -i
+			self.beamline[1][parameter] = 2 * i if (i % 2) == 0 else -2 * i
+
+		test_param = 'y'
+		self.beamline.realign_elements(test_param)
+
+		self.assertEqual(self.beamline[0][test_param], 0.0)
+		self.assertEqual(self.beamline[1][test_param], 0.0)
+
+	def test_realign_elements3(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		for j, parameter in enumerate(self.beamline._alignment_parameters):
+			i = j + 1
+			self.beamline[0][parameter] = i if (i % 2) == 0 else -i
+			self.beamline[1][parameter] = 2 * i if (i % 2) == 0 else -2 * i
+
+		test_params = ['y', 'roll']
+		self.beamline.realign_elements(test_params)
+
+		for parameter in test_params:
+			self.assertEqual(self.beamline[0][parameter], 0.0)
+			self.assertEqual(self.beamline[1][parameter], 0.0)		
+
+	def test_realign_elements4(self):
+
+		self.beamline.append(self.test_quad)
+		self.beamline.append(self.test_cavity)
+
+		for j, parameter in enumerate(self.beamline._alignment_parameters):
+			i = j + 1
+			self.beamline[0][parameter] = i if (i % 2) == 0 else -i
+			self.beamline[1][parameter] = 2 * i if (i % 2) == 0 else -2 * i
+
+		test_params = ['my_coordinate1', 'mycoordinate2']
+		
+		with self.assertRaises(ValueError):
+			self.beamline.realign_elements(test_params)	
+
+
 	def test_girders_number(self):
 
 		self.beamline.append(self.test_quad)

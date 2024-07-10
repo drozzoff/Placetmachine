@@ -1,7 +1,7 @@
 from pandas import DataFrame
 import re
 import shlex
-from typing import List, Callable, Generator, Optional
+from typing import List, Callable, Generator, Optional, Union
 import warnings
 from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element, Knob
 
@@ -181,6 +181,7 @@ class Beamline:
 
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
 	_parsers = ['advanced', 'default']
+	_alignment_parameters = ['x', 'xp', 'y', 'yp', 'roll', 'tilt']
 
 	def __init__(self, name: str):
 		"""
@@ -319,6 +320,42 @@ class Beamline:
 			raise warnings.warn(f"The knob already exist!")
 		else:
 			self.adjusted_knobs.append(knob)
+
+	def realign_elements(self, specific_parameters: Optional[Union[str, List[str]]] = None):
+		"""
+		Perfectly realign all the elements `Beamline.lattice` by settings
+		one or all of the the following parameters to zero:
+		```
+		['x', 'xp', 'y', 'yp', 'roll', 'tilt']
+		```
+
+		Parameters
+		----------
+		specific_parameters
+			One or several parameters from `['x', 'xp', 'y', 'yp', 'roll', 'tilt']` to reset.
+			The unspecified parameters are not going to be change.
+
+			If not specified - all the parameters  in `['x', 'xp', 'y', 'yp', 'roll', 'tilt']`
+			are reset.
+		"""
+		parameters_to_reset = []
+		
+		if isinstance(specific_parameters, str):
+			parameters_to_reset.append(specific_parameters)
+		
+		if specific_parameters is None:
+			parameters_to_reset = self._alignment_parameters
+		
+		if isinstance(specific_parameters, list):
+			for parameter in specific_parameters:
+				if parameter not in self._alignment_parameters:
+					raise ValueError(f"Parameter '{parameter}' either cannot be reset or does not exist!")
+				parameters_to_reset.append(parameter)
+
+		
+		for element in self.lattice:
+			for parameter in parameters_to_reset:
+				element.settings[parameter] = 0.0
 
 	def cache_lattice_data(self, elements: List[Element]):
 		"""
