@@ -34,6 +34,7 @@ markdown_extensions:
   - pymdownx.superfences
 
 nav:
+  - Main: index.md 
   - 'Documentation':
     - 'Placet module':
       - Communicator: placet/communicator.md
@@ -55,4 +56,4 @@ nav:
     - Machine: machine.md
   - 'Examples':
     - Example 1: examples/example1.md
-  - Main: index.md 
+

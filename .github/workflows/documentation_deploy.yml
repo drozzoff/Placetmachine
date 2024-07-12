@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - PPI-119
 
 permissions:
   contents: write
