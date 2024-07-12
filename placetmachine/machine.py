@@ -1,6 +1,5 @@
 import os
 from typing import List, Callable, Optional, Union
-import json
 import random
 import pandas as pd
 from rich.console import Console
@@ -1298,6 +1297,21 @@ class Machine():
 		------
 		dict
 			The scan summary.
+			The structure of the dictionary looks like this:
+			```
+			{
+				'scan_log': 
+					{
+						'knob_range': knob_range, 
+						'obs_data': observable_values
+					}, 
+				'fitted_value': ..,
+				'best_obs': ..
+			}
+			```
+			`obs_data` follows the same format as the input variable `observables`.
+			`fitted_value` is the best value estimated from the fit (if the fit function is given)
+			`best_obs` is the fitted function.
 		"""
 		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
 				'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 
@@ -1357,7 +1371,7 @@ class Machine():
 				obs = _eval_obs(knob, amplitude)
 				observable_values.append(obs)
 
-		iter_data = json.dumps({'knob_range': list(knob_range), 'obs_data': observable_values})
+		iter_data = {'knob_range': list(knob_range), 'obs_data': observable_values}
 		obs_f_element = list(map(lambda x: x[0], observable_values))
 
 		fit_result = extra_params.get('fit')(knob_range, obs_f_element) if ('fit' in extra_params) and (len(observables) == 1) else None
