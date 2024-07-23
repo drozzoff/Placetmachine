@@ -53,7 +53,9 @@ jobs:
       
       - name: Adjust paths in .coverage file
         run: |
-          coverage combine --append --rcfile <(echo '[run]\ndata_file = .coverage\n[paths]\nsource =\n    /module_to_test/placetmachine\n    placetmachine')
+          coverage combine
+          coverage report
+          coverage html
 
       - name: Verify .coverage file content
         run: |
