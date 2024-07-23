@@ -63,15 +63,14 @@ jobs:
       - name: Adjust paths in .coverage file using Python script
         run: |
           python3 -c "
-            import sqlite3
+          import sqlite3
 
-            conn = sqlite3.connect('.coverage')
-            cursor = conn.cursor()
+          conn = sqlite3.connect('.coverage')
+          cursor = conn.cursor()
 
-            cursor.execute('UPDATE file SET path = REPLACE(path, "/module_to_test/", "./")')
-            conn.commit()
-            conn.close()
-                      "
+          cursor.execute('UPDATE file SET path = REPLACE(path, "/module_to_test/", "./")')
+          conn.commit()
+          conn.close()"
       - name: Generate coverage report on host
         run: |
           coverage report
