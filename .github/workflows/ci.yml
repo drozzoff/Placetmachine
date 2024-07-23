@@ -57,5 +57,3 @@ jobs:
 
       - name: Remove Docker container
         run: docker rm unit_tests
-
-        github-token: ${{ secrets.GITHUB_TOKEN }}
