@@ -36,7 +36,7 @@ jobs:
         run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
       - name: Install Placetmachine, coverage, and coveralls in the container
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
 
       - name: Run tests with coverage in container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run -m unittest discover -s tests"
@@ -49,13 +49,14 @@ jobs:
 
       - name: Create .coveralls.yml file inside container
         run: |
-          docker exec unit_tests bash -c "echo 'repo_token: ${{ secrets.COVERALLS_REPO_TOKEN }}' > /module_to_test/.coveralls.yml"
+          docker exec unit_tests bash -c "echo 'repo_token: \"${{ secrets.COVERALLS_REPO_TOKEN }}\"' > /module_to_test/.coveralls.yml"
 
       - name: Verify .coveralls.yml file content
         run: docker exec unit_tests bash -c "cat /module_to_test/.coveralls.yml"
 
       - name: Submit coverage to Coveralls from container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
+
 
       - name: Stop Docker container
         run: docker stop unit_tests
