@@ -34,6 +34,8 @@ jobs:
         run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && pip3 install /module_to_test/. coverage"
 
       - name: Run tests with coverage in container
+        env:
+          PYTHONPATH: /module_to_test
         run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage run --source=/module_to_test/placetmachine -m unittest discover -s /module_to_test/tests"
 
       - name: Generate coverage report in container
@@ -41,6 +43,9 @@ jobs:
 
       - name: Generate HTML coverage report in container
         run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage html"
+
+      - name: List htmlcov directory contents for debugging
+        run: docker exec unit_tests bash -c "ls -la /module_to_test/htmlcov"  
 
       - name: Copy HTML coverage report to host
         run: docker cp unit_tests:/htmlcov ./htmlcov
