@@ -21,6 +21,10 @@ jobs:
       - name: Pull the Docker image with PLACET
         run: docker pull drozzoff/ubuntu_placet:latest
       
+      # Debugging step to verify the secret
+      - name: Verify COVERALLS_REPO_TOKEN
+        run: echo "COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }}"
+
       - name: Start the Docker container
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
