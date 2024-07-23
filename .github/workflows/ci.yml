@@ -22,7 +22,7 @@ jobs:
         run: docker pull drozzoff/ubuntu_placet:latest
       
       - name: Start the Docker container
-        run: docker run -d --name unit_tests -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} drozzoff/ubuntu_placet:latest tail -f /dev/null
+        run: docker run -d --name unit_tests -e COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} drozzoff/ubuntu_placet:latest tail -f /dev/null
 
       - name: Copy the Placetmachine module to the container
         run: docker cp . unit_tests:module_to_test/
@@ -44,7 +44,7 @@ jobs:
 
       - name: Submit coverage to Coveralls from container
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
 
       - name: Stop Docker container
