@@ -47,7 +47,10 @@ jobs:
 
       - name: Copy .coverage file to host
         run: docker cp unit_tests:/module_to_test/.coverage ./.coverage
-
+      
+      - name: Install coveralls and coverage
+        run: pip3 install coverage coveralls
+      
       - name: Adjust paths in .coverage file
         run: |
           coverage combine --append --rcfile <(echo '[run]\ndata_file = .coverage\n[paths]\nsource =\n    /module_to_test/placetmachine\n    placetmachine')
@@ -65,9 +68,6 @@ jobs:
 
       - name: Remove Docker container
         run: docker rm unit_tests
-
-      - name: Installing coveralls
-        run: pip3 install coveralls
 
       - name: Upload Coverage to Coveralls
         env:
