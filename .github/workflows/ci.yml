@@ -62,6 +62,10 @@ jobs:
       
       - name: Adjust paths in .coverage file
         run: |
+          sed -i 's|/module_to_test/|./|g' .coverage
+      
+      - name: Adjust paths in .coverage file
+        run: |
           coverage report
           coverage html
 
