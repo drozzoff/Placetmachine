@@ -62,7 +62,5 @@ jobs:
       - name: Remove Docker container
         run: docker rm unit_tests
 
-      - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@v2.2.3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Coverage to Coveralls
+        run: coveralls
