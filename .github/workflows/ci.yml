@@ -48,6 +48,10 @@ jobs:
       - name: Copy .coverage file to host
         run: docker cp unit_tests:/module_to_test/.coverage ./.coverage
 
+      - name: Adjust paths in .coverage file
+        run: |
+          coverage combine --append --rcfile <(echo '[run]\ndata_file = .coverage\n[paths]\nsource =\n    /module_to_test/placetmachine\n    placetmachine')
+
       - name: Verify .coverage file content
         run: |
           echo "Verifying .coverage file content"
