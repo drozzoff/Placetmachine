@@ -49,7 +49,9 @@ jobs:
         run: docker cp unit_tests:/module_to_test/.coverage ./.coverage
 
       - name: Verify .coverage file content
-        run: cat .coverage
+        run: |
+          echo "Verifying .coverage file content"
+          python -c "import sqlite3; conn = sqlite3.connect('.coverage'); cursor = conn.cursor(); cursor.execute('SELECT * FROM meta'); rows = cursor.fetchall(); print(rows);"
 
       - name: Copy HTML coverage report to host
         run: docker cp unit_tests:/module_to_test/htmlcov ./htmlcov
