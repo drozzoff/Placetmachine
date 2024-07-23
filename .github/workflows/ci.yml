@@ -54,7 +54,7 @@ jobs:
       - name: Submit coverage to Coveralls from container
         env:
           COVERALLS_FLAG_NAME: no-git
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls 2>/dev/null"
 
       - name: Stop Docker container
         run: docker stop unit_tests
