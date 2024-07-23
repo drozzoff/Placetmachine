@@ -20,18 +20,12 @@ jobs:
 
       - name: Pull the Docker image with PLACET
         run: docker pull drozzoff/ubuntu_placet:latest
-      
-      # Debugging step to verify the secret
-      - name: Verify COVERALLS_REPO_TOKEN
-        run: echo "COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }}"
 
       - name: Start the Docker container
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          COVERALLS_FLAG_NAME: no-git
         run: docker run -d --name unit_tests drozzoff/ubuntu_placet:latest tail -f /dev/null
-
-      - name: Verify environment variable inside container
-        run: docker exec unit_tests bash -c "echo \$COVERALLS_REPO_TOKEN"
 
       - name: Copy the Placetmachine module to the container
         run: docker cp . unit_tests:module_to_test/
@@ -40,7 +34,7 @@ jobs:
         run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
       - name: Install Placetmachine, coverage, and coveralls in the container
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
+        run: docker exec unit_tests bash -c "apt-get update && apt-get install -y git && cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
 
       - name: Run tests with coverage in container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run -m unittest discover -s tests"
@@ -55,12 +49,10 @@ jobs:
         run: |
           docker exec unit_tests bash -c "echo 'repo_token: \"${{ secrets.COVERALLS_REPO_TOKEN }}\"' > /module_to_test/.coveralls.yml"
 
-      - name: Verify .coveralls.yml file content
-        run: docker exec unit_tests bash -c "cat /module_to_test/.coveralls.yml"
-
       - name: Submit coverage to Coveralls from container
+        env:
+          COVERALLS_FLAG_NAME: no-git
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
-
 
       - name: Stop Docker container
         run: docker stop unit_tests
