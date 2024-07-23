@@ -62,7 +62,7 @@ jobs:
       
       - name: Adjust paths in .coverage file using Python script
         run: |
-          python -c "
+          python3 -c "
             import sqlite3
 
             conn = sqlite3.connect('.coverage')
