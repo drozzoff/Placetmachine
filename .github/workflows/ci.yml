@@ -62,5 +62,8 @@ jobs:
       - name: Remove Docker container
         run: docker rm unit_tests
 
+      - name: Installing coveralls
+        run: pip3 install coveralls
+
       - name: Upload Coverage to Coveralls
         run: coveralls
