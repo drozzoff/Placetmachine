@@ -47,10 +47,15 @@ jobs:
       - name: Generate HTML coverage report in container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage html"
 
+      - name: Create .coveralls.yml file inside container
+        run: |
+          docker exec unit_tests bash -c "echo 'repo_token: ${{ secrets.COVERALLS_REPO_TOKEN }}' > /module_to_test/.coveralls.yml"
+
+      - name: Verify .coveralls.yml file content
+        run: docker exec unit_tests bash -c "cat /module_to_test/.coveralls.yml"
+
       - name: Submit coverage to Coveralls from container
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: docker exec -e COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
 
       - name: Stop Docker container
         run: docker stop unit_tests
