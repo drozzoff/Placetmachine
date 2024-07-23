@@ -31,18 +31,16 @@ jobs:
         run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
       - name: Install package and coverage in container
-        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && pip3 install /module_to_test/. coverage"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage"
 
       - name: Run tests with coverage in container
-        env:
-          PYTHONPATH: /module_to_test
-        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage run --source=/module_to_test/placetmachine -m unittest discover -s /module_to_test/tests"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run -m unittest discover -s tests"
 
       - name: Generate coverage report in container
-        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage report"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage report"
 
       - name: Generate HTML coverage report in container
-        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage html"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage html"
 
       - name: List htmlcov directory contents for debugging
         run: docker exec unit_tests bash -c "ls -la /module_to_test/htmlcov"  
