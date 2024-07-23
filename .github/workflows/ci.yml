@@ -34,7 +34,7 @@ jobs:
         run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && pip3 install /module_to_test/. coverage"
 
       - name: Run tests with coverage in container
-        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage run -m unittest discover -s /module_to_test/tests"
+        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage run --source=/module_to_test/placetmachine -m unittest discover -s /module_to_test/tests"
 
       - name: Generate coverage report in container
         run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage report"
