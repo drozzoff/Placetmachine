@@ -11,7 +11,6 @@ jobs:
 
     env:
       COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      COVERALLS_FLAG_NAME: no-git
 
     steps:
       - name: Checkout code
@@ -35,8 +34,11 @@ jobs:
       - name: Create a virtual environment
         run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
-      - name: Install Placetmachine, coverage, and coveralls in the container
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
+      - name: Install git and required python modules in the container
+        run: docker exec unit_tests bash -c "apt-get update && apt-get install -y git && cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
+
+      - name: Install Placetmachine in the container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/."
 
       - name: Run tests with coverage in container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run -m unittest discover -s tests"
@@ -52,9 +54,7 @@ jobs:
           docker exec unit_tests bash -c "echo 'repo_token: \"${{ secrets.COVERALLS_REPO_TOKEN }}\"' > /module_to_test/.coveralls.yml"
 
       - name: Submit coverage to Coveralls from container
-        env:
-          COVERALLS_FLAG_NAME: no-git
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls 2>/dev/null"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
 
       - name: Stop Docker container
         run: docker stop unit_tests
