@@ -62,7 +62,6 @@ jobs:
       
       - name: Adjust paths in .coverage file
         run: |
-          coverage combine
           coverage report
           coverage html
 
