@@ -22,7 +22,12 @@ jobs:
         run: docker pull drozzoff/ubuntu_placet:latest
       
       - name: Start the Docker container
-        run: docker run -d --name unit_tests -e COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} drozzoff/ubuntu_placet:latest tail -f /dev/null
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: docker run -d --name unit_tests drozzoff/ubuntu_placet:latest tail -f /dev/null
+
+      - name: Verify environment variable inside container
+        run: docker exec unit_tests bash -c "echo \$COVERALLS_REPO_TOKEN"
 
       - name: Copy the Placetmachine module to the container
         run: docker cp . unit_tests:module_to_test/
@@ -52,3 +57,5 @@ jobs:
 
       - name: Remove Docker container
         run: docker rm unit_tests
+
+        github-token: ${{ secrets.GITHUB_TOKEN }}
