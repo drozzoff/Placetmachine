@@ -46,7 +46,7 @@ jobs:
         run: docker exec unit_tests bash -c "ls -la /module_to_test/htmlcov"  
 
       - name: Copy HTML coverage report to host
-        run: docker cp unit_tests:/htmlcov ./htmlcov
+        run: docker cp unit_tests:/module_to_test/htmlcov ./htmlcov
 
       - name: Stop Docker container
         run: docker stop unit_tests
