@@ -60,25 +60,28 @@ jobs:
       - name: Install coveralls and coverage
         run: pip3 install coverage coveralls
       
-      - name: Create .coveragerc file
+      - name: Adjust paths in .coverage file using Python script
         run: |
-          echo "[run]" > .coveragerc
-          echo "data_file = .coverage" >> .coveragerc
-          echo "[paths]" >> .coveragerc
-          echo "source =" >> .coveragerc
-          echo "    /module_to_test/placetmachine" >> .coveragerc
-          echo "    placetmachine" >> .coveragerc
-      
-      - name: Adjust paths in .coverage file
+          python -c "
+            import sqlite3
+
+            conn = sqlite3.connect('.coverage')
+            cursor = conn.cursor()
+
+            cursor.execute('UPDATE file SET path = REPLACE(path, "/module_to_test/", "./")')
+            conn.commit()
+            conn.close()
+                      "
+      - name: Generate coverage report on host
         run: |
-          coverage combine --rcfile=.coveragerc
           coverage report
           coverage html
 
       - name: Verify .coverage file content
         run: |
           echo "Verifying .coverage file content"
-          python3 -c "import sqlite3; conn = sqlite3.connect('.coverage'); cursor = conn.cursor(); cursor.execute('SELECT * FROM meta'); rows = cursor.fetchall(); print(rows); cursor.execute('SELECT * FROM line_bits'); rows = cursor.fetchall(); print(rows);"
+          python -c "import sqlite3; conn = sqlite3.connect('.coverage'); cursor = conn.cursor(); cursor.execute('SELECT * FROM meta'); rows = cursor.fetchall(); print(rows); cursor.execute('SELECT * FROM line_bits'); rows = cursor.fetchall(); print(rows);"
+
 
 
       - name: Stop Docker container
