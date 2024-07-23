@@ -48,6 +48,15 @@ jobs:
       - name: Copy .coverage file to host
         run: docker cp unit_tests:/module_to_test/.coverage ./.coverage
       
+      - name: Copy HTML coverage report to host
+        run: docker cp unit_tests:/module_to_test/htmlcov ./htmlcov
+
+      - name: Verify .coverage file in container
+        run: docker exec unit_tests bash -c "ls -la /module_to_test/.coverage"
+
+      - name: Verify .coverage file on host
+        run: ls -la .coverage
+
       - name: Install coveralls and coverage
         run: pip3 install coverage coveralls
       
@@ -62,8 +71,6 @@ jobs:
           echo "Verifying .coverage file content"
           python3 -c "import sqlite3; conn = sqlite3.connect('.coverage'); cursor = conn.cursor(); cursor.execute('SELECT * FROM meta'); rows = cursor.fetchall(); print(rows); cursor.execute('SELECT * FROM line_bits'); rows = cursor.fetchall(); print(rows);"
 
-      - name: Copy HTML coverage report to host
-        run: docker cp unit_tests:/module_to_test/htmlcov ./htmlcov
 
       - name: Stop Docker container
         run: docker stop unit_tests
