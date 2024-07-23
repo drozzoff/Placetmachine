@@ -60,12 +60,18 @@ jobs:
       - name: Install coveralls and coverage
         run: pip3 install coverage coveralls
       
-      - name: Adjust paths in .coverage file
+      - name: Create .coveragerc file
         run: |
-          sed -i 's|/module_to_test/|./|g' .coverage
+          echo "[run]" > .coveragerc
+          echo "data_file = .coverage" >> .coveragerc
+          echo "[paths]" >> .coveragerc
+          echo "source =" >> .coveragerc
+          echo "    /module_to_test/placetmachine" >> .coveragerc
+          echo "    placetmachine" >> .coveragerc
       
       - name: Adjust paths in .coverage file
         run: |
+          coverage combine --rcfile=.coveragerc
           coverage report
           coverage html
 
