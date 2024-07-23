@@ -34,8 +34,11 @@ jobs:
       - name: Create a virtual environment
         run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
+      - name: Configure git safe directory
+        run: docker exec unit_tests bash -c "git config --global --add safe.directory /module_to_test"
+
       - name: Install git and required python modules in the container
-        run: docker exec unit_tests bash -c "apt-get update && apt-get install -y git && cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
 
       - name: Install Placetmachine in the container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/."
