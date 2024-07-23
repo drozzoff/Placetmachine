@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 DEPENDENCIES = [
-	'pexpect==4.7.0',
-	'pandas==1.1.3',
+	'pexpect',
+	'pandas',
 	'rich',
-	'numpy==1.21.6'
+	'numpy'
 ]
 
 setup(
