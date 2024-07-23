@@ -22,7 +22,7 @@ jobs:
         run: docker pull drozzoff/ubuntu_placet:latest
       
       - name: Start the Docker container
-        run: docker run -d --name unit_tests drozzoff/ubuntu_placet:latest tail -f /dev/null
+        run: docker run -d --name unit_tests -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} drozzoff/ubuntu_placet:latest tail -f /dev/null
 
       - name: Copy the Placetmachine module to the container
         run: docker cp . unit_tests:module_to_test/
@@ -30,11 +30,11 @@ jobs:
       - name: Create a virtual environment
         run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
-      - name: Install package and coverage in container
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage"
+      - name: Install Placetmachine, coverage, and coveralls in the container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls"
 
       - name: Run tests with coverage in container
-        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run --debug=data -m unittest discover -s tests"
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run -m unittest discover -s tests"
 
       - name: Generate coverage report in container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage report"
@@ -42,54 +42,13 @@ jobs:
       - name: Generate HTML coverage report in container
         run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage html"
 
-      - name: List htmlcov directory contents for debugging
-        run: docker exec unit_tests bash -c "ls -la /module_to_test/htmlcov"  
-
-      - name: Copy .coverage file to host
-        run: docker cp unit_tests:/module_to_test/.coverage ./.coverage
-      
-      - name: Copy HTML coverage report to host
-        run: docker cp unit_tests:/module_to_test/htmlcov ./htmlcov
-
-      - name: Verify .coverage file in container
-        run: docker exec unit_tests bash -c "ls -la /module_to_test/.coverage"
-
-      - name: Verify .coverage file on host
-        run: ls -la .coverage
-
-      - name: Install coveralls and coverage
-        run: pip3 install coverage coveralls
-      
-      - name: Adjust paths in .coverage file using Python script
-        run: |
-          python3 -c "
-          import sqlite3
-
-          conn = sqlite3.connect('.coverage')
-          cursor = conn.cursor()
-
-          cursor.execute('UPDATE file SET path = REPLACE(path, "/module_to_test/", "./")')
-          conn.commit()
-          conn.close()"
-      - name: Generate coverage report on host
-        run: |
-          coverage report
-          coverage html
-
-      - name: Verify .coverage file content
-        run: |
-          echo "Verifying .coverage file content"
-          python -c "import sqlite3; conn = sqlite3.connect('.coverage'); cursor = conn.cursor(); cursor.execute('SELECT * FROM meta'); rows = cursor.fetchall(); print(rows); cursor.execute('SELECT * FROM line_bits'); rows = cursor.fetchall(); print(rows);"
-
-
+      - name: Submit coverage to Coveralls from container
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
 
       - name: Stop Docker container
         run: docker stop unit_tests
 
       - name: Remove Docker container
         run: docker rm unit_tests
-
-      - name: Upload Coverage to Coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: coveralls
