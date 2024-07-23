@@ -18,17 +18,38 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Install the package
-        run: pip3 install .
+      - name: Pull the Docker image with PLACET
+        run: docker pull drozzoff/ubuntu_placet:latest
+      
+      - name: Start the Docker container
+        run: docker run -d --name unit_tests drozzoff/ubuntu_placet:latest tail -f /dev/null
 
-      - name: Install coverage package
-        run: pip3 install coverage
+      - name: Copy the Placetmachine module to the container
+        run: docker cp . unit_tests:module_to_test/
 
-      - name: Run tests with coverage
-        run: coverage run -m unittest discover -s tests
+      - name: Create a virtual environment
+        run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
 
-      - name: Generate coverage report
-        run: coverage report
+      - name: Install package and coverage in container
+        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && pip3 install /module_to_test/. coverage"
+
+      - name: Run tests with coverage in container
+        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage run -m unittest discover -s /module_to_test/tests"
+
+      - name: Generate coverage report in container
+        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage report"
+
+      - name: Generate HTML coverage report in container
+        run: docker exec unit_tests bash -c "source /module_to_test/tvenv/bin/activate && coverage html"
+
+      - name: Copy HTML coverage report to host
+        run: docker cp unit_tests:/module_to_test/htmlcov ./htmlcov
+
+      - name: Stop Docker container
+        run: docker stop unit_tests
+
+      - name: Remove Docker container
+        run: docker rm unit_tests
 
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2.2.3
