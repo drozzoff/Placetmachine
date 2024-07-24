@@ -17,5 +17,10 @@ The package should be installed and available as `placetmachine`.
 
 **It requires a PLACET installation (https://gitlab.cern.ch/clic-software/placet)!**
 
+There is also a public **Docker** image of an Ubuntu with **PLACET** on Docker Hub. To get it run:
+```
+    docker pull drozzoff/ubuntu_placet:latest
+```
+
 # Documentation
 For the details, visit the MkDocs generated [documentation](https://drozzoff.github.io/Placetmachine/).

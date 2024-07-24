@@ -9,6 +9,9 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
 
+    env:
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -18,19 +21,46 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Install the package
-        run: pip3 install .
+      - name: Pull the Docker image with PLACET
+        run: docker pull drozzoff/ubuntu_placet:latest
 
-      - name: Install coverage package
-        run: pip3 install coverage
+      - name: Start the Docker container
 
-      - name: Run tests with coverage
-        run: coverage run -m unittest discover -s tests
+        run: docker run -d --name unit_tests -e COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} -e COVERALLS_FLAG_NAME=no-git drozzoff/ubuntu_placet:latest tail -f /dev/null
 
-      - name: Generate coverage report
-        run: coverage report
+      - name: Copy the Placetmachine module to the container
+        run: docker cp . unit_tests:module_to_test/
 
-      - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@v2.2.3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a virtual environment
+        run: docker exec unit_tests python3 -m venv /module_to_test/tvenv
+
+      - name: Configure git safe directory
+        run: docker exec unit_tests bash -c "git config --global --add safe.directory /module_to_test"
+
+      - name: Install git and required python modules in the container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/. coverage coveralls pyyaml"
+
+      - name: Install Placetmachine in the container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && pip3 install /module_to_test/."
+
+      - name: Run tests with coverage in container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage run -m unittest discover -s tests"
+
+      - name: Generate coverage report in container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage report"
+
+      - name: Generate HTML coverage report in container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coverage html"
+
+      - name: Create .coveralls.yml file inside container
+        run: |
+          docker exec unit_tests bash -c "echo 'repo_token: \"${{ secrets.COVERALLS_REPO_TOKEN }}\"' > /module_to_test/.coveralls.yml"
+
+      - name: Submit coverage to Coveralls from container
+        run: docker exec unit_tests bash -c "cd /module_to_test && source tvenv/bin/activate && coveralls"
+
+      - name: Stop Docker container
+        run: docker stop unit_tests
+
+      - name: Remove Docker container
+        run: docker rm unit_tests
