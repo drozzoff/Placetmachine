@@ -26,7 +26,7 @@ jobs:
 
       - name: Start the Docker container
 
-        run: docker run -d --name unit_tests -e COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} -e COVERALLS_FLAG_NAME=no-git drozzoff/ubuntu_placet:latest tail -f /dev/null
+        run: docker run -d --name unit_tests -e COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }} drozzoff/ubuntu_placet:latest tail -f /dev/null
 
       - name: Copy the Placetmachine module to the container
         run: docker cp . unit_tests:module_to_test/
