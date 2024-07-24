@@ -1,0 +1,19 @@
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Emacs
+*~
+
+*.pyc
+build/
+*.egg-info/
+**/__pycache__/
+.coverage*
+htmlcov
