@@ -29,6 +29,8 @@ class Knob:
 		Name of the Knob.
 	types_of_elements : List[str]
 		Types of the elements involved in the Knob.
+	amplitude : float
+		The current Knob amplitude.
 	"""
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
@@ -54,7 +56,7 @@ class Knob:
 		name : str
 			The name of the knob. If not provided, defaults to "".
 		"""
-		self.elements, self.types_of_elements = elements, []
+		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
 		self.name = extra_params.get('name', "")
 		
 		# checking the supported types and building the types involved
@@ -86,6 +88,7 @@ class Knob:
 		"""
 		for element, i in zip(self.elements, range(len(self.values))):
 			element[self.coord] += self.values[i] * amplitude
+		self.amplitude += amplitude
 
 	def __str__(self):
 		_data_to_show = ['name', 'type', 'girder', 's', 'x', 'y', 'xp', 'yp']
