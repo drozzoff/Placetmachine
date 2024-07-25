@@ -317,8 +317,13 @@ class Beamline:
 			The knob to attach to the lattice.
 		"""
 		if knob in self.attached_knobs:
-			raise warnings.warn(f"The knob already exist!")
+			warnings.warn(f"The knob already attached!")
 		else:
+			# Verifying the elements in the given Knob exist in the Beamline
+			for element in knob.elements:
+				if element not in self.lattice:
+					warnings.warn(f"One or few elements used in the Knob are not present in this Beamline! Knob is not attached")
+					return
 			self.attached_knobs.append(knob)
 
 	def realign_elements(self, specific_parameters: Optional[Union[str, List[str]]] = None):
