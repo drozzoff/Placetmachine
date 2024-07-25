@@ -16,6 +16,19 @@ class Knob:
 
 	The `Knob` is going to store the references of the [`Element`][placetmachine.lattice.element.Element]s provided and use them to 
 	apply the changes. Thus changes to the elements here are going to change the originals.
+
+	Attributes
+	----------
+	elements : List[Element]
+		List of the elements that used in this Knob.
+	coord : str
+		Coordinate that is going to be modified.
+	values : List[float]
+		List of the coordinates changes for each [`Element`][placetmachine.lattice.element.Element] in `elements`.
+	name : str
+		Name of the Knob.
+	types_of_elements : List[str]
+		Types of the elements involved in the Knob.
 	"""
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
