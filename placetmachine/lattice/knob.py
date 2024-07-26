@@ -16,6 +16,21 @@ class Knob:
 
 	The `Knob` is going to store the references of the [`Element`][placetmachine.lattice.element.Element]s provided and use them to 
 	apply the changes. Thus changes to the elements here are going to change the originals.
+
+	Attributes
+	----------
+	elements : List[Element]
+		List of the elements that used in this Knob.
+	coord : str
+		Coordinate that is going to be modified.
+	values : List[float]
+		List of the coordinates changes for each [`Element`][placetmachine.lattice.element.Element] in `elements`.
+	name : str
+		Name of the Knob.
+	types_of_elements : List[str]
+		Types of the elements involved in the Knob.
+	amplitude : float
+		The current Knob amplitude.
 	"""
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
@@ -41,7 +56,7 @@ class Knob:
 		name : str
 			The name of the knob. If not provided, defaults to "".
 		"""
-		self.elements, self.types_of_elements = elements, []
+		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
 		self.name = extra_params.get('name', "")
 		
 		# checking the supported types and building the types involved
@@ -73,25 +88,45 @@ class Knob:
 		"""
 		for element, i in zip(self.elements, range(len(self.values))):
 			element[self.coord] += self.values[i] * amplitude
+		self.amplitude += amplitude
+
+	def get_dataframe(self) -> DataFrame:
+		"""
+		Return the DataFrame with the Knob data.
+
+		The data included in the DataFrame is:
+		```
+		['name', 'type', 'girder', 's']
+		```
+		which is a name, type, girder id, and location of the element belonging to the girder.
+		Plus the amplitude of the coordinate and its current value in the beamline, E.g.:
+		```
+		['y_amplitude', 'y_current']
+		```
+		Typically, the properties, like `girder` or `s` are acquired during the [`Beamline`][placetmachine.lattice.lattice.Beamline]
+		creation. When the knob is created on the isolated element, these properties are set to `None`.
+
+		Returns
+		-------
+		DataFrame
+			Knob data summary
+		"""
+		data_dict = {key: [] for key in ['name', 'type', 'girder', 's'] + [self.coord + "_amplitude", self.coord + "_current"]}
+		for i, element in enumerate(self.elements):
+			data_dict['name'].append(element['name'])
+			
+			data_dict['s'].append(element['s'] if 's' in element.settings else None)
+
+			data_dict['type'].append(element.type)
+			data_dict['girder'].append(element.girder)
+
+			data_dict[self.coord + "_amplitude"].append(self.values[i])
+			data_dict[self.coord + "_current"].append(element[self.coord])
+
+		return DataFrame(data_dict)
 
 	def __str__(self):
-		_data_to_show = ['name', 'type', 'girder', 's', 'x', 'y', 'xp', 'yp']
-		i = 0
-		data_dict = {key: [None] * len(self.elements) for key in _data_to_show}
-		for element in self.elements:
-			for key in ['name', 's', 'x', 'y', 'xp', 'yp']:
-				if key == self.coord:
-					data_dict[key][i] = self.values[i]
-				elif key in ['name', 's']:
-					data_dict[key][i] = element[key]
-				else:
-					data_dict[key][i] = 0.0
-			data_dict['type'][i] = element.type
-			data_dict['girder'][i] = element.girder
-
-			i += 1
-		res_table = DataFrame(data_dict)
-
-		return str(res_table)
+		
+		return str(self.get_dataframe())
 
 	__repr__ = __str__

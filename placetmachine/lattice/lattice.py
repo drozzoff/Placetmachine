@@ -175,7 +175,7 @@ class Beamline:
 		Name of the beamline.
 	lattice : List[Element]
 		The list of the elements forming the beamline.
-	adjusted_knobs : List[Knob]
+	attached_knobs : List[Knob]
 		The list of the knobs references that are associated with the `Beamline`
 	"""
 
@@ -190,7 +190,7 @@ class Beamline:
 		name
 			Name of the beamline.
 		"""
-		self.name, self.lattice, self.adjusted_knobs = name, [], []
+		self.name, self.lattice, self.attached_knobs = name, [], []
 
 	def __repr__(self):
 		return f"Beamline('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
@@ -305,21 +305,26 @@ class Beamline:
 				raise ValueError(f"Unsupported element type - {elem_type}")
 		return True
 
-	def adjust_knob(self, knob: Knob):
+	def attach_knob(self, knob: Knob):
 		"""
-		Adjust an existing knob to the lattice.
+		Attach an existing knob to the lattice.
 
 		The elements included in the knob should exist in the lattice.
 
 		Parameters
 		----------
 		knob
-			The knob to adjust to the lattice.
+			The knob to attach to the lattice.
 		"""
-		if knob in self.adjusted_knobs:
-			raise warnings.warn(f"The knob already exist!")
+		if knob in self.attached_knobs:
+			warnings.warn(f"The knob already attached!")
 		else:
-			self.adjusted_knobs.append(knob)
+			# Verifying the elements in the given Knob exist in the Beamline
+			for element in knob.elements:
+				if element not in self.lattice:
+					warnings.warn(f"One or few elements used in the Knob are not present in this Beamline! Knob is not attached")
+					return
+			self.attached_knobs.append(knob)
 
 	def realign_elements(self, specific_parameters: Optional[Union[str, List[str]]] = None):
 		"""

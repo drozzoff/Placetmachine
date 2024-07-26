@@ -1074,7 +1074,7 @@ class Machine():
 		amplitude
 			Amplitude to apply.
 		"""
-		if knob not in self.beamline.adjusted_knobs:
+		if knob not in self.beamline.attached_knobs:
 			raise ValueError("The knob provided does not exist!")
 		knob.apply(amplitude)
 
