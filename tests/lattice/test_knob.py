@@ -1,18 +1,22 @@
 import unittest
 from placetmachine.lattice import Knob, Quadrupole, Bpm
-
+import pandas as pd
 
 class KnobTest(unittest.TestCase):
 
 	def setUp(self):
 		
-		self.test_quad = Quadrupole()
+		self.test_quad = Quadrupole({'name': "test_quad"})
 
 	def test_init(self):
 
-		knob = Knob([self.test_quad], 'y', [40.0])
+		knob = Knob([self.test_quad], 'y', [40.0], name = "test_knob")
 
 		self.assertEqual(knob.values, [40.0])
+
+		self.assertEqual(knob.amplitude, 0.0)
+
+		self.assertEqual(knob.name, "test_knob")
 
 	def test_init_unsupported_type(self):
 		
@@ -39,4 +43,23 @@ class KnobTest(unittest.TestCase):
 		knob.apply(0.5)
 
 		self.assertEqual(self.test_quad['y'], 20.0)
+
+		self.assertEqual(knob.amplitude, 0.5)
 	
+	def test_get_dataframe(self):
+
+		knob = Knob([self.test_quad], 'y', [40.0])
+
+		knob.apply(0.5)
+
+		test_dataframe_dict = {
+			'name': ["test_quad"], 
+			'type': ["Quadrupole"],
+			'girder': [None],
+			's': [None],
+			'y_amplitude': [40.0],
+			'y_current': [20.0]
+			}
+		test_dataframe = pd.DataFrame(test_dataframe_dict)
+
+		pd.testing.assert_frame_equal(test_dataframe, knob.get_dataframe())
