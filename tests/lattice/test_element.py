@@ -27,6 +27,9 @@ class ElementElementaryTest(unittest.TestCase):
 
 		# verifying there are no other parameters except declared
 		self.assertNotIn("s", self.new_element.settings)
+
+		with self.assertRaises(KeyError):
+			print(self.new_element['s'])
 	
 	def test_attributes2(self):
 

@@ -65,6 +65,9 @@ class Element(ABC):
 		if key not in self.parameters:
 			raise KeyError(f"Element does not have a '{key}' property!")
 		
+		if key not in self.settings:
+			raise KeyError(f"'{key}' property is not defined!")
+		
 		return self.settings[key]
 
 	def __setitem__(self, key : str, value):
