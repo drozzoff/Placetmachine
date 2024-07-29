@@ -25,7 +25,7 @@ class Girder:
 			elements_sequence = [elements_sequence]
 
 		for element in elements_sequence:
-			if element.girder is None:
+			if element.girder is not None:
 				raise ValueError("Element(s) provided are already on other Girder. Cannot create a new Girder.")
 				
 		self.elements = elements_sequence
