@@ -10,8 +10,9 @@ class Bpm(Element):
 	----------
 	settings : dict
 		Dictionary containing the element settings.
-	girder : int
-		The girder id, the element is on. This parameter is only relevant when being the part of the lattice..
+	girder : Optional[Girder]
+		The girder reference the `Element` is placed on. This parameter is only relevant when being the part of the lattice.
+		Upon creation is set to `None`.
 	type : str
 		The type of the element. It is set to "Bpm".
 
