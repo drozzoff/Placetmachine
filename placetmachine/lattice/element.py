@@ -15,8 +15,9 @@ class Element(ABC):
 	----------
 	settings : Optional[dict]
 		Dictionary containing the element settings. 
-	girder : Optional[int] 
-		The girder id, the element is on. This parameter is only relevant when being the part of the lattice.
+	girder : Optional[Girder] 
+		The girder reference the `Element` is placed on. This parameter is only relevant when being the part of the lattice.
+		Upon creation is set to `None`.
 	type : Optional[str]
 		The type of the element.
 	index : Optional[int]
@@ -27,14 +28,14 @@ class Element(ABC):
 	_int_params = []
 	_cached_parameters = []
 	
-	def __init__(self, in_parameters: Optional[dict] = None, girder: Optional[int] = None, index: Optional[int] = None, elem_type: Optional[str] = None):
+	def __init__(self, in_parameters: Optional[dict] = None, index: Optional[int] = None, elem_type: Optional[str] = None):
 		"""
 		Parameters
 		----------
 		in_parameters
 			The dict with input settings.
 		girder
-			The number of the girder element is placed.
+			The girder reference the `Element` is placed on.
 		index
 			The index of the element in the lattice.
 		"""
@@ -53,7 +54,7 @@ class Element(ABC):
 		for x in self._cached_parameters:
 			if not x in self.settings:
 				self.settings[x] = 0.0
-		self.girder, self.index, self.type, self._cached_data = girder, index, elem_type, None
+		self.girder, self.index, self.type, self._cached_data = None, index, elem_type, None
 
 	def __repr__(self):
 		return f"{self.type}({self.settings}, {self.girder}, {self.index}, '{self.type}')"
