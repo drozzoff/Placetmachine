@@ -1,4 +1,5 @@
 import unittest
+import pandas as pd
 from placetmachine.lattice import Girder, Quadrupole, Cavity
 
 
@@ -47,3 +48,17 @@ class GirderElementaryTest(unittest.TestCase):
 		self.girder.append(new_quad)
 
 		self.assertIs(self.girder, new_quad.girder)
+
+	def test_get_dataframe(self):
+		new_quad = Quadrupole(dict(name = "new_quad"))
+
+		self.girder.append(new_quad)
+
+		test_dataframe_dict = {
+			'name': ["test_quad", "test_cav", "new_quad"], 
+			'type': ["Quadrupole", "Cavity", "Quadrupole"],
+			's': [None] * 3,
+			}
+		test_dataframe = pd.DataFrame(test_dataframe_dict)
+
+		pd.testing.assert_frame_equal(test_dataframe, self.girder.get_dataframe())
