@@ -15,6 +15,9 @@ class GirderElementaryTest(unittest.TestCase):
 		
 		self.assertEqual(self.girder.name, "test_girder")
 
+		self.assertIs(self.girder, self.girder.elements[0].girder)
+		self.assertIs(self.girder, self.girder.elements[1].girder)
+
 	def test_access(self):
 
 		self.assertEqual(self.girder[0]['name'], "test_quad")

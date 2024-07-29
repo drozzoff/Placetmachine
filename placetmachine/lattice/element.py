@@ -121,4 +121,4 @@ class Element(ABC):
 	
 	@classmethod
 	def duplicate(cls, initial_instance):
-		return cls(initial_instance.settings, initial_instance.girder, initial_instance.index)
+		return cls(initial_instance.settings, initial_instance.index)
