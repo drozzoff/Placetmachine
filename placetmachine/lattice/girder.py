@@ -1,5 +1,6 @@
 from typing import Optional, List, Union
 import warnings
+from pandas import DataFrame
 from placetmachine.lattice.element import Element
 
 
@@ -80,3 +81,35 @@ class Girder:
 		"""Get the element from that girder at the given position."""
 		return self.elements[index]
 	
+	def get_dataframe(self) -> DataFrame:
+		"""
+		Return the DataFrame with the Girder data.
+
+		The data included in the DataFrame are the `Elements` information:
+		```
+		['name', 'type', 's']
+		```
+		which is a name, type, and location of the element belonging to the girder.
+		
+		Typically, the properties, like `s` are acquired during the [`Beamline`][placetmachine.lattice.lattice.Beamline]
+		creation. When the girder is created separately, these properties are set to `None`.
+
+		Returns
+		-------
+		DataFrame
+			Girder data summary
+		"""
+		data_dict = {key: [] for key in ['name', 'type', 's']}
+		for i, element in enumerate(self.elements):
+			data_dict['name'].append(element['name'])
+			
+			data_dict['s'].append(element['s'] if 's' in element.settings else None)
+
+			data_dict['type'].append(element.type)
+		return DataFrame(data_dict)
+	
+	def __str__(self):
+		
+		return str(self.get_dataframe())
+
+	__repr__ = __str__
