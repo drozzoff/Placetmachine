@@ -40,3 +40,10 @@ class GirderElementaryTest(unittest.TestCase):
 		self.assertEqual(self.girder[1]['name'], "new_quad")
 
 		self.assertEqual(self.girder[0]['name'], "test_quad")
+
+	def test_append(self):
+		new_quad = Quadrupole(dict(name = "new_quad"))
+
+		self.girder.append(new_quad)
+
+		self.assertIs(self.girder, new_quad.girder)

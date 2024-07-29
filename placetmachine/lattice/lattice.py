@@ -3,7 +3,7 @@ import re
 import shlex
 from typing import List, Callable, Generator, Optional, Union
 import warnings
-from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element, Knob
+from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element, Knob, Girder
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -177,6 +177,8 @@ class Beamline:
 		The list of the elements forming the beamline.
 	attached_knobs : List[Knob]
 		The list of the knobs references that are associated with the `Beamline`
+	girders : List[Girder]
+		The list of the girders references that are the parts of the `Beamline`.
 	"""
 
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
@@ -190,7 +192,7 @@ class Beamline:
 		name
 			Name of the beamline.
 		"""
-		self.name, self.lattice, self.attached_knobs = name, [], []
+		self.name, self.lattice, self.attached_knobs, self.girders = name, [], [], []
 
 	def __repr__(self):
 		return f"Beamline('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
@@ -242,19 +244,21 @@ class Beamline:
 		"""
 		new_element = element.duplicate(element)
 		if extra_params.get('new_girder', False):
-			if self.lattice == []:
-				new_element.girder = 1
-			elif self.lattice[-1].girder is not None:
-				girder_id = self.lattice[-1].girder
-				new_element.girder = girder_id + 1
+			if self.lattice == [] or self.girders != []:
+				# lattice is empty or the girders' list is non empty -> Creating a new Girder with an element
+				self.girders.append(Girder(new_element, name = f"{len(self.girders) + 1}"))
 			else:
+				# lattice is non empty and there are no girders present -> Warning
 				warnings.warn("Cannot create a new girder when previous elements are not on girders!", category = RuntimeWarning)
-				new_element.girder = None
+				
+		elif self.girders != []:
+			# girders list is non empty -> placing element in the last Girder
+			self.girders[-1].append(new_element)
 		else:
-			if self.lattice == []:
-				new_element.girder = None
-			else:
-				new_element.girder = self.lattice[-1].girder
+			# girders list is empty
+			pass
+
+		# Updating indexing and long. position
 		
 		if self.lattice == []:
 			new_element.settings['s'] = new_element.settings['length']
@@ -264,6 +268,7 @@ class Beamline:
 			new_element.index = self.lattice[-1].index + 1
 		
 		self.lattice.append(new_element)
+		
 
 	def __setitem__(self, index: int, element: Element):
 		#
@@ -272,8 +277,14 @@ class Beamline:
 		# The element is copied and placed on the same girder the element before it was.
 		#
 		new_element = element.duplicate(element)
-		new_element.girder = self.lattice[index].girder
-
+		
+		girder = self.lattice[index].girder
+		if girder is not None:
+			# finding the correct element on the girder
+			for i, element in enumerate(girder.elements):
+				if element is self.lattice[index]:
+					girder.elements[i] = new_element
+			
 		self.lattice[index] = new_element
 
 	def __getitem__(self, index: int):

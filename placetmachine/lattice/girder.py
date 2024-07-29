@@ -47,6 +47,7 @@ class Girder:
 		"""
 		if element.girder is None:
 			self.elements.append(element)
+			element.girder = self
 		else:
 			warnings.warn("Given element is already on the other girder!")
 

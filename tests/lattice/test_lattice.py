@@ -25,18 +25,31 @@ class ElementElementaryTest(unittest.TestCase):
 	def test_append_girder_check(self):
 
 		self.beamline.append(self.test_quad, new_girder = True)
+
+		self.assertIs(self.beamline.lattice[0].girder, self.beamline.girders[0])
+
 		self.beamline.append(self.test_cavity)
 
-		self.assertEqual(self.beamline.lattice[1].girder, 1)
+		self.assertIs(self.beamline.lattice[1].girder, self.beamline.girders[0])
 	
 	def test_append_girder_check2(self):
 
 		self.beamline.append(self.test_quad, new_girder = True)
+		self.assertIs(self.beamline.lattice[0].girder, self.beamline.girders[0])
+
 		self.beamline.append(self.test_cavity, new_girder = True)
 
-		self.assertEqual(self.beamline.lattice[1].girder, 2)
-	
+		self.assertIs(self.beamline.lattice[1].girder, self.beamline.girders[1])
+
 	def test_append_girder_check3(self):
+
+		self.beamline.append(self.test_quad)
+		self.assertIs(self.beamline.lattice[0].girder, None)
+
+		self.beamline.append(self.test_cavity)
+		self.assertIs(self.beamline.lattice[1].girder, None)
+	
+	def test_append_girder_check4(self):
 
 		self.beamline.append(self.test_quad)
 
@@ -170,28 +183,6 @@ class ElementElementaryTest(unittest.TestCase):
 		
 		with self.assertRaises(ValueError):
 			self.beamline.realign_elements(test_params)	
-
-
-	def test_girders_number(self):
-
-		self.beamline.append(self.test_quad)
-		self.beamline.append(self.test_cavity)
-		
-		self.assertIs(self.beamline.get_girders_number(), None)
-	
-	def test_girders_number2(self):
-
-		self.beamline.append(self.test_quad, new_girder = True)
-		self.beamline.append(self.test_cavity)
-		
-		self.assertIs(self.beamline.get_girders_number(), 1)
-		
-	def test_girders_number3(self):
-
-		self.beamline.append(self.test_quad, new_girder = True)
-		self.beamline.append(self.test_cavity, new_girder = True)
-		
-		self.assertIs(self.beamline.get_girders_number(), 2)
 
 	def test_extract(self):
 
