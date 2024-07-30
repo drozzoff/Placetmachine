@@ -205,7 +205,8 @@ class Beamline:
 			for key in _settings_data:
 				data_dict[key][i] = self.lattice[i].settings[key] if key in self.lattice[i].settings else None
 			data_dict['type'][i] = self.lattice[i].type
-			data_dict['girder'][i] = self.lattice[i].girder.name
+
+			data_dict['girder'][i] = self.lattice[i].girder.name if data_dict['girder'][i] is not None else None
 
 		res_table = DataFrame(data_dict)
 #		res_table.name = self.name
@@ -446,8 +447,8 @@ class Beamline:
 				if debug_mode:
 					print(f"#{__line_counter}. Read: '{line}'")
 					__line_counter += 1
+					processed_line = preprocess_func(line)
 					if parser == "advanced":
-						processed_line = preprocess_func(line)
 						print(f"---Parsed: '{processed_line}'")
 				else:
 					processed_line = preprocess_func(line)
