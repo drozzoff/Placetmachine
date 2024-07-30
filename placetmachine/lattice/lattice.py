@@ -205,7 +205,7 @@ class Beamline:
 			for key in _settings_data:
 				data_dict[key][i] = self.lattice[i].settings[key] if key in self.lattice[i].settings else None
 			data_dict['type'][i] = self.lattice[i].type
-			data_dict['girder'][i] = self.lattice[i].girder
+			data_dict['girder'][i] = self.lattice[i].girder.name
 
 		res_table = DataFrame(data_dict)
 #		res_table.name = self.name
@@ -523,8 +523,8 @@ class Beamline:
 		
 		Parameters
 		----------
-		girder_index
-			The girder id. The girder numbering starts from 1.
+		girder_id
+			The girder's index in the list of girders list associated with the Beamline
 		
 		Other parameters
 		----------------
@@ -536,8 +536,8 @@ class Beamline:
 		Element
 			Element extracted from the girder.
 		"""
-		for element in self.lattice:
-			if element.girder == girder_index and element.type in extra_params.get("filter_types", self._supported_elements):
+		for element in self.girders[girder_index]:
+			if element.type in extra_params.get("filter_types", self._supported_elements):
 				yield element
 
 	def _get_quads_strengths(self) -> List[float]:

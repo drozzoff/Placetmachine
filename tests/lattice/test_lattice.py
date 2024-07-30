@@ -310,16 +310,16 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(quad)
 
 		# testing girder 1
-		for element, i in zip(self.beamline.get_girder(1), range(5)):
+		for i, element in enumerate(self.beamline.get_girder(0)):
 			self.assertIs(element, self.beamline[i] )
 
 		#testting girder 2
-		for element, i in zip(self.beamline.get_girder(2), range(5, 11)):
-			self.assertIs(element, self.beamline[i] )			
+		for i, element in enumerate(self.beamline.get_girder(1)):
+			self.assertIs(element, self.beamline[i + 5])			
 
 		#testting girder 3
-		for element, i in zip(self.beamline.get_girder(3), range(10, 16)):
-			self.assertIs(element, self.beamline[i])
+		for i, element in enumerate(self.beamline.get_girder(2)):
+			self.assertIs(element, self.beamline[i + 10])
 			
 	def test_misalign_girder_general(self):
 
@@ -346,6 +346,8 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(drift)
 		self.beamline.append(quad)
 		# 1.0 - 0.5 - 2.0 - 0.5 - 1.0 - 5.0 total
+
+		print(self.beamline)
 
 		#misaligning the girder
 		x_left, x_right = 5.0, 10.0
