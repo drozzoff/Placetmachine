@@ -411,7 +411,6 @@ class Beamline:
 		"""
 		Read the lattice from the Placet lattice file.
 
-		Girders numbering starts from 1.
 		Evaluates the longitudinal coordinates while parsing the lattice. The coordinate `s` corresponds 
 		to the element exit.
 
@@ -438,7 +437,7 @@ class Beamline:
 			advanced_parser = AdvancedParser(**extra_params.get('parser_variables', {}))
 			preprocess_func = lambda x: advanced_parser.parse(x)
 
-		girder_index, index, debug_mode, __line_counter = 0, 0, extra_params.get('debug_mode', False), 1
+		index, debug_mode, __line_counter = 0, extra_params.get('debug_mode', False), 1
 		if debug_mode:
 			print(f"Processing the file '{filename}' with a parser '{parser}'")
 		with open(filename, 'r') as f:
@@ -452,12 +451,12 @@ class Beamline:
 						print(f"---Parsed: '{processed_line}'")
 				else:
 					processed_line = preprocess_func(line)
-				elem_type, element = parse_line(processed_line, girder_index, index)
+				elem_type, element = parse_line(processed_line, index)
 
 				if debug_mode:
 					print(f"---Element created: {repr(element)}")
 				if elem_type == 'Girder':
-					girder_index += 1
+					self.girders.append(Girder())
 					continue
 				elif elem_type is None:
 					continue
@@ -928,7 +927,7 @@ class Beamline:
 				res += "\n"
 			f.write(res)
 
-def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[int] = None):
+def parse_line(data: str, index: Optional[int] = None):
 	"""
 	Parse the line of the file with Placet elements.
 
@@ -936,8 +935,6 @@ def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[in
 	----------
 	data
 		The line from the PLACET file.
-	girder_index
-		The girder number of the current element.
 	index
 		The current element's id.
 	
@@ -978,25 +975,25 @@ def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[in
 					res[param] = value
 
 	if elem_type == "Quadrupole":
-		return "Quadrupole", Quadrupole(res, girder_index, index)
+		return "Quadrupole", Quadrupole(res, index)
 
 	if elem_type == "Cavity":
-		return "Cavity", Cavity(res, girder_index, index)
+		return "Cavity", Cavity(res, index)
 
 	if elem_type == "Bpm":
-		return "Bpm", Bpm(res, girder_index, index)
+		return "Bpm", Bpm(res, index)
 
 	if elem_type == "Drift":
-		return "Drift", Drift(res, girder_index, index)
+		return "Drift", Drift(res, index)
 	
 	if elem_type == "Dipole":
-		return "Dipole", Dipole(res, girder_index, index)
+		return "Dipole", Dipole(res, index)
 	
 	if elem_type == "Sbend":
-		return "Sbend", Sbend(res, girder_index, index)
+		return "Sbend", Sbend(res, index)
 
 	if elem_type == "Multipole":
-		return "Multipole", Multipole(res, girder_index, index)
+		return "Multipole", Multipole(res, index)
 
 	if elem_type == "Girder":
 		return "Girder", None

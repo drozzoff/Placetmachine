@@ -9,7 +9,7 @@ class Girder:
 	A class that stores the elements' references that are placed on it.
 	"""
 
-	def __init__(self, elements_sequence : Optional[Union[Element, List[Element]]], **kwargs):
+	def __init__(self, elements_sequence : Optional[Union[Element, List[Element]]] = None, **kwargs):
 		"""
 
 		Parameters
@@ -22,6 +22,9 @@ class Girder:
 		name : str
 			Name of the girder.
 		"""
+		if elements_sequence is None:
+			elements_sequence = []
+			
 		if isinstance(elements_sequence, Element):
 			elements_sequence = [elements_sequence]
 
