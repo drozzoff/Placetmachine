@@ -477,7 +477,7 @@ class Beamline:
 		int
 			The total number of girders in the lattice.
 		"""
-		return self.lattice[-1].girder
+		return len(self.girders)
 
 	def extract(self, element_types: Union[str, List[str]]) -> Generator[Element, None, None]:
 		"""
@@ -730,18 +730,18 @@ class Beamline:
 			raise ValueError("The girders provided do not have a common articulation point.")
 
 		if girder_left is not None:
-			if girder_left < 1 or girder_left > N_girders:
+			if girder_left < 0 or girder_left >= N_girders:
 				raise ValueError(f"A girder with {girder_left} id does not exist!")
 		
 		if girder_right is not None:
-			if girder_right < 1 or girder_right > N_girders:
+			if girder_right < 0 or girder_right >= N_girders:
 				raise ValueError(f"A girder with {girder_right} id does not exist!")
 
 		if girder_right is not None:
-			girder_left = girder_right - 1 if girder_right != 1 else None
+			girder_left = girder_right - 1 if girder_right != 0 else None
 		
 		elif girder_left is not None:
-			girder_right = girder_left + 1 if girder_left != N_girders else None
+			girder_right = girder_left + 1 if girder_left != N_girders - 1 else None
 
 		if girder_left is not None:
 			# misalign the girder_left from the right

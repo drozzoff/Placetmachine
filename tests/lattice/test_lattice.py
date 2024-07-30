@@ -347,13 +347,11 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(quad)
 		# 1.0 - 0.5 - 2.0 - 0.5 - 1.0 - 5.0 total
 
-		print(self.beamline)
-
 		#misaligning the girder
 		x_left, x_right = 5.0, 10.0
 		y_left, y_right = -10.0, 10.0
 
-		self.beamline.misalign_girder_general(girder = 1, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['Quadrupole'])
+		self.beamline.misalign_girder_general(girder = 0, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['Quadrupole'])
 
 		self.assertAlmostEqual(self.beamline[0]['x'], 5.5, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[1]['x'], 0.0, delta = 1e-5)
@@ -406,7 +404,7 @@ class ElementElementaryTest(unittest.TestCase):
 
 		x, y = 5.0, -10.0
 
-		self.beamline.misalign_girder(girder = 1, x = x, y = y)
+		self.beamline.misalign_girder(girder = 0, x = x, y = y)
 
 		for i in range(5):
 			self.assertAlmostEqual(self.beamline[i]['x'], x, delta = 1e-5)
@@ -451,7 +449,7 @@ class ElementElementaryTest(unittest.TestCase):
 
 		x, y = 5.0, -10.0
 		
-		self.beamline.misalign_articulation_point(girder_left = 1, girder_right = 2, x = x, y = y, filter_types = ['Quadrupole'])
+		self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 1, x = x, y = y, filter_types = ['Quadrupole'])
 
 		# girder 1
 		self.assertAlmostEqual(self.beamline[0]['x'], 0.5, delta = 1e-5)
@@ -481,7 +479,7 @@ class ElementElementaryTest(unittest.TestCase):
 
 		# incorrect girder ids (< 0 or > N girders)
 		with self.assertRaises(ValueError):
-			self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 1, x = x, y = y, filter_types = ['Quadrupole'])
+			self.beamline.misalign_articulation_point(girder_left = -1, girder_right = 0, x = x, y = y, filter_types = ['Quadrupole'])
 
 		with self.assertRaises(ValueError):
 			self.beamline.misalign_articulation_point(girder_left = 2, girder_right = 3, x = x, y = y, filter_types = ['Quadrupole'])
@@ -521,9 +519,9 @@ class ElementElementaryTest(unittest.TestCase):
 
 		x, y = 5.0, -10.0
 
-		self.beamline.misalign_articulation_point(girder_right = 1, x = x, y = y)
+		self.beamline.misalign_articulation_point(girder_right = 0, x = x, y = y)
 
-		self.beamline.misalign_articulation_point(girder_left = 3, x = x, y = y)
+		self.beamline.misalign_articulation_point(girder_left = 2, x = x, y = y)
 
 		self.assertAlmostEqual(self.beamline[0]['x'], 3.125, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[1]['x'], 0.625, delta = 1e-5)
@@ -543,7 +541,7 @@ class ElementElementaryTest(unittest.TestCase):
 		
 
 		with self.assertRaises(ValueError):
-			self.beamline.misalign_articulation_point(girder_left = 1, girder_right = 3, x = x, y = y, filter_types = ['Quadrupole'])	
+			self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 2, x = x, y = y, filter_types = ['Quadrupole'])	
 
 	def test_misalign_girders(self):
 
@@ -579,11 +577,11 @@ class ElementElementaryTest(unittest.TestCase):
 		# 2.0 - 0.5
 
 		offset_data = {
-			'1': {
+			'0': {
 				'x': 0.5,
 				'y': 2.5
 			},
-			'2': {
+			'1': {
 				'x': -5.0
 			}
 
