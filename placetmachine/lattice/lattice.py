@@ -206,7 +206,7 @@ class Beamline:
 				data_dict[key][i] = self.lattice[i].settings[key] if key in self.lattice[i].settings else None
 			data_dict['type'][i] = self.lattice[i].type
 
-			data_dict['girder'][i] = self.lattice[i].girder.name if data_dict['girder'][i] is not None else None
+			data_dict['girder'][i] = self.lattice[i].girder.name if self.lattice[i].girder is not None else None
 
 		res_table = DataFrame(data_dict)
 #		res_table.name = self.name
@@ -226,8 +226,6 @@ class Beamline:
 
 		**`append()` works by duplicating a given element and then appending it. 
 		Thus, the original and the appended element do not share the same reference**.
-
-		Also, the **girders numbering starts from 1**.
 
 		Parameters
 		----------
@@ -415,6 +413,8 @@ class Beamline:
 		Evaluates the longitudinal coordinates while parsing the lattice. The coordinate `s` corresponds 
 		to the element exit.
 
+		The girders parsed in the process are named based on their ID.
+
 		Parameters
 		----------
 		filename
@@ -457,7 +457,7 @@ class Beamline:
 				if debug_mode:
 					print(f"---Element created: {repr(element)}")
 				if elem_type == 'Girder':
-					self.girders.append(Girder())
+					self.girders.append(Girder(name = f"{len(self.girders)}"))
 					continue
 				elif elem_type is None:
 					continue
@@ -466,7 +466,7 @@ class Beamline:
 					element.settings['s'] = element.settings['length']
 				else:
 					element.settings['s'] = self.lattice[-1].settings['s'] + element.settings['length']
-				self.lattice.append(element)
+				self.append(element)
 
 	def get_girders_number(self) -> int:
 		"""
