@@ -611,3 +611,78 @@ class ElementElementaryTest(unittest.TestCase):
 	def test_to_placet(self):
 
 		pass
+
+	def test_read_placet_lattice(self):
+		import tempfile
+		from os.path import join
+
+		temp_dict = tempfile.TemporaryDirectory()
+		folder_name = temp_dict.name
+
+		placet_lattice_file = 'Girder\n\
+Quadrupole -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.215 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -strength 3.0913947 -Kn 0 -type 0 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.06 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.02 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Girder\n\
+Bpm -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.08 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -resolution 0 -reading_x 0 -reading_y 0 -transmitted_charge 0 -scale_x 1 -scale_y 1 -store_bunches 2 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Quadrupole -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.43 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -strength -6.25787261354262 -Kn 0 -type 0 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.06 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.02 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Girder\n\
+Bpm -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.08 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -resolution 0 -reading_x 0 -reading_y 0 -transmitted_charge 0 -scale_x 1 -scale_y 1 -store_bunches 2 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Quadrupole -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.43 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -strength 6.33295582708523 -Kn 0 -type 0 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.06 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.02 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Girder'
+		
+		# 1st: Saving the content to the file
+		filename = join(folder_name, "placet_test_lattice.tcl")
+		
+		with open(filename, 'w') as f:
+			f.write(placet_lattice_file)
+
+		self.beamline.read_placet_lattice(filename, debug_mode = False)
+
+		temp_dict.cleanup()
+
+		# Checking the correctness of the girder names
+		self.assertEqual(self.beamline[7].girder.name, "0")
+		self.assertEqual(self.beamline[8].girder.name, "1")
+		self.assertEqual(self.beamline[20].girder.name, "2")
+
+		# Checking the correctness of the girder references
+		self.assertIs(self.beamline[7].girder, self.beamline.girders[0])
+		self.assertIs(self.beamline[8].girder, self.beamline.girders[1])
+		self.assertIs(self.beamline[20].girder, self.beamline.girders[2])
+
+		# Checking the correctness of the elements' types
+		self.assertEqual(self.beamline[7].type, "Drift")
+		self.assertEqual(self.beamline[8].type, "Bpm")
+		self.assertEqual(self.beamline[20].type, "Quadrupole")
+
+		# Checking the correctness of the quadrupoles' strengths
+		self.assertAlmostEqual(self.beamline[0]['strength'], 3.0913947, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[10]['strength'], -6.25787261354262, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[20]['strength'], 6.33295582708523, delta = 1e-12)
+
+		# Checking the correctness of the cavities' gradients
+		self.assertAlmostEqual(self.beamline[2]['gradient'], 0.068672261356676, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[6]['gradient'], 0.068672261356676, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[22]['gradient'], 0.068672261356676, delta = 1e-12)
