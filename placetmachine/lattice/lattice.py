@@ -284,7 +284,7 @@ class Beamline:
 			for i, element in enumerate(girder.elements):
 				if element is self.lattice[index]:
 					girder.elements[i] = new_element
-			
+					new_element.girder = girder
 		self.lattice[index] = new_element
 
 	def __getitem__(self, index: int):

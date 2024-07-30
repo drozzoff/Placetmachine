@@ -74,6 +74,23 @@ class ElementElementaryTest(unittest.TestCase):
 		self.assertFalse(test_element is self.beamline[1])
 		self.assertEqual(self.beamline[1]['name'], "test_quad2")
 
+	def test_setitem2(self):
+
+		#creating 2 girders
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		test_element = Quadrupole({'name': "new_quad"})
+
+		#adding a new element at position 2 in the beamline
+		self.beamline[2] = test_element
+
+		#this element should be placed on the second girder
+		self.assertIs(self.beamline[2].girder, self.beamline.girders[1])
+
 	def test_next(self):
 
 		self.beamline.append(self.test_quad)
