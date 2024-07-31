@@ -11,8 +11,9 @@ class Sbend(Element):
 	----------
 	settings : dict
 		Dictionary containing the element settings.
-	girder : int
-		The girder id, the element is on.
+	girder : Optional[Girder]
+		The girder reference the `Element` is placed on. This parameter is only relevant when being the part of the lattice.
+		Upon creation is set to `None`.
 	type : str
 		The type of the element. It is set to "Sbend".
 
@@ -30,7 +31,7 @@ class Sbend(Element):
 	_int_params = ["synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 
-	def __init__(self, in_parameters: Optional[dict] = None, girder: Optional[int] = None, index: Optional[int] = None):
+	def __init__(self, in_parameters: Optional[dict] = None, index: Optional[int] = None):
 		"""
 		Parameters
 		----------
@@ -41,4 +42,4 @@ class Sbend(Element):
 		index
 			The index of the element in the lattice.
 		"""
-		super(Sbend, self).__init__(in_parameters, girder, index, "Sbend")
+		super(Sbend, self).__init__(in_parameters, index, "Sbend")

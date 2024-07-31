@@ -3,7 +3,7 @@ import re
 import shlex
 from typing import List, Callable, Generator, Optional, Union
 import warnings
-from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element, Knob
+from placetmachine.lattice import Quadrupole, Cavity, Drift, Bpm, Dipole, Multipole, Sbend, Element, Knob, Girder
 
 
 _extract_subset = lambda _set, _dict: list(filter(lambda key: key in _dict, _set))
@@ -177,6 +177,8 @@ class Beamline:
 		The list of the elements forming the beamline.
 	attached_knobs : List[Knob]
 		The list of the knobs references that are associated with the `Beamline`
+	girders : List[Girder]
+		The list of the girders references that are the parts of the `Beamline`.
 	"""
 
 	_supported_elements = ["Girder", "Bpm", "Cavity", "Quadrupole", "Drift", "Dipole", "Sbend", "Multipole"]
@@ -190,7 +192,7 @@ class Beamline:
 		name
 			Name of the beamline.
 		"""
-		self.name, self.lattice, self.attached_knobs = name, [], []
+		self.name, self.lattice, self.attached_knobs, self.girders = name, [], [], []
 
 	def __repr__(self):
 		return f"Beamline('{self.name}') && lattice = {list(map(lambda x: repr(x), self.lattice))}"
@@ -203,7 +205,8 @@ class Beamline:
 			for key in _settings_data:
 				data_dict[key][i] = self.lattice[i].settings[key] if key in self.lattice[i].settings else None
 			data_dict['type'][i] = self.lattice[i].type
-			data_dict['girder'][i] = self.lattice[i].girder
+
+			data_dict['girder'][i] = self.lattice[i].girder.name if self.lattice[i].girder is not None else None
 
 		res_table = DataFrame(data_dict)
 #		res_table.name = self.name
@@ -224,8 +227,6 @@ class Beamline:
 		**`append()` works by duplicating a given element and then appending it. 
 		Thus, the original and the appended element do not share the same reference**.
 
-		Also, the **girders numbering starts from 1**.
-
 		Parameters
 		----------
 		element : Element
@@ -242,19 +243,21 @@ class Beamline:
 		"""
 		new_element = element.duplicate(element)
 		if extra_params.get('new_girder', False):
-			if self.lattice == []:
-				new_element.girder = 1
-			elif self.lattice[-1].girder is not None:
-				girder_id = self.lattice[-1].girder
-				new_element.girder = girder_id + 1
+			if self.lattice == [] or self.girders != []:
+				# lattice is empty or the girders' list is non empty -> Creating a new Girder with an element
+				self.girders.append(Girder(new_element, name = f"{len(self.girders) + 1}"))
 			else:
+				# lattice is non empty and there are no girders present -> Warning
 				warnings.warn("Cannot create a new girder when previous elements are not on girders!", category = RuntimeWarning)
-				new_element.girder = None
+				
+		elif self.girders != []:
+			# girders list is non empty -> placing element in the last Girder
+			self.girders[-1].append(new_element)
 		else:
-			if self.lattice == []:
-				new_element.girder = None
-			else:
-				new_element.girder = self.lattice[-1].girder
+			# girders list is empty
+			pass
+
+		# Updating indexing and long. position
 		
 		if self.lattice == []:
 			new_element.settings['s'] = new_element.settings['length']
@@ -264,6 +267,7 @@ class Beamline:
 			new_element.index = self.lattice[-1].index + 1
 		
 		self.lattice.append(new_element)
+		
 
 	def __setitem__(self, index: int, element: Element):
 		#
@@ -272,8 +276,14 @@ class Beamline:
 		# The element is copied and placed on the same girder the element before it was.
 		#
 		new_element = element.duplicate(element)
-		new_element.girder = self.lattice[index].girder
-
+		
+		girder = self.lattice[index].girder
+		if girder is not None:
+			# finding the correct element on the girder
+			for i, element in enumerate(girder.elements):
+				if element is self.lattice[index]:
+					girder.elements[i] = new_element
+					new_element.girder = girder
 		self.lattice[index] = new_element
 
 	def __getitem__(self, index: int):
@@ -400,9 +410,10 @@ class Beamline:
 		"""
 		Read the lattice from the Placet lattice file.
 
-		Girders numbering starts from 1.
 		Evaluates the longitudinal coordinates while parsing the lattice. The coordinate `s` corresponds 
 		to the element exit.
+
+		The girders parsed in the process are named based on their ID.
 
 		Parameters
 		----------
@@ -427,7 +438,7 @@ class Beamline:
 			advanced_parser = AdvancedParser(**extra_params.get('parser_variables', {}))
 			preprocess_func = lambda x: advanced_parser.parse(x)
 
-		girder_index, index, debug_mode, __line_counter = 0, 0, extra_params.get('debug_mode', False), 1
+		index, debug_mode, __line_counter = 0, extra_params.get('debug_mode', False), 1
 		if debug_mode:
 			print(f"Processing the file '{filename}' with a parser '{parser}'")
 		with open(filename, 'r') as f:
@@ -436,17 +447,17 @@ class Beamline:
 				if debug_mode:
 					print(f"#{__line_counter}. Read: '{line}'")
 					__line_counter += 1
+					processed_line = preprocess_func(line)
 					if parser == "advanced":
-						processed_line = preprocess_func(line)
 						print(f"---Parsed: '{processed_line}'")
 				else:
 					processed_line = preprocess_func(line)
-				elem_type, element = parse_line(processed_line, girder_index, index)
+				elem_type, element = parse_line(processed_line, index)
 
 				if debug_mode:
 					print(f"---Element created: {repr(element)}")
 				if elem_type == 'Girder':
-					girder_index += 1
+					self.girders.append(Girder(name = f"{len(self.girders)}"))
 					continue
 				elif elem_type is None:
 					continue
@@ -455,7 +466,7 @@ class Beamline:
 					element.settings['s'] = element.settings['length']
 				else:
 					element.settings['s'] = self.lattice[-1].settings['s'] + element.settings['length']
-				self.lattice.append(element)
+				self.append(element)
 
 	def get_girders_number(self) -> int:
 		"""
@@ -466,7 +477,7 @@ class Beamline:
 		int
 			The total number of girders in the lattice.
 		"""
-		return self.lattice[-1].girder
+		return len(self.girders)
 
 	def extract(self, element_types: Union[str, List[str]]) -> Generator[Element, None, None]:
 		"""
@@ -512,8 +523,8 @@ class Beamline:
 		
 		Parameters
 		----------
-		girder_index
-			The girder id. The girder numbering starts from 1.
+		girder_id
+			The girder's index in the list of girders list associated with the Beamline
 		
 		Other parameters
 		----------------
@@ -525,8 +536,8 @@ class Beamline:
 		Element
 			Element extracted from the girder.
 		"""
-		for element in self.lattice:
-			if element.girder == girder_index and element.type in extra_params.get("filter_types", self._supported_elements):
+		for element in self.girders[girder_index]:
+			if element.type in extra_params.get("filter_types", self._supported_elements):
 				yield element
 
 	def _get_quads_strengths(self) -> List[float]:
@@ -719,18 +730,18 @@ class Beamline:
 			raise ValueError("The girders provided do not have a common articulation point.")
 
 		if girder_left is not None:
-			if girder_left < 1 or girder_left > N_girders:
+			if girder_left < 0 or girder_left >= N_girders:
 				raise ValueError(f"A girder with {girder_left} id does not exist!")
 		
 		if girder_right is not None:
-			if girder_right < 1 or girder_right > N_girders:
+			if girder_right < 0 or girder_right >= N_girders:
 				raise ValueError(f"A girder with {girder_right} id does not exist!")
 
 		if girder_right is not None:
-			girder_left = girder_right - 1 if girder_right != 1 else None
+			girder_left = girder_right - 1 if girder_right != 0 else None
 		
 		elif girder_left is not None:
-			girder_right = girder_left + 1 if girder_left != N_girders else None
+			girder_right = girder_left + 1 if girder_left != N_girders - 1 else None
 
 		if girder_left is not None:
 			# misalign the girder_left from the right
@@ -802,13 +813,15 @@ class Beamline:
 		str
 			The string with the lattice in Placet readable format.
 		"""
-		res, current_girder_index = "Girder\n", 1
-		
-		for element in self.lattice:
-			if element.girder == current_girder_index + 1:
-				current_girder_index += 1
+		res = ""
+		if self.girders != []:
+			for girder in self.girders:
 				res += "Girder\n"
-			res += element.to_placet() + "\n"
+				for element in girder.elements:
+					res += element.to_placet() + "\n"
+		else:
+			for element in self.lattice:
+				res += element.to_placet() + "\n"
 
 		if filename is not None:
 			with open(filename, 'w') as f:
@@ -917,7 +930,7 @@ class Beamline:
 				res += "\n"
 			f.write(res)
 
-def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[int] = None):
+def parse_line(data: str, index: Optional[int] = None):
 	"""
 	Parse the line of the file with Placet elements.
 
@@ -925,8 +938,6 @@ def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[in
 	----------
 	data
 		The line from the PLACET file.
-	girder_index
-		The girder number of the current element.
 	index
 		The current element's id.
 	
@@ -967,25 +978,25 @@ def parse_line(data: str, girder_index: Optional[int] = None, index: Optional[in
 					res[param] = value
 
 	if elem_type == "Quadrupole":
-		return "Quadrupole", Quadrupole(res, girder_index, index)
+		return "Quadrupole", Quadrupole(res, index)
 
 	if elem_type == "Cavity":
-		return "Cavity", Cavity(res, girder_index, index)
+		return "Cavity", Cavity(res, index)
 
 	if elem_type == "Bpm":
-		return "Bpm", Bpm(res, girder_index, index)
+		return "Bpm", Bpm(res, index)
 
 	if elem_type == "Drift":
-		return "Drift", Drift(res, girder_index, index)
+		return "Drift", Drift(res, index)
 	
 	if elem_type == "Dipole":
-		return "Dipole", Dipole(res, girder_index, index)
+		return "Dipole", Dipole(res, index)
 	
 	if elem_type == "Sbend":
-		return "Sbend", Sbend(res, girder_index, index)
+		return "Sbend", Sbend(res, index)
 
 	if elem_type == "Multipole":
-		return "Multipole", Multipole(res, girder_index, index)
+		return "Multipole", Multipole(res, index)
 
 	if elem_type == "Girder":
 		return "Girder", None

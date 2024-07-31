@@ -11,8 +11,9 @@ class Cavity(Element):
 	----------
 	settings : dict
 		Dictionary containing the element settings.
-	girder : int
-		The girder id, the element is on.
+	girder : Optional[Girder]
+		The girder reference the `Element` is placed on. This parameter is only relevant when being the part of the lattice.
+		Upon creation is set to `None`.
 	type : str
 		The type of the element. It is set to "Cavity".
 
@@ -36,7 +37,7 @@ class Cavity(Element):
 	_int_params = ["type", "synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['x', 'y', 'xp', 'yp', 'bpm_offset_y', 'bpm_offset_x', 'gradient', 'phase']
 
-	def __init__(self, in_parameters: Optional[dict] = None, girder: Optional[int] = None, index: Optional[int] = None, **extra_params):
+	def __init__(self, in_parameters: Optional[dict] = None, index: Optional[int] = None, **extra_params):
 		"""
 		Parameters
 		----------
@@ -52,7 +53,7 @@ class Cavity(Element):
 		angle : bool
 			If `True` (default is `True`), the phase is given in degrees, otherwise radians.
 		"""
-		super(Cavity, self).__init__(in_parameters, girder, index, "Cavity")
+		super(Cavity, self).__init__(in_parameters, index, "Cavity")
 		if extra_params.get('angle', True):
 			self.settings['phase'] = radians(float(self.settings['phase']))
 

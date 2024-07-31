@@ -10,8 +10,9 @@ class Dipole(Element):
 	----------
 	settings : dict
 		Dictionary containing the element settings.
-	girder : int
-		The girder id, the element is on.
+	girder : Optional[Girder]
+		The girder reference the `Element` is placed on. This parameter is only relevant when being the part of the lattice.
+		Upon creation is set to `None`.
 	type: str
 		The type of the element. It is set to "Dipole".
 
@@ -32,7 +33,7 @@ class Dipole(Element):
 	_int_params = ["synrad", "thin_lens", "six_dim"]
 	_cached_parameters = ['strength_x', 'strength_y']
 
-	def __init__(self, in_parameters: Optional[dict] = None, girder: Optional[int] = None, index: Optional[int] = None):
+	def __init__(self, in_parameters: Optional[dict] = None, index: Optional[int] = None):
 		"""
 		Parameters
 		----------
@@ -43,4 +44,4 @@ class Dipole(Element):
 		index
 			The index of the element in the lattice.
 		"""
-		super(Dipole, self).__init__(in_parameters, girder, index, "Dipole")
+		super(Dipole, self).__init__(in_parameters, index, "Dipole")

@@ -1,4 +1,5 @@
 import unittest
+from typing import Optional
 from placetmachine.lattice import Element
 
 
@@ -12,8 +13,8 @@ class ElementElementaryTest(unittest.TestCase):
 			_int_params = ["type"]
 			_cached_parameters = ['x', 'y', 'xp', 'yp', 'roll']
 
-			def __init__(self, in_parameters: dict = None, girder: int = None, index: int = None):
-				super(NewElement, self).__init__(in_parameters, girder, index, "NewElement")
+			def __init__(self, in_parameters: Optional[dict] = None, index: Optional[int] = None):
+				super(NewElement, self).__init__(in_parameters, index, "NewElement")
 
 		self.new_element = NewElement(dict(name = "new_element"))
 		
@@ -27,6 +28,8 @@ class ElementElementaryTest(unittest.TestCase):
 
 		# verifying there are no other parameters except declared
 		self.assertNotIn("s", self.new_element.settings)
+
+		self.assertIs(self.new_element.girder, None)
 
 		with self.assertRaises(KeyError):
 			print(self.new_element['s'])

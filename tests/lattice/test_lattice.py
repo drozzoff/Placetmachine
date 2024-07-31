@@ -25,18 +25,31 @@ class ElementElementaryTest(unittest.TestCase):
 	def test_append_girder_check(self):
 
 		self.beamline.append(self.test_quad, new_girder = True)
+
+		self.assertIs(self.beamline.lattice[0].girder, self.beamline.girders[0])
+
 		self.beamline.append(self.test_cavity)
 
-		self.assertEqual(self.beamline.lattice[1].girder, 1)
+		self.assertIs(self.beamline.lattice[1].girder, self.beamline.girders[0])
 	
 	def test_append_girder_check2(self):
 
 		self.beamline.append(self.test_quad, new_girder = True)
+		self.assertIs(self.beamline.lattice[0].girder, self.beamline.girders[0])
+
 		self.beamline.append(self.test_cavity, new_girder = True)
 
-		self.assertEqual(self.beamline.lattice[1].girder, 2)
-	
+		self.assertIs(self.beamline.lattice[1].girder, self.beamline.girders[1])
+
 	def test_append_girder_check3(self):
+
+		self.beamline.append(self.test_quad)
+		self.assertIs(self.beamline.lattice[0].girder, None)
+
+		self.beamline.append(self.test_cavity)
+		self.assertIs(self.beamline.lattice[1].girder, None)
+	
+	def test_append_girder_check4(self):
 
 		self.beamline.append(self.test_quad)
 
@@ -60,6 +73,23 @@ class ElementElementaryTest(unittest.TestCase):
 
 		self.assertFalse(test_element is self.beamline[1])
 		self.assertEqual(self.beamline[1]['name'], "test_quad2")
+
+	def test_setitem2(self):
+
+		#creating 2 girders
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		test_element = Quadrupole({'name': "new_quad"})
+
+		#adding a new element at position 2 in the beamline
+		self.beamline[2] = test_element
+
+		#this element should be placed on the second girder
+		self.assertIs(self.beamline[2].girder, self.beamline.girders[1])
 
 	def test_next(self):
 
@@ -171,28 +201,6 @@ class ElementElementaryTest(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			self.beamline.realign_elements(test_params)	
 
-
-	def test_girders_number(self):
-
-		self.beamline.append(self.test_quad)
-		self.beamline.append(self.test_cavity)
-		
-		self.assertIs(self.beamline.get_girders_number(), None)
-	
-	def test_girders_number2(self):
-
-		self.beamline.append(self.test_quad, new_girder = True)
-		self.beamline.append(self.test_cavity)
-		
-		self.assertIs(self.beamline.get_girders_number(), 1)
-		
-	def test_girders_number3(self):
-
-		self.beamline.append(self.test_quad, new_girder = True)
-		self.beamline.append(self.test_cavity, new_girder = True)
-		
-		self.assertIs(self.beamline.get_girders_number(), 2)
-
 	def test_extract(self):
 
 		self.beamline.append(self.test_quad)
@@ -302,16 +310,16 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(quad)
 
 		# testing girder 1
-		for element, i in zip(self.beamline.get_girder(1), range(5)):
+		for i, element in enumerate(self.beamline.get_girder(0)):
 			self.assertIs(element, self.beamline[i] )
 
 		#testting girder 2
-		for element, i in zip(self.beamline.get_girder(2), range(5, 11)):
-			self.assertIs(element, self.beamline[i] )			
+		for i, element in enumerate(self.beamline.get_girder(1)):
+			self.assertIs(element, self.beamline[i + 5])			
 
 		#testting girder 3
-		for element, i in zip(self.beamline.get_girder(3), range(10, 16)):
-			self.assertIs(element, self.beamline[i])
+		for i, element in enumerate(self.beamline.get_girder(2)):
+			self.assertIs(element, self.beamline[i + 10])
 			
 	def test_misalign_girder_general(self):
 
@@ -343,7 +351,7 @@ class ElementElementaryTest(unittest.TestCase):
 		x_left, x_right = 5.0, 10.0
 		y_left, y_right = -10.0, 10.0
 
-		self.beamline.misalign_girder_general(girder = 1, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['Quadrupole'])
+		self.beamline.misalign_girder_general(girder = 0, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['Quadrupole'])
 
 		self.assertAlmostEqual(self.beamline[0]['x'], 5.5, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[1]['x'], 0.0, delta = 1e-5)
@@ -396,7 +404,7 @@ class ElementElementaryTest(unittest.TestCase):
 
 		x, y = 5.0, -10.0
 
-		self.beamline.misalign_girder(girder = 1, x = x, y = y)
+		self.beamline.misalign_girder(girder = 0, x = x, y = y)
 
 		for i in range(5):
 			self.assertAlmostEqual(self.beamline[i]['x'], x, delta = 1e-5)
@@ -441,7 +449,7 @@ class ElementElementaryTest(unittest.TestCase):
 
 		x, y = 5.0, -10.0
 		
-		self.beamline.misalign_articulation_point(girder_left = 1, girder_right = 2, x = x, y = y, filter_types = ['Quadrupole'])
+		self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 1, x = x, y = y, filter_types = ['Quadrupole'])
 
 		# girder 1
 		self.assertAlmostEqual(self.beamline[0]['x'], 0.5, delta = 1e-5)
@@ -471,7 +479,7 @@ class ElementElementaryTest(unittest.TestCase):
 
 		# incorrect girder ids (< 0 or > N girders)
 		with self.assertRaises(ValueError):
-			self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 1, x = x, y = y, filter_types = ['Quadrupole'])
+			self.beamline.misalign_articulation_point(girder_left = -1, girder_right = 0, x = x, y = y, filter_types = ['Quadrupole'])
 
 		with self.assertRaises(ValueError):
 			self.beamline.misalign_articulation_point(girder_left = 2, girder_right = 3, x = x, y = y, filter_types = ['Quadrupole'])
@@ -511,9 +519,9 @@ class ElementElementaryTest(unittest.TestCase):
 
 		x, y = 5.0, -10.0
 
-		self.beamline.misalign_articulation_point(girder_right = 1, x = x, y = y)
+		self.beamline.misalign_articulation_point(girder_right = 0, x = x, y = y)
 
-		self.beamline.misalign_articulation_point(girder_left = 3, x = x, y = y)
+		self.beamline.misalign_articulation_point(girder_left = 2, x = x, y = y)
 
 		self.assertAlmostEqual(self.beamline[0]['x'], 3.125, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[1]['x'], 0.625, delta = 1e-5)
@@ -533,7 +541,7 @@ class ElementElementaryTest(unittest.TestCase):
 		
 
 		with self.assertRaises(ValueError):
-			self.beamline.misalign_articulation_point(girder_left = 1, girder_right = 3, x = x, y = y, filter_types = ['Quadrupole'])	
+			self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 2, x = x, y = y, filter_types = ['Quadrupole'])	
 
 	def test_misalign_girders(self):
 
@@ -569,11 +577,11 @@ class ElementElementaryTest(unittest.TestCase):
 		# 2.0 - 0.5
 
 		offset_data = {
-			'1': {
+			'0': {
 				'x': 0.5,
 				'y': 2.5
 			},
-			'2': {
+			'1': {
 				'x': -5.0
 			}
 
@@ -600,6 +608,104 @@ class ElementElementaryTest(unittest.TestCase):
 			self.assertAlmostEqual(self.beamline[i]['x'], 0.0, delta = 1e-5)
 			self.assertAlmostEqual(self.beamline[i]['y'], 0.0, delta = 1e-5)
 
+	def test_read_placet_lattice(self):
+		import tempfile
+		from os.path import join
+
+		temp_dict = tempfile.TemporaryDirectory()
+		folder_name = temp_dict.name
+
+		placet_lattice_file = 'Girder\n\
+Quadrupole -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.215 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -strength 3.0913947 -Kn 0 -type 0 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.06 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.02 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Girder\n\
+Bpm -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.08 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -resolution 0 -reading_x 0 -reading_y 0 -transmitted_charge 0 -scale_x 1 -scale_y 1 -store_bunches 2 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Quadrupole -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.43 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -strength -6.25787261354262 -Kn 0 -type 0 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.06 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.02 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Girder\n\
+Bpm -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.08 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -resolution 0 -reading_x 0 -reading_y 0 -transmitted_charge 0 -scale_x 1 -scale_y 1 -store_bunches 2 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Quadrupole -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.43 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -strength 6.33295582708523 -Kn 0 -type 0 -hcorrector "x" -hcorrector_step_size 0 -vcorrector "y" -vcorrector_step_size 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.06 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.04 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Cavity -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.54333 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake "" -gradient 0.068672261356676 -phase 4.5 -type 0 -lambda 0.025 -frequency 11.99169832 -bookshelf_x 0 -bookshelf_y 0 -bookshelf_phase -0.148352986419518 -bpm_offset_x 0 -bpm_offset_y 0 -bpm_reading_x 0 -bpm_reading_y 0 -dipole_kick_x 0 -dipole_kick_y 0 -pi_mode 0\n\
+Drift -name "" -comment "" -s 0 -x 0 -y 0 -xp 0 -yp 0 -roll 0 -tilt 0 -tilt_deg 0 -length 0.02 -synrad 0 -six_dim 0 -thin_lens 0 -e0 -1 -aperture_x 1 -aperture_y 1 -aperture_losses 0 -aperture_shape "none" -tclcall_entrance "" -tclcall_exit "" -short_range_wake ""\n\
+Girder'
+		
+		# 1st: Saving the content to the file
+		filename = join(folder_name, "placet_test_lattice.tcl")
+		
+		with open(filename, 'w') as f:
+			f.write(placet_lattice_file)
+
+		self.beamline.read_placet_lattice(filename, debug_mode = False)
+
+		temp_dict.cleanup()
+
+		# Checking the correctness of the girder names
+		self.assertEqual(self.beamline[7].girder.name, "0")
+		self.assertEqual(self.beamline[8].girder.name, "1")
+		self.assertEqual(self.beamline[20].girder.name, "2")
+
+		# Checking the correctness of the girder references
+		self.assertIs(self.beamline[7].girder, self.beamline.girders[0])
+		self.assertIs(self.beamline[8].girder, self.beamline.girders[1])
+		self.assertIs(self.beamline[20].girder, self.beamline.girders[2])
+
+		# Checking the correctness of the elements' types
+		self.assertEqual(self.beamline[7].type, "Drift")
+		self.assertEqual(self.beamline[8].type, "Bpm")
+		self.assertEqual(self.beamline[20].type, "Quadrupole")
+
+		# Checking the correctness of the quadrupoles' strengths
+		self.assertAlmostEqual(self.beamline[0]['strength'], 3.0913947, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[10]['strength'], -6.25787261354262, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[20]['strength'], 6.33295582708523, delta = 1e-12)
+
+		# Checking the correctness of the cavities' gradients
+		self.assertAlmostEqual(self.beamline[2]['gradient'], 0.068672261356676, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[6]['gradient'], 0.068672261356676, delta = 1e-12)
+		self.assertAlmostEqual(self.beamline[22]['gradient'], 0.068672261356676, delta = 1e-12)
+
+	def test_get_girders_number(self):
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.assertEqual(self.beamline.get_girders_number(), 3)
+
 	def test_to_placet(self):
 
-		pass
+		# Creating a test beamline from few elements
+		quad = Quadrupole(dict(name = "quad", strength = 0.5, length = 2.0))
+		drift = Drift(dict(length = 2.0))
+		cavity = Cavity(dict(name = "cav", length = 1.5))
+		
+		# Checking the beamline without girders
+		self.beamline.append(quad)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+
+		print(self.beamline.to_placet())
