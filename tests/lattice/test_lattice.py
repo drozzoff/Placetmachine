@@ -608,10 +608,6 @@ class ElementElementaryTest(unittest.TestCase):
 			self.assertAlmostEqual(self.beamline[i]['x'], 0.0, delta = 1e-5)
 			self.assertAlmostEqual(self.beamline[i]['y'], 0.0, delta = 1e-5)
 
-	def test_to_placet(self):
-
-		pass
-
 	def test_read_placet_lattice(self):
 		import tempfile
 		from os.path import join
@@ -686,3 +682,30 @@ Girder'
 		self.assertAlmostEqual(self.beamline[2]['gradient'], 0.068672261356676, delta = 1e-12)
 		self.assertAlmostEqual(self.beamline[6]['gradient'], 0.068672261356676, delta = 1e-12)
 		self.assertAlmostEqual(self.beamline[22]['gradient'], 0.068672261356676, delta = 1e-12)
+
+	def test_get_girders_number(self):
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.beamline.append(self.test_quad, new_girder = True)
+		self.beamline.append(self.test_cavity)
+
+		self.assertEqual(self.beamline.get_girders_number(), 3)
+
+	def test_to_placet(self):
+
+		# Creating a test beamline from few elements
+		quad = Quadrupole(dict(name = "quad", strength = 0.5, length = 2.0))
+		drift = Drift(dict(length = 2.0))
+		cavity = Cavity(dict(name = "cav", length = 1.5))
+		
+		# Checking the beamline without girders
+		self.beamline.append(quad)
+		self.beamline.append(drift)
+		self.beamline.append(cavity)
+
+		print(self.beamline.to_placet())

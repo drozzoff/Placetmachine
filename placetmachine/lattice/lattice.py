@@ -813,13 +813,15 @@ class Beamline:
 		str
 			The string with the lattice in Placet readable format.
 		"""
-		res, current_girder_index = "Girder\n", 1
-		
-		for element in self.lattice:
-			if element.girder == current_girder_index + 1:
-				current_girder_index += 1
+		res = ""
+		if self.girders != []:
+			for girder in self.girders:
 				res += "Girder\n"
-			res += element.to_placet() + "\n"
+				for element in girder.elements:
+					res += element.to_placet() + "\n"
+		else:
+			for element in self.lattice:
+				res += element.to_placet() + "\n"
 
 		if filename is not None:
 			with open(filename, 'w') as f:
