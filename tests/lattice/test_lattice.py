@@ -708,4 +708,28 @@ Girder'
 		self.beamline.append(drift)
 		self.beamline.append(cavity)
 
-		print(self.beamline.to_placet())
+		correct_line = 'Quadrupole -name "quad" -x 0.0 -y 0.0 -xp 0.0 -yp 0.0 -roll 0.0 -length 2.0 -strength 0.5 -s 2.0\n\
+Drift -x 0.0 -y 0.0 -xp 0.0 -yp 0.0 -length 2.0 -s 4.0\n\
+Cavity -name "cav" -x 0.0 -y 0.0 -xp 0.0 -yp 0.0 -length 1.5 -gradient 0.0 -phase 0.0 -bpm_offset_x 0.0 -bpm_offset_y 0.0 -s 5.5\n'
+
+		self.assertEqual(self.beamline.to_placet(), correct_line)
+
+	def test_to_placet2(self):
+
+		# Creating a test beamline from few elements
+		quad = Quadrupole(dict(name = "quad", strength = 0.5, length = 2.0))
+		drift = Drift(dict(length = 2.0))
+		cavity = Cavity(dict(name = "cav", length = 1.5))
+		
+		# Checking the beamline with girders
+		self.beamline.append(quad, new_girder = True)
+		self.beamline.append(drift)
+		self.beamline.append(cavity, new_girder = True)
+
+		correct_line = 'Girder\n\
+Quadrupole -name "quad" -x 0.0 -y 0.0 -xp 0.0 -yp 0.0 -roll 0.0 -length 2.0 -strength 0.5 -s 2.0\n\
+Drift -x 0.0 -y 0.0 -xp 0.0 -yp 0.0 -length 2.0 -s 4.0\n\
+Girder\n\
+Cavity -name "cav" -x 0.0 -y 0.0 -xp 0.0 -yp 0.0 -length 1.5 -gradient 0.0 -phase 0.0 -bpm_offset_x 0.0 -bpm_offset_y 0.0 -s 5.5\n'
+
+		self.assertEqual(self.beamline.to_placet(), correct_line)
