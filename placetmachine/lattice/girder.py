@@ -84,7 +84,7 @@ class Girder:
 		"""Get the element from that girder at the given position."""
 		return self.elements[index]
 	
-	def get_dataframe(self) -> DataFrame:
+	def to_dataframe(self) -> DataFrame:
 		"""
 		Return the DataFrame with the Girder data.
 
@@ -113,6 +113,6 @@ class Girder:
 	
 	def __str__(self):
 		
-		return str(self.get_dataframe())
+		return str(self.to_dataframe())
 
 	__repr__ = __str__

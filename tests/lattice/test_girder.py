@@ -49,7 +49,7 @@ class GirderElementaryTest(unittest.TestCase):
 
 		self.assertIs(self.girder, new_quad.girder)
 
-	def test_get_dataframe(self):
+	def test_to_dataframe(self):
 		new_quad = Quadrupole(dict(name = "new_quad"))
 
 		self.girder.append(new_quad)
@@ -61,4 +61,4 @@ class GirderElementaryTest(unittest.TestCase):
 			}
 		test_dataframe = pd.DataFrame(test_dataframe_dict)
 
-		pd.testing.assert_frame_equal(test_dataframe, self.girder.get_dataframe())
+		pd.testing.assert_frame_equal(test_dataframe, self.girder.to_dataframe())

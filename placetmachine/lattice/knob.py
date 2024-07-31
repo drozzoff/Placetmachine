@@ -90,7 +90,7 @@ class Knob:
 			element[self.coord] += self.values[i] * amplitude
 		self.amplitude += amplitude
 
-	def get_dataframe(self) -> DataFrame:
+	def to_dataframe(self) -> DataFrame:
 		"""
 		Return the DataFrame with the Knob data.
 
@@ -127,6 +127,6 @@ class Knob:
 
 	def __str__(self):
 		
-		return str(self.get_dataframe())
+		return str(self.to_dataframe())
 
 	__repr__ = __str__

@@ -46,7 +46,7 @@ class KnobTest(unittest.TestCase):
 
 		self.assertEqual(knob.amplitude, 0.5)
 	
-	def test_get_dataframe(self):
+	def test_to_dataframe(self):
 
 		knob = Knob([self.test_quad], 'y', [40.0])
 
@@ -62,4 +62,4 @@ class KnobTest(unittest.TestCase):
 			}
 		test_dataframe = pd.DataFrame(test_dataframe_dict)
 
-		pd.testing.assert_frame_equal(test_dataframe, knob.get_dataframe())
+		pd.testing.assert_frame_equal(test_dataframe, knob.to_dataframe())
