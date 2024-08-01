@@ -74,3 +74,7 @@ class Cavity(Element):
 			else:
 				res += f" -{key} {_to_str(self.settings[key])}"
 		return res
+
+	@classmethod
+	def duplicate(cls, initial_instance):
+		return cls(initial_instance.settings, initial_instance.index, angle = False)
