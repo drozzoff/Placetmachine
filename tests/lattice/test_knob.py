@@ -46,6 +46,15 @@ class KnobTest(unittest.TestCase):
 
 		self.assertEqual(knob.amplitude, 0.5)
 	
+	def test_apply2(self):
+
+		knob = Knob([self.test_quad], 'y', [3.0], step_size = 1.0)
+
+		knob.apply(0.5)
+
+		self.assertEqual(self.test_quad['y'], 2.0)
+
+
 	def test_to_dataframe(self):
 
 		knob = Knob([self.test_quad], 'y', [40.0])

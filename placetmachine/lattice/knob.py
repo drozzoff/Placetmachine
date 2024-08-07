@@ -16,6 +16,9 @@ class Knob:
 
 	The `Knob` is going to store the references of the [`Element`][placetmachine.lattice.element.Element]s provided and use them to 
 	apply the changes. Thus changes to the elements here are going to change the originals.
+	
+	If parameter ``step_size'' is provided, the coordinates modifications when using [`apply_knob'][placetmachine.lattice.knob.Knob.apply_knob]
+	are adjusted towards the closest  number full of steps.
 
 	Attributes
 	----------
@@ -25,6 +28,8 @@ class Knob:
 		Coordinate that is going to be modified.
 	values : List[float]
 		List of the coordinates changes for each [`Element`][placetmachine.lattice.element.Element] in `elements`.
+	step_size : Optional[float]
+		The smallest step that can be implemented when applying the knob
 	name : str
 		Name of the Knob.
 	types_of_elements : List[str]
@@ -55,9 +60,11 @@ class Knob:
 		----------------
 		name : str
 			The name of the knob. If not provided, defaults to "".
+		step_size : Optional[float]
+			Step size for the coordinates changes.
 		"""
 		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
-		self.name = extra_params.get('name', "")
+		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
 		
 		# checking the supported types and building the types involved
 		for element in self.elements:
@@ -79,7 +86,10 @@ class Knob:
 		"""
 		Apply the knob.
 
-		This function is going to apply modifications to the elements associated with the Knob.
+		Amplitude defines the fraction of `values` to add to the `elements`s `coord` involved in 
+		the `Knob`. If `step_size` is not defined (default), coordinates changes are applied directly.
+		If `step_size` is defined, the values of the coordinates' changes are rounded to the closest
+		value that has a full number of `step_size`s. 
 
 		Parameters
 		----------
@@ -87,7 +97,16 @@ class Knob:
 			Amplitude of the knob to apply.
 		"""
 		for element, i in zip(self.elements, range(len(self.values))):
-			element[self.coord] += self.values[i] * amplitude
+			if self.step_size is None:
+				element[self.coord] += self.values[i] * amplitude
+			else:
+				coord_change = self.values[i] * amplitude
+				n_step_sizes = int(coord_change / self.step_size)
+
+				if coord_change - n_step_sizes * self.step_size < 0.5:
+					element[self.coord] += n_step_sizes * self.step_size
+				else:
+					element[self.coord] += (n_step_sizes + 1) * self.step_size
 		self.amplitude += amplitude
 
 	def to_dataframe(self) -> DataFrame:
