@@ -30,6 +30,11 @@ class Knob:
 		List of the coordinates changes for each [`Element`][placetmachine.lattice.element.Element] in `elements`.
 	step_size : Optional[float]
 		The smallest step that can be implemented when applying the knob
+	mismatch : List[float]
+		A mismatch between the actual coordinates changes given by `changes` and the ones given by the amplitude. 
+		When `step_size` is not provided, is a list of `0.0`.
+	changes : List[float]
+		A total coordinate change performed with a knob.
 	name : str
 		Name of the Knob.
 	types_of_elements : List[str]
@@ -64,6 +69,7 @@ class Knob:
 			Step size for the coordinates changes.
 		"""
 		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
+		self.mismatch, self.changes = [0.0] * len(elements), [0.0] * len(elements)
 		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
 		
 		# checking the supported types and building the types involved
@@ -96,17 +102,26 @@ class Knob:
 		amplitude : float
 			Amplitude of the knob to apply.
 		"""
-		for element, i in zip(self.elements, range(len(self.values))):
+		for i, element in enumerate(self.elements):
 			if self.step_size is None:
 				element[self.coord] += self.values[i] * amplitude
 			else:
-				coord_change = self.values[i] * amplitude
+				#checking the required coordinate change including the mismatch
+				coord_change = self.values[i] * amplitude + self.mismatch[i]
 				n_step_sizes = int(coord_change / self.step_size)
-
-				if coord_change - n_step_sizes * self.step_size < 0.5:
-					element[self.coord] += n_step_sizes * self.step_size
+				
+				new_coord_change = None
+				if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+					new_coord_change = n_step_sizes * self.step_size
 				else:
-					element[self.coord] += (n_step_sizes + 1) * self.step_size
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+
+				self.changes[i] += new_coord_change
+
+				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
+
+				element[self.coord] += new_coord_change
+				
 		self.amplitude += amplitude
 
 	def to_dataframe(self) -> DataFrame:
@@ -141,6 +156,9 @@ class Knob:
 
 			data_dict[self.coord + "_amplitude"].append(self.values[i])
 			data_dict[self.coord + "_current"].append(element[self.coord])
+
+		data_dict[self.coord + "_changes"] = self.changes
+		data_dict[self.coord + "_mismatch"] = self.mismatch
 
 		return DataFrame(data_dict)
 
