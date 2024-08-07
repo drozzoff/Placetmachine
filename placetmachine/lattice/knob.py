@@ -133,7 +133,8 @@ class Knob:
 		['name', 'type', 'girder', 's']
 		```
 		which is a name, type, girder id, and location of the element belonging to the girder.
-		Plus the amplitude of the coordinate and its current value in the beamline, E.g.:
+		Plus the coordinate amplitude, current value in the beamline, coordinate change performed
+		by the knob, and the mismatch when there is a finit step size:
 		```
 		['y_amplitude', 'y_current']
 		```
