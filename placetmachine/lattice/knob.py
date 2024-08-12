@@ -88,7 +88,7 @@ class Knob:
 		if len(self.values) != len(self.elements):
 			raise ValueError(f"The number of elements and values provided are different.")
 		
-	def apply(self, amplitude: float):
+	def apply(self, amplitude: float, **kwargs):
 		"""
 		Apply the knob.
 
@@ -101,28 +101,87 @@ class Knob:
 		----------
 		amplitude : float
 			Amplitude of the knob to apply.
+
+		Other parameters
+		----------------
+		strategy : str
+			Strategy to use for calculations of the offsets when the `step_size` is defined. Default is
+			'simple_memory'.
 		"""
-		for i, element in enumerate(self.elements):
-			if self.step_size is None:
+		__strategies_available = ["simple", "simple_memory"]
+
+		if self.step_size == 0:
+			self.step_size = None
+
+		if self.step_size is None:
+			for i, element in enumerate(self.elements):
 				element[self.coord] += self.values[i] * amplitude
-			else:
-				#checking the required coordinate change including the mismatch
-				coord_change = self.values[i] * amplitude + self.mismatch[i]
-				n_step_sizes = int(coord_change / self.step_size)
-				
-				new_coord_change = None
-				if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
-					new_coord_change = n_step_sizes * self.step_size
-				else:
-					new_coord_change = (n_step_sizes + 1) * self.step_size
+		else:
+			strategy = kwargs.get("strategy", "simple_memory")
+			if strategy not in __strategies_available:
+				raise ValueError(f"Strategy '{strategy}' is not available. Possible options are {__strategies_available}.")
 
-				self.changes[i] += new_coord_change
-
-				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
-
-				element[self.coord] += new_coord_change
+			if strategy == "simple":
+				self.__appply_simple(amplitude)
+			if strategy == "simple_memory":
+				self.__apply_simple_memory()
 				
 		self.amplitude += amplitude
+
+	def __appply_simple(self, amplitude):
+		"""
+		Apply the the knob.
+
+		The offsets to apply are evaluated by rounding the offsets' amplitude.
+		Is prone to accumulating the missmatches of the knobs offsets.
+
+		Parameters
+		----------
+		amplitude : float
+			Amplitude of the knob to apply.
+		"""
+		for i, element in enumerate(self.elements):
+			coord_change = self.values[i] * amplitude
+			n_step_sizes = int(coord_change / self.step_size)
+
+			new_coord_change = None
+			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+				new_coord_change = n_step_sizes * self.step_size
+			else:
+				new_coord_change = (n_step_sizes + 1) * self.step_size
+
+			self.changes[i] += new_coord_change
+			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
+
+			element[self.coord] += new_coord_change
+
+	def __apply_simple_memory(self, amplitude):
+		"""
+		Apply the the knob.
+
+		The offsets to apply are evaluated by rounding the offsets' amplitude taking into account also
+		the the accumulated mismatch.
+
+		Parameters
+		----------
+		amplitude : float
+			Amplitude of the knob to apply.
+		"""
+		for i, element in enumerate(self.elements):
+			coord_change = self.values[i] * amplitude + self.mismatch[i]
+			n_step_sizes = int(coord_change / self.step_size)
+			
+			new_coord_change = None
+			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+				new_coord_change = n_step_sizes * self.step_size
+			else:
+				new_coord_change = (n_step_sizes + 1) * self.step_size
+
+			self.changes[i] += new_coord_change
+
+			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
+
+			element[self.coord] += new_coord_change
 
 	def to_dataframe(self) -> DataFrame:
 		"""

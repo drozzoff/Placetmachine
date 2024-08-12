@@ -56,20 +56,53 @@ class KnobTest(unittest.TestCase):
 
 		knob = Knob([self.test_quad, second_quad], 'y', [3.0, 1.5], step_size = 1.0)
 		
-		knob.apply(0.5)
+		knob.apply(0.5, strategy = "simple_memory")
+		# offsets = 1.5, 0.75
+		# applied 2.0, 1.0 | missmatch -0.5, -0.25
 
 		self.assertEqual(self.test_quad['y'], 2.0)
 		self.assertEqual(knob.mismatch, [-0.5, -0.25])
 
-		knob.apply(0.5)
+		knob.apply(0.5, strategy = "simple_memory")
+		# offsets = 1.5, 0.75
+		# applied 1.0 (3.0), 1.0(2.0) | missmatch 0.0, -0.5
 
 		self.assertEqual(self.test_quad['y'], 3.0)
 		self.assertEqual(knob.mismatch, [0.0, -0.5])
 		self.assertEqual(second_quad['y'], 2.0)
 
-		knob.apply(1.0)
+		knob.apply(1.0, strategy = "simple_memory")
+		# offsets = 3.0, 1.5
+		# applied 3.0(6.0), 1.0(2.0) | mismatch 0.0, 0.0
 
 		self.assertEqual(knob.mismatch, [0.0, 0.0])
+
+	def test_apply3(self):
+		
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		knob = Knob([self.test_quad, second_quad], 'y', [3.0, 1.5], step_size = 1.0)
+		
+		knob.apply(0.5, strategy = "simple")
+		# offsets = 1.5, 0.75
+		# applied 2.0, 1.0 | missmatch -0.5, -0.25
+
+		self.assertEqual(self.test_quad['y'], 2.0)
+		self.assertEqual(knob.mismatch, [-0.5, -0.25])
+
+		knob.apply(0.5, strategy = "simple")
+		# offsets = 1.5, 0.75
+		# applied 2.0 (4.0), 1.0(2.0) | missmatch -1.0, -0.5
+
+		self.assertEqual(self.test_quad['y'], 4.0)
+		self.assertEqual(knob.mismatch, [-1.0, -0.5])
+		self.assertEqual(second_quad['y'], 2.0)
+
+		knob.apply(1.0, strategy = "simple")
+		# offsets = 3.0, 1.5
+		# applied 3.0(7.0), 2.0(4.0) | mismatch -1.0, -1.0
+
+		self.assertEqual(knob.mismatch, [-1.0, -1.0])
 
 	def test_to_dataframe(self):
 
