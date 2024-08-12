@@ -1265,6 +1265,9 @@ class Machine():
 	def iterate_knob(self, beam: Beam, knob: Knob, observables: Union[str, List[str]], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
 		Iterate the given knob in the given range and get the iteration summary.
+
+		Stores the elements offsets at the beginning and restores them at the end of
+		the knob iteration.
 		
 		Parameters
 		----------
@@ -1286,6 +1289,17 @@ class Machine():
 
 		Other parameters
 		----------------
+		iteration_type : str
+			The type of the knob iteration scan to perform. The possible options are 
+			```
+			["natural", "with_cache"]
+			```
+			When it is "with_cache" (default), after each value from `knob_range` is applied
+			the offsets of the elements associated with a given `knob` are reset back to the 
+			initial values. 
+			When it is "natural", the elements' offsets associated with a `knob` are not reset.
+			Since `Knob.apply()` is additive function, an amplitude difference between the 
+			previous and current is applied.
 		fit : Callable
 			Function to fit the data.
 			**!!** Only works if the amound of observables is equaly **1**.
@@ -1321,11 +1335,16 @@ class Machine():
 		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
 				'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 
 				'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		_iteration_types = ["natural", "with_cache"]
 		if isinstance(observables, str):
 			observables = [observables]
 
 		if not set(list(observables)).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
+
+		iteration_type = extra_params.get("iteration_type", "with_cache")
+		if not iteration_type in _iteration_types:
+			raise ValueError(f"The following iteration type is not supported. Accepted options are {_iteration_types}")
 
 		observable_values = []
 		
@@ -1349,7 +1368,7 @@ class Machine():
 			
 			return table
 
-		def _eval_obs(knob: Knob, amplitude: float):
+		def _eval_obs(knob: Knob, amplitude: float, iteration_type: str):
 			"""
 			Maybe this function can be used universally, Machine wide.
 
@@ -1360,8 +1379,8 @@ class Machine():
 			self._CACHE_LOCK['iterate_knob'] = True
 
 			obs = self.eval_obs(beam, observables, suppress_output = True)
-			
-			self.beamline.upload_from_cache(knob.elements)
+			if iteration_type == "with_cache":
+				self.beamline.upload_from_cache(knob.elements)
 			self._CACHE_LOCK['iterate_knob'] = False
 
 			return obs
@@ -1369,15 +1388,35 @@ class Machine():
 		if self.console_output:
 			table = console_table()	
 			
-			with Live(table, refresh_per_second = 10):
+			with Live(table, refresh_per_second = 10) as live:
+				amplitude_prev, obs = .0, None
 				for amplitude in knob_range:
-					obs = _eval_obs(knob, amplitude)
+					if iteration_type == "with_cache":
+						obs = _eval_obs(knob, amplitude, iteration_type)
+					elif iteration_type == "natural":
+						obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type)
+						amplitude_prev = amplitude
+					else:
+						continue
 					observable_values.append(obs)
 					table.add_row(str(amplitude), *list(map(lambda x: str(x), obs)))
+				live.refresh()
 		else:
+			amplitude_prev, obs = .0, None
 			for amplitude in knob_range:
-				obs = _eval_obs(knob, amplitude)
+				if iteration_type == "with_cache":
+					obs = _eval_obs(knob, amplitude, iteration_type)
+				elif iteration_type == "natural":
+					obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type)
+					amplitude_prev = amplitude
+				else:
+					continue
 				observable_values.append(obs)
+		
+		# if we iterated using the "natural" iteration type, we need to reset the knob
+		# offsets back
+		if iteration_type == "natural":
+			self.beamline.upload_from_cache(knob.elements)
 
 		# rebulding observable_values into the different structure
 		#	[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..], ..] into
