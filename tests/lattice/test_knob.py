@@ -187,6 +187,9 @@ class KnobTest(unittest.TestCase):
 		print(knob)
 		print(knob.amplitude)
 
+		with self.assertRaises(ValueError):
+			knob.apply(2.5, strategy = "custom")
+		
 
 	def test_to_dataframe(self):
 
