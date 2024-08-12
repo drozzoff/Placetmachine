@@ -124,7 +124,7 @@ class Knob:
 			if strategy == "simple":
 				self.__appply_simple(amplitude)
 			if strategy == "simple_memory":
-				self.__apply_simple_memory()
+				self.__apply_simple_memory(amplitude)
 				
 		self.amplitude += amplitude
 
