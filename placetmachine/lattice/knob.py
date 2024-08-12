@@ -45,6 +45,7 @@ class Knob:
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 	_accepted_types = ['Quadrupole', 'Cavity']
+	_strategies_available = ["simple", "simple_memory", "min_scale", "min_scale_memory"]
 
 	def __init__(self, elements: List[Element], coord: str, values: List[float], **extra_params):
 		"""
@@ -108,7 +109,7 @@ class Knob:
 			Strategy to use for calculations of the offsets when the `step_size` is defined. Default is
 			'simple_memory'.
 		"""
-		__strategies_available = ["simple", "simple_memory", "min_scale", "min_scale_memory"]
+		
 
 		if self.step_size == 0:
 			self.step_size = None
@@ -119,8 +120,8 @@ class Knob:
 			self.amplitude += amplitude
 		else:
 			strategy = kwargs.get("strategy", "simple_memory")
-			if strategy not in __strategies_available:
-				raise ValueError(f"Strategy '{strategy}' is not available. Possible options are {__strategies_available}.")
+			if strategy not in self._strategies_available:
+				raise ValueError(f"Strategy '{strategy}' is not available. Possible options are {self._strategies_available}.")
 
 			if strategy == "simple":
 				self.__appply_simple(amplitude)
