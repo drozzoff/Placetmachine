@@ -1321,6 +1321,9 @@ class Machine():
 		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
 				'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 
 				'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		if isinstance(observables, str):
+			observables = [observables]
+
 		if not set(list(observables)).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
@@ -1376,16 +1379,14 @@ class Machine():
 				obs = _eval_obs(knob, amplitude)
 				observable_values.append(obs)
 
-		new_observable_values = None
+		# rebulding observable_values into the different structure
+		#	[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..], ..] into
+		# 	[[obs1_value1, obs1_value2, ..], [obs2_value1, obs2_value2, ..], ..]
+		new_observable_values = []
+		for i, __ in enumerate(observables):
+			new_observable_values.append(list(map(lambda x: x[i], observable_values)))
 		if len(observables) == 1:
-			new_observable_values = observable_values
-		else:
-			# rebulding observable_values into the different structure
-			#	[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..], ..] into
-			# 	[[obs1_value1, obs1_value2, ..], [obs2_value1, obs2_value2, ..], ..]
-			new_observable_values = []
-			for i, __ in enumerate(observables):
-				new_observable_values.append(list(map(lambda x: x[i], observable_values)))
+			new_observable_values = new_observable_values[0]
 
 		iter_data = {'knob_range': list(knob_range), 'obs_data': new_observable_values}
 		obs_f_element = list(map(lambda x: x[0], observable_values))
