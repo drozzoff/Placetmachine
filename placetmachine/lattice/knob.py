@@ -108,7 +108,7 @@ class Knob:
 			Strategy to use for calculations of the offsets when the `step_size` is defined. Default is
 			'simple_memory'.
 		"""
-		__strategies_available = ["simple", "simple_memory"]
+		__strategies_available = ["simple", "simple_memory", "min_scale", "min_scale_memory"]
 
 		if self.step_size == 0:
 			self.step_size = None
@@ -125,8 +125,10 @@ class Knob:
 				self.__appply_simple(amplitude)
 			if strategy == "simple_memory":
 				self.__apply_simple_memory(amplitude)
-				
-		self.amplitude += amplitude
+			if strategy == "min_scale":
+				self.__apply_min_scale(amplitude)
+			if strategy == "min_scale_memory":
+				self.__apply_min_scale_memory(amplitude)
 
 	def __appply_simple(self, amplitude):
 		"""
@@ -154,6 +156,8 @@ class Knob:
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
 
 			element[self.coord] += new_coord_change
+		
+		self.amplitude += amplitude
 
 	def __apply_simple_memory(self, amplitude):
 		"""
@@ -182,6 +186,118 @@ class Knob:
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
 
 			element[self.coord] += new_coord_change
+		
+		self.amplitude += amplitude
+
+	def __apply_min_scale(self, amplitude):
+		"""
+		Apply the the knob.
+
+		The offsets are evaluated the following way:
+		1. The minimum offset is evalued among all the elements. For instance, lets take
+			the smallest offset amplitude is 1.0 $\mu$m, step size of 0.5 $\mu$m, and the knob
+			amplitude of 0.6. The rounded smallest offsets is goint to be 0.5.
+		2. We take the smallest rounded offset and evaluate the offsets of the other elements by
+			scalling the offset amplitudes correspondingly. These offsets are also rounded to 
+			the closest value proportional to the step size.
+
+		As a result of such adjustemnt - amplitude applied may differ from the amplitude
+		passed.
+
+		Parameters
+		----------
+		amplitude : float
+			Amplitude of the knob to apply.
+		"""
+		i_min = self.values.index(min([abs(x) for x in self.values]))
+
+		coord_change_ref = self.values[i_min] * amplitude
+		n_step_sizes_ref = int(coord_change_ref / self.step_size)
+		
+		ref_offset = None
+		if (coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
+			ref_offset = n_step_sizes_ref * self.step_size
+		else:
+			ref_offset = (n_step_sizes_ref + 1) * self.step_size
+
+		amplitude_adjusted = ref_offset / self.values[i_min]
+
+		for i, element in enumerate(self.elements):
+			if i == i_min:
+				self.changes[i] += ref_offset
+				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+				element[self.coord] += ref_offset
+				continue
+
+			coord_change = self.values[i] * amplitude_adjusted
+			n_step_sizes = int(coord_change / self.step_size)
+			
+			new_coord_change = None
+			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+				new_coord_change = n_step_sizes * self.step_size
+			else:
+				new_coord_change = (n_step_sizes + 1) * self.step_size
+
+			self.changes[i] += new_coord_change
+			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+			element[self.coord] += new_coord_change
+
+		self.amplitude += amplitude_adjusted
+
+	def __apply_min_scale_memory(self, amplitude):
+		"""
+		Apply the the knob.
+
+		The offsets are evaluated the following way:
+		1. The minimum offset is evalued among all the elements. For instance, lets take
+			the smallest offset amplitude is 1.0 $\mu$m, step size of 0.5 $\mu$m, and the knob
+			amplitude of 0.6. The rounded smallest offsets is goint to be 0.5.
+		2. We take the smallest rounded offset and evaluate the offsets of the other elements by
+			scalling the offset amplitudes correspondingly. These offsets are also rounded to 
+			the closest value proportional to the step size.
+
+		As a result of such adjustment - amplitude applied may differ from the amplitude
+		passed. Also, when evaluating the offsets, the mismatch is taken into account
+
+		Parameters
+		----------
+		amplitude : float
+			Amplitude of the knob to apply.
+		"""
+		i_min = self.values.index(min([abs(x) for x in self.values]))
+
+		coord_change_ref = self.values[i_min] * amplitude + self.mismatch[i_min]
+		n_step_sizes_ref = int(coord_change_ref / self.step_size)
+		
+		ref_offset = None
+		if (coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
+			ref_offset = n_step_sizes_ref * self.step_size
+		else:
+			ref_offset = (n_step_sizes_ref + 1) * self.step_size
+
+		amplitude_adjusted = ref_offset / self.values[i_min]
+
+		for i, element in enumerate(self.elements):
+			if i == i_min:
+				self.changes[i] += ref_offset
+				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+				element[self.coord] += ref_offset
+				continue
+
+			coord_change = self.values[i] * amplitude_adjusted + self.mismatch[i]
+			n_step_sizes = int(coord_change / self.step_size)
+			
+			new_coord_change = None
+			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+				new_coord_change = n_step_sizes * self.step_size
+			else:
+				new_coord_change = (n_step_sizes + 1) * self.step_size
+
+			self.changes[i] += new_coord_change
+			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+			element[self.coord] += new_coord_change
+
+		self.amplitude += amplitude_adjusted
 
 	def to_dataframe(self) -> DataFrame:
 		"""
