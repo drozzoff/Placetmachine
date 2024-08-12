@@ -116,6 +116,7 @@ class Knob:
 		if self.step_size is None:
 			for i, element in enumerate(self.elements):
 				element[self.coord] += self.values[i] * amplitude
+			self.amplitude += amplitude
 		else:
 			strategy = kwargs.get("strategy", "simple_memory")
 			if strategy not in __strategies_available:
