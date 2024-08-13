@@ -257,7 +257,7 @@ class Knob:
 			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				if new_coord_change > 0:
+				if coord_change > 0:
 					new_coord_change = (n_step_sizes + 1) * self.step_size
 				else:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
@@ -318,7 +318,7 @@ class Knob:
 			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				if new_coord_change > 0:
+				if coord_change > 0:
 					new_coord_change = (n_step_sizes + 1) * self.step_size
 				else:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
