@@ -189,7 +189,19 @@ class KnobTest(unittest.TestCase):
 
 		with self.assertRaises(ValueError):
 			knob.apply(2.5, strategy = "custom")
-		
+
+	def test_apply7(self):
+
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		knob = Knob([self.test_quad, second_quad], 'y', [-3.2, 1.5], step_size = 1.0)
+
+		knob.apply(0.5, strategy = "simple")
+		# offrsets = -1.6, 0.75
+		# applied -2.0 , 1.0 | mismatch 0.4, -0.25
+		print(knob)
+		self.assertAlmostEqual(knob.mismatch[0], 0.4, delta = 1e-4)
+		self.assertAlmostEqual(knob.mismatch[1], -0.25, delta = 1e-4)
 
 	def test_to_dataframe(self):
 

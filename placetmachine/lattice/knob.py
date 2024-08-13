@@ -159,10 +159,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
@@ -188,10 +191,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 
@@ -227,10 +233,13 @@ class Knob:
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
-		if (coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
+		if abs(coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
 			ref_offset = n_step_sizes_ref * self.step_size
 		else:
-			ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			if coord_change_ref > 0:
+				ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			else:
+				ref_offset = (n_step_sizes_ref - 1) * self.step_size
 
 		amplitude_adjusted = ref_offset / self.values[i_min]
 
@@ -245,10 +254,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if new_coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
@@ -282,10 +294,13 @@ class Knob:
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
-		if (coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
+		if abs(coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
 			ref_offset = n_step_sizes_ref * self.step_size
 		else:
-			ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			if coord_change_ref > 0:
+				ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			else:
+				ref_offset = (n_step_sizes_ref - 1) * self.step_size
 
 		amplitude_adjusted = ref_offset / self.values[i_min]
 
@@ -300,10 +315,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if new_coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
