@@ -88,7 +88,17 @@ class Knob:
 		self.values = values
 		if len(self.values) != len(self.elements):
 			raise ValueError(f"The number of elements and values provided are different.")
+	
+	def reset(self):
+		"""
+		Reset the knob's data.
 		
+		It resets the following attributes: `amplitude`, `mismatch`, and `changes`. Does not change
+		the elements' settings.
+		"""
+		self.amplitude = 0.0
+		self.mismatch, self.changes = [0.0] * len(self.elements), [0.0] * len(self.elements)
+
 	def apply(self, amplitude: float, **kwargs):
 		"""
 		Apply the knob.
