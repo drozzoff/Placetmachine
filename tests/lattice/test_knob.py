@@ -165,7 +165,8 @@ class KnobTest(unittest.TestCase):
 		
 		knob.apply(0.5, strategy = "min_scale_memory")
 		# offrsets = 1.625, 0.75
-		# applied 2.0 (correct 2.1666..), 1.0 (correct 1.0) | mismatch 0.166.., 0.0 | Amplitude change 0.5 -> 0.6666
+		# applied 2.0 (correct 2.1666..), 1.0 (correct 1.0) | mismatch 0.166.., 0.0 
+		# Amplitude change 0.5 -> 0.6666 | Amplitude mismatch -0.1666
 
 		self.assertEqual(second_quad['y'], 1.0)
 		self.assertAlmostEqual(self.test_quad['y'], 2.0)
@@ -175,14 +176,16 @@ class KnobTest(unittest.TestCase):
 		print(knob.amplitude)
 
 		knob.apply(1.0, strategy = "min_scale_memory")
-		# offrsets = 3.25, 1.5
-		# applied 5.0 (correct 4.333.. + 0.166 (memory)), 2.0 (correct 2.0) | mismatch -0.5, 0.0 | Amplitude change 1.0 -> 1.3333..
-		# total applied 7.0, 3.0 | missmatch total -0.5, 0.0 | Total amplitude 2.0
+		# amplitude to apply 0.8333333 (mismatch = -0.1666)
+		# offrsets = 2.7083, 1.25
+		# applied 2.0 (correct 2.1667.. + 0.166 (memory)), 1.0 (correct 1.0) | mismatch 0.3333, 0.0 | Amplitude change 1.0 -> 0.8333333
+		# total applied 4.0, 2.0 | Total amplitude 1.3333
 
-		self.assertEqual(knob.amplitude, 2.0)
-		self.assertAlmostEqual(self.test_quad['y'], 7.0)
-		self.assertAlmostEqual(second_quad['y'], 3.0)
-		self.assertEqual(knob.mismatch, [-0.5, 0.0])
+		self.assertAlmostEqual(knob.amplitude, 4./3.)
+		self.assertAlmostEqual(self.test_quad['y'], 4.0)
+		self.assertAlmostEqual(second_quad['y'], 2.0)
+		self.assertAlmostEqual(knob.mismatch[0], 1./3.)
+		self.assertAlmostEqual(knob.mismatch[1], 0.0)
 
 		print(knob)
 		print(knob.amplitude)
