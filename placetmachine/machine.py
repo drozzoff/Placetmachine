@@ -1397,6 +1397,7 @@ class Machine():
 
 			return obs
 		
+		amplitudes_updated = []
 		if self.console_output:
 			table = console_table()	
 			
@@ -1411,6 +1412,7 @@ class Machine():
 					else:
 						continue
 					observable_values.append(obs)
+					amplitudes_updated.append(knob.amplitude)
 					table.add_row(str(amplitude), *list(map(lambda x: str(x), obs)))
 				live.refresh()
 		else:
@@ -1424,6 +1426,7 @@ class Machine():
 				else:
 					continue
 				observable_values.append(obs)
+				amplitudes_updated.append(knob.amplitude)
 		
 		# if we iterated using the "natural" iteration type, we need to reset the knob
 		# offsets back
@@ -1439,10 +1442,10 @@ class Machine():
 		if len(observables) == 1:
 			new_observable_values = new_observable_values[0]
 
-		iter_data = {'knob_range': list(knob_range), 'obs_data': new_observable_values}
+		iter_data = {'knob_range': amplitudes_updated, 'obs_data': new_observable_values}
 		obs_f_element = list(map(lambda x: x[0], observable_values))
 
-		fit_result = extra_params.get('fit')(knob_range, obs_f_element) if ('fit' in extra_params) and (len(observables) == 1) else None
+		fit_result = extra_params.get('fit')(amplitudes_updated, obs_f_element) if ('fit' in extra_params) and (len(observables) == 1) else None
 		
 		if self.console_output:
 			if fit_result is not None:
@@ -1452,9 +1455,9 @@ class Machine():
 
 		if ('plot' in extra_params) and len(observables) == 1:
 			if (fit_result != None) and fit_result[1] is not None:
-				extra_params.get('plot')(knob_range, obs_f_element, fit_result[1])
+				extra_params.get('plot')(amplitudes_updated, obs_f_element, fit_result[1])
 			else:
-				extra_params.get('plot')(knob_range, obs_f_element)
+				extra_params.get('plot')(amplitudes_updated, obs_f_element)
 		
 		if fit_result is not None:
 			if fit_result[1] is not None:
