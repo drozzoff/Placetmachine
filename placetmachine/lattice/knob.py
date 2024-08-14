@@ -31,8 +31,12 @@ class Knob:
 	step_size : Optional[float]
 		The smallest step that can be implemented when applying the knob
 	mismatch : List[float]
-		A mismatch between the actual coordinates changes given by `changes` and the ones given by the amplitude. 
+		A mismatch between the actual coordinates changes given by `changes` and the ones given by the current amplitude. 
 		When `step_size` is not provided, is a list of `0.0`.
+	amplitude_mismatch : float
+		A mismatch between the amplitude requested and the amplitude applied. By default is `0.0`.
+		It is modified when the `apply()` strategy foresees the automatic adjustment of the amplitude. So
+		`amplitude_mismatch` accomodates this mismatch between multiple `apply()` calls.
 	changes : List[float]
 		A total coordinate change performed with a knob.
 	name : str
@@ -71,6 +75,7 @@ class Knob:
 		"""
 		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
 		self.mismatch, self.changes = [0.0] * len(elements), [0.0] * len(elements)
+		self.amplitude_mismatch = 0.0
 		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
 		
 		# checking the supported types and building the types involved
@@ -96,7 +101,7 @@ class Knob:
 		It resets the following attributes: `amplitude`, `mismatch`, and `changes`. Does not change
 		the elements' settings.
 		"""
-		self.amplitude = 0.0
+		self.amplitude, self.amplitude_mismatch = 0.0, 0.0
 		self.mismatch, self.changes = [0.0] * len(self.elements), [0.0] * len(self.elements)
 
 	def apply(self, amplitude: float, **kwargs):
@@ -281,7 +286,11 @@ class Knob:
 			the closest value proportional to the step size.
 
 		As a result of such adjustment - amplitude applied may differ from the amplitude
-		passed. Also, when evaluating the offsets, the mismatch is taken into account
+		passed.
+
+		When evaluating the offsets, the mismatch between the current values and values
+		expected by the amplitude are added. Also, the amplitude mismatch (difference between
+		the `amplitude` provided to the function `Knob.amplitude`) is taken into accound.
 
 		Parameters
 		----------
@@ -290,7 +299,7 @@ class Knob:
 		"""
 		i_min = self.values.index(min([abs(x) for x in self.values]))
 
-		coord_change_ref = self.values[i_min] * amplitude + self.mismatch[i_min]
+		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch) + self.mismatch[i_min]
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
@@ -303,6 +312,9 @@ class Knob:
 				ref_offset = (n_step_sizes_ref - 1) * self.step_size
 
 		amplitude_adjusted = ref_offset / self.values[i_min]
+		# this could be different from the correct amplitude required:
+		# which is amplitude + self.amplitude_mismatch
+		self.amplitude_mismatch = amplitude + self.amplitude_mismatch - amplitude_adjusted
 
 		for i, element in enumerate(self.elements):
 			if i == i_min:
