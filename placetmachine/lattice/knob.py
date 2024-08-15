@@ -1,5 +1,6 @@
 from typing import List
 from pandas import DataFrame
+import warnings
 from placetmachine.lattice import Element
 
 
@@ -31,8 +32,12 @@ class Knob:
 	step_size : Optional[float]
 		The smallest step that can be implemented when applying the knob
 	mismatch : List[float]
-		A mismatch between the actual coordinates changes given by `changes` and the ones given by the amplitude. 
+		A mismatch between the actual coordinates changes given by `changes` and the ones given by the current amplitude. 
 		When `step_size` is not provided, is a list of `0.0`.
+	amplitude_mismatch : float
+		A mismatch between the amplitude requested and the amplitude applied. By default is `0.0`.
+		It is modified when the `apply()` strategy foresees the automatic adjustment of the amplitude. So
+		`amplitude_mismatch` accomodates this mismatch between multiple `apply()` calls.
 	changes : List[float]
 		A total coordinate change performed with a knob.
 	name : str
@@ -45,6 +50,7 @@ class Knob:
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 	_accepted_types = ['Quadrupole', 'Cavity']
+	_strategies_available = ["simple", "simple_memory", "min_scale", "min_scale_memory"]
 
 	def __init__(self, elements: List[Element], coord: str, values: List[float], **extra_params):
 		"""
@@ -70,6 +76,7 @@ class Knob:
 		"""
 		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
 		self.mismatch, self.changes = [0.0] * len(elements), [0.0] * len(elements)
+		self.amplitude_mismatch = 0.0
 		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
 		
 		# checking the supported types and building the types involved
@@ -87,7 +94,20 @@ class Knob:
 		self.values = values
 		if len(self.values) != len(self.elements):
 			raise ValueError(f"The number of elements and values provided are different.")
+	
+	def reset(self):
+		"""
+		Reset the knob's data.
 		
+		It resets the knob to 0.0 amplitude. The means the elements' offsets changes done 
+		by the knob are removed.
+		Consequently resets the following attributes: `amplitude`, `mismatch`, and `changes`. 
+		"""
+		self.amplitude, self.amplitude_mismatch = 0.0, 0.0
+		for i, element in enumerate(self.elements):
+			element[self.coord] -= self.changes[i]
+		self.mismatch, self.changes = [0.0] * len(self.elements), [0.0] * len(self.elements)
+
 	def apply(self, amplitude: float, **kwargs):
 		"""
 		Apply the knob.
@@ -108,7 +128,7 @@ class Knob:
 			Strategy to use for calculations of the offsets when the `step_size` is defined. Default is
 			'simple_memory'.
 		"""
-		__strategies_available = ["simple", "simple_memory", "min_scale", "min_scale_memory"]
+		
 
 		if self.step_size == 0:
 			self.step_size = None
@@ -116,11 +136,12 @@ class Knob:
 		if self.step_size is None:
 			for i, element in enumerate(self.elements):
 				element[self.coord] += self.values[i] * amplitude
+				self.changes[i] += self.values[i] * amplitude
 			self.amplitude += amplitude
 		else:
 			strategy = kwargs.get("strategy", "simple_memory")
-			if strategy not in __strategies_available:
-				raise ValueError(f"Strategy '{strategy}' is not available. Possible options are {__strategies_available}.")
+			if strategy not in self._strategies_available:
+				raise ValueError(f"Strategy '{strategy}' is not available. Possible options are {self._strategies_available}.")
 
 			if strategy == "simple":
 				self.__appply_simple(amplitude)
@@ -130,6 +151,56 @@ class Knob:
 				self.__apply_min_scale(amplitude)
 			if strategy == "min_scale_memory":
 				self.__apply_min_scale_memory(amplitude)
+
+	def cache_state(self):
+		"""
+		Save the current knobs' state into the cache.
+
+		It saves the changes applied by the knob so it could be restored later.
+		Attributes to be cached:
+		```
+		[`amplitude`, `amplitude_mismatch`, `changes`, `mismatch`]
+		```
+		"""
+		self._cached_data = {
+			'amplitude': self.amplitude,
+			'amplitude_mismatch': self.amplitude_mismatch,
+			'changes': self.changes.copy(),
+			'mismatch': self.mismatch.copy()
+		}
+	
+	def upload_state_from_cache(self, clear_cache: bool = False):
+		"""
+		Upload the knob's data from the cache.
+
+		Attributes to be upload:
+		```
+		[`amplitude`, `amplitude_mismatch`, `changes`, `mismatch`]
+		```
+		As these values are uploaded - elements' offsets are adjusted correspondingly.
+
+		Parameters
+		----------
+		clear_cache
+			If `True` clears the cached data.
+		"""
+		if not hasattr(self, '_cached_data'):
+			warnings.warn(f"Cannot upload, cache is empty!")
+			return 
+		elif self._cached_data is None:
+			warnings.warn(f"Cannot upload, cache is empty!")
+			return 
+		
+		for i, element in enumerate(self.elements):
+			element[self.coord] += self._cached_data['changes'][i] - self.changes[i]
+
+		self.amplitude = self._cached_data['amplitude']
+		self.amplitude_mismatch = self._cached_data['amplitude_mismatch']
+		self.changes = self._cached_data['changes'].copy()
+		self.mismatch = self._cached_data['mismatch'].copy()
+
+		if clear_cache:
+			self._cached_data = None
 
 	def __appply_simple(self, amplitude):
 		"""
@@ -148,10 +219,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
@@ -177,10 +251,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 
@@ -216,10 +293,13 @@ class Knob:
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
-		if (coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
+		if abs(coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
 			ref_offset = n_step_sizes_ref * self.step_size
 		else:
-			ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			if coord_change_ref > 0:
+				ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			else:
+				ref_offset = (n_step_sizes_ref - 1) * self.step_size
 
 		amplitude_adjusted = ref_offset / self.values[i_min]
 
@@ -234,10 +314,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
@@ -258,7 +341,11 @@ class Knob:
 			the closest value proportional to the step size.
 
 		As a result of such adjustment - amplitude applied may differ from the amplitude
-		passed. Also, when evaluating the offsets, the mismatch is taken into account
+		passed.
+
+		When evaluating the offsets, the mismatch between the current values and values
+		expected by the amplitude are added. Also, the amplitude mismatch (difference between
+		the `amplitude` provided to the function `Knob.amplitude`) is taken into accound.
 
 		Parameters
 		----------
@@ -267,16 +354,22 @@ class Knob:
 		"""
 		i_min = self.values.index(min([abs(x) for x in self.values]))
 
-		coord_change_ref = self.values[i_min] * amplitude + self.mismatch[i_min]
+		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch) + self.mismatch[i_min]
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
-		if (coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
+		if abs(coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
 			ref_offset = n_step_sizes_ref * self.step_size
 		else:
-			ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			if coord_change_ref > 0:
+				ref_offset = (n_step_sizes_ref + 1) * self.step_size
+			else:
+				ref_offset = (n_step_sizes_ref - 1) * self.step_size
 
 		amplitude_adjusted = ref_offset / self.values[i_min]
+		# this could be different from the correct amplitude required:
+		# which is amplitude + self.amplitude_mismatch
+		self.amplitude_mismatch = amplitude + self.amplitude_mismatch - amplitude_adjusted
 
 		for i, element in enumerate(self.elements):
 			if i == i_min:
@@ -289,10 +382,13 @@ class Knob:
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
-			if (coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
+			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
 				new_coord_change = n_step_sizes * self.step_size
 			else:
-				new_coord_change = (n_step_sizes + 1) * self.step_size
+				if coord_change > 0:
+					new_coord_change = (n_step_sizes + 1) * self.step_size
+				else:
+					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
@@ -329,7 +425,7 @@ class Knob:
 			data_dict['s'].append(element['s'] if 's' in element.settings else None)
 
 			data_dict['type'].append(element.type)
-			data_dict['girder'].append(element.girder)
+			data_dict['girder'].append(element.girder.name if element.girder is not None else None)
 
 			data_dict[self.coord + "_amplitude"].append(self.values[i])
 			data_dict[self.coord + "_current"].append(element[self.coord])
