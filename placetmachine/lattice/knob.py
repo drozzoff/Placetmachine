@@ -136,6 +136,7 @@ class Knob:
 		if self.step_size is None:
 			for i, element in enumerate(self.elements):
 				element[self.coord] += self.values[i] * amplitude
+				self.changes[i] += self.values[i] * amplitude
 			self.amplitude += amplitude
 		else:
 			strategy = kwargs.get("strategy", "simple_memory")
@@ -424,7 +425,7 @@ class Knob:
 			data_dict['s'].append(element['s'] if 's' in element.settings else None)
 
 			data_dict['type'].append(element.type)
-			data_dict['girder'].append(element.girder)
+			data_dict['girder'].append(element.girder.name)
 
 			data_dict[self.coord + "_amplitude"].append(self.values[i])
 			data_dict[self.coord + "_current"].append(element[self.coord])
