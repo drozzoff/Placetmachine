@@ -1269,8 +1269,7 @@ class Machine():
 		"""
 		Iterate the given knob in the given range and get the iteration summary.
 
-		Stores the elements offsets at the beginning and restores them at the end of
-		the knob iteration.
+		Saves the knob's state at the beginning of the iteration and restores it at the end.
 		
 		Parameters
 		----------
@@ -1298,8 +1297,7 @@ class Machine():
 			["natural", "with_cache"]
 			```
 			When it is "with_cache" (default), after each value from `knob_range` is applied
-			the offsets of the elements associated with a given `knob` are reset back to the 
-			initial values. 
+			the knob is reset to the initial state. 
 			When it is "natural", the elements' offsets associated with a `knob` are not reset.
 			Since `Knob.apply()` is additive function, an amplitude difference between the 
 			previous and current is applied.
@@ -1359,18 +1357,9 @@ class Machine():
 			raise ValueError(f"The following iteration type is not supported. Accepted options are {_iteration_types}")
 
 		observable_values = []
-		
-		if not hasattr(self, '_CACHE_LOCK'):
-			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
-			self.beamline.cache_lattice_data(knob.elements)
-		elif self._CACHE_LOCK['iterate_knob']:
-			# this corresponds to the case when the values from the cache were not uploaded to the lattice
-			# the reason for this could be the interruption of the execution of eval_obs() function
-			self.beamline.upload_from_cache(knob.elements)
-			self._CACHE_LOCK['iterate_knob'] = False
-		else:
-			self._CACHE_LOCK['iterate_knob'] = False
-			self.beamline.cache_lattice_data(knob.elements)
+
+		# saving the initial state of the knob for reference
+		knob.cache_state()
 
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
@@ -1388,14 +1377,12 @@ class Machine():
 			*I use the similar function to test the knob performance.
 			"""
 			self.apply_knob(knob, amplitude, knob_apply_strategy)
-			self._CACHE_LOCK['iterate_knob'] = True
-
+			amp = knob.amplitude
 			obs = self.eval_obs(beam, observables, suppress_output = True)
 			if iteration_type == "with_cache":
-				self.beamline.upload_from_cache(knob.elements)
-			self._CACHE_LOCK['iterate_knob'] = False
-
-			return obs
+				knob.upload_state_from_cache(False)
+			
+			return amp, obs
 		
 		amplitudes_updated = []
 		if self.console_output:
@@ -1405,33 +1392,33 @@ class Machine():
 				amplitude_prev, obs = .0, None
 				for amplitude in knob_range:
 					if iteration_type == "with_cache":
-						obs = _eval_obs(knob, amplitude, iteration_type, knob_apply_strategy)
+						amp, obs = _eval_obs(knob, amplitude, iteration_type, knob_apply_strategy)
 					elif iteration_type == "natural":
-						obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type, knob_apply_strategy)
+						amp, obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type, knob_apply_strategy)
 						amplitude_prev = amplitude
 					else:
 						continue
 					observable_values.append(obs)
-					amplitudes_updated.append(knob.amplitude)
-					table.add_row(str(amplitude), *list(map(lambda x: str(x), obs)))
+					amplitudes_updated.append(amp)
+					table.add_row(str(amp), *list(map(lambda x: str(x), obs)))
 				live.refresh()
 		else:
 			amplitude_prev, obs = .0, None
 			for amplitude in knob_range:
 				if iteration_type == "with_cache":
-					obs = _eval_obs(knob, amplitude, iteration_type, knob_apply_strategy)
+					amp, obs = _eval_obs(knob, amplitude, iteration_type, knob_apply_strategy)
 				elif iteration_type == "natural":
-					obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type, knob_apply_strategy)
+					amp, obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type, knob_apply_strategy)
 					amplitude_prev = amplitude
 				else:
 					continue
 				observable_values.append(obs)
-				amplitudes_updated.append(knob.amplitude)
+				amplitudes_updated.append(amp)
 		
 		# if we iterated using the "natural" iteration type, we need to reset the knob
-		# offsets back
+		# back since currently the knob amplitude is equal to `knob_range[-1]`
 		if iteration_type == "natural":
-			self.beamline.upload_from_cache(knob.elements)
+			knob.upload_state_from_cache(False)
 
 		# rebulding observable_values into the different structure
 		#	[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..], ..] into
