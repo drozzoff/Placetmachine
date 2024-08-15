@@ -1,5 +1,6 @@
 from typing import List
 from pandas import DataFrame
+import warnings
 from placetmachine.lattice import Element
 
 
@@ -98,10 +99,13 @@ class Knob:
 		"""
 		Reset the knob's data.
 		
-		It resets the following attributes: `amplitude`, `mismatch`, and `changes`. Does not change
-		the elements' settings.
+		It resets the knob to 0.0 amplitude. The means the elements' offsets changes done 
+		by the knob are removed.
+		Consequently resets the following attributes: `amplitude`, `mismatch`, and `changes`. 
 		"""
 		self.amplitude, self.amplitude_mismatch = 0.0, 0.0
+		for i, element in enumerate(self.elements):
+			element[self.coord] -= self.changes[i]
 		self.mismatch, self.changes = [0.0] * len(self.elements), [0.0] * len(self.elements)
 
 	def apply(self, amplitude: float, **kwargs):
@@ -146,6 +150,56 @@ class Knob:
 				self.__apply_min_scale(amplitude)
 			if strategy == "min_scale_memory":
 				self.__apply_min_scale_memory(amplitude)
+
+	def cache_state(self):
+		"""
+		Save the current knobs' state into the cache.
+
+		It saves the changes applied by the knob so it could be restored later.
+		Attributes to be cached:
+		```
+		[`amplitude`, `amplitude_mismatch`, `changes`, `mismatch`]
+		```
+		"""
+		self._cached_data = {
+			'amplitude': self.amplitude,
+			'amplitude_mismatch': self.amplitude_mismatch,
+			'changes': self.changes.copy(),
+			'mismatch': self.mismatch.copy()
+		}
+	
+	def upload_state_from_cache(self, clear_cache: bool = False):
+		"""
+		Upload the knob's data from the cache.
+
+		Attributes to be upload:
+		```
+		[`amplitude`, `amplitude_mismatch`, `changes`, `mismatch`]
+		```
+		As these values are uploaded - elements' offsets are adjusted correspondingly.
+
+		Parameters
+		----------
+		clear_cache
+			If `True` clears the cached data.
+		"""
+		if not hasattr(self, '_cached_data'):
+			warnings.warn(f"Cannot upload, cache is empty!")
+			return 
+		elif self._cached_data is None:
+			warnings.warn(f"Cannot upload, cache is empty!")
+			return 
+		
+		for i, element in enumerate(self.elements):
+			element[self.coord] += self._cached_data['changes'][i] - self.changes[i]
+
+		self.amplitude = self._cached_data['amplitude']
+		self.amplitude_mismatch = self._cached_data['amplitude_mismatch']
+		self.changes = self._cached_data['changes'].copy()
+		self.mismatch = self._cached_data['mismatch'].copy()
+
+		if clear_cache:
+			self._cached_data = None
 
 	def __appply_simple(self, amplitude):
 		"""

@@ -206,6 +206,53 @@ class KnobTest(unittest.TestCase):
 		self.assertAlmostEqual(knob.mismatch[0], 0.4, delta = 1e-4)
 		self.assertAlmostEqual(knob.mismatch[1], -0.25, delta = 1e-4)
 
+	def test_cache(self):
+
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		knob = Knob([self.test_quad, second_quad], 'y', [3.25, 1.5], step_size = 1.0)
+
+		knob.apply(0.5, strategy = "min_scale_memory")
+
+		print(knob)
+		print(knob.amplitude)
+
+		knob.cache_state()
+		print(knob._cached_data)
+
+		knob.apply(1.0, strategy = "min_scale_memory")
+
+		print(knob)
+		print(knob.amplitude)
+		print(knob._cached_data)
+
+		self.assertAlmostEqual(knob._cached_data['amplitude'], 2./3.)
+		self.assertEqual(knob._cached_data['changes'], [2.0, 1.0])
+
+		knob.reset()
+
+		self.assertEqual(knob.amplitude, 0.0)
+		self.assertEqual(knob.amplitude_mismatch, 0.0)
+		self.assertEqual(knob.changes, [0.0, 0.0])
+		self.assertEqual(knob.mismatch, [0.0, 0.0])
+		self.assertEqual(knob.elements[0]['y'], 0.0)
+		self.assertEqual(knob.elements[1]['y'], 0.0)
+
+		print(knob)
+		print(knob.amplitude)
+		print(knob._cached_data)
+
+		knob.upload_state_from_cache(True)
+
+		self.assertIs(knob._cached_data, None)
+
+		self.assertAlmostEqual(knob.amplitude, 2./3.)
+		self.assertEqual(knob.changes, [2.0, 1.0])
+
+		print(knob)
+		print(knob.amplitude)
+		print(knob._cached_data)
+
 	def test_to_dataframe(self):
 
 		knob = Knob([self.test_quad], 'y', [40.0], step_size = 5.0)
