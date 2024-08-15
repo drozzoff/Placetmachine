@@ -425,7 +425,7 @@ class Knob:
 			data_dict['s'].append(element['s'] if 's' in element.settings else None)
 
 			data_dict['type'].append(element.type)
-			data_dict['girder'].append(element.girder.name)
+			data_dict['girder'].append(element.girder.name if element.girder is not None else None)
 
 			data_dict[self.coord + "_amplitude"].append(self.values[i])
 			data_dict[self.coord + "_current"].append(element[self.coord])
