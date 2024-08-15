@@ -343,6 +343,8 @@ class Beamline:
 		```
 		['x', 'xp', 'y', 'yp', 'roll', 'tilt']
 		```
+		If there are knobs that are constructed on the setting to be reset -> knobs are reset
+		as well.
 
 		Parameters
 		----------
@@ -371,6 +373,11 @@ class Beamline:
 		for element in self.lattice:
 			for parameter in parameters_to_reset:
 				element.settings[parameter] = 0.0
+		
+		# reseting the attached knobs
+		for knob in self.attached_knobs:
+			if knob.coord in parameters_to_reset:
+				knob.reset()
 
 	def cache_lattice_data(self, elements: List[Element]):
 		"""

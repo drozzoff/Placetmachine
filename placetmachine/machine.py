@@ -1058,7 +1058,7 @@ class Machine():
 		track_results.correction = "RF align"
 		return track_results
 
-	def apply_knob(self, knob: Knob, amplitude: float):
+	def apply_knob(self, knob: Knob, amplitude: float, strategy: str):
 		"""
 		Apply the knob and update the beamline offsets.
 
@@ -1073,10 +1073,13 @@ class Machine():
 			The knob to use.
 		amplitude
 			Amplitude to apply.
+		strategy
+			Strategy to use for calculations of the offsets when the knob has `step_size` 
+			defined. Default is 'simple_memory'.
 		"""
 		if knob not in self.beamline.attached_knobs:
 			raise ValueError("The knob provided does not exist!")
-		knob.apply(amplitude)
+		knob.apply(amplitude, strategy = strategy)
 
 	@verify_beam
 	def eval_track_results(self, beam: Beam, **extra_params) -> (pd.DataFrame, float, float):
@@ -1265,6 +1268,8 @@ class Machine():
 	def iterate_knob(self, beam: Beam, knob: Knob, observables: Union[str, List[str]], knob_range: List[float] = [-1.0, 0.0, 1.0], **extra_params) -> dict:
 		"""
 		Iterate the given knob in the given range and get the iteration summary.
+
+		Saves the knob's state at the beginning of the iteration and restores it at the end.
 		
 		Parameters
 		----------
@@ -1286,6 +1291,22 @@ class Machine():
 
 		Other parameters
 		----------------
+		iteration_type : str
+			The type of the knob iteration scan to perform. The possible options are 
+			```
+			["natural", "with_cache"]
+			```
+			When it is "with_cache" (default), after each value from `knob_range` is applied
+			the knob is reset to the initial state. 
+			When it is "natural", the elements' offsets associated with a `knob` are not reset.
+			Since `Knob.apply()` is additive function, an amplitude difference between the 
+			previous and current is applied.
+		knob_apply_strategy : str
+			Strategy to use for calculations of the offsets when knob has `step_size` defined. 
+			Default is 'simple_memory'. Possible options are:
+			```
+			["simple", "simple_memory", "min_scale", "min_scale_memory"]
+			```
 		fit : Callable
 			Function to fit the data.
 			**!!** Only works if the amound of observables is equaly **1**.
@@ -1321,22 +1342,24 @@ class Machine():
 		_obs_values = ['s', 'weight', 'E', 'x', 'px', 'y', 'py', 'sigma_xx', 'sigma_xpx', 
 				'sigma_pxpx', 'sigma_yy', 'sigma_ypy', 'sigma_pypy', 'sigma_xy', 'sigma_xpy', 
 				'sigma_yx', 'sigma_ypx', 'emittx', 'emitty']
+		_iteration_types = ["natural", "with_cache"]
+		if isinstance(observables, str):
+			observables = [observables]
+		knob_apply_strategy = extra_params.get("knob_apply_strategy", "simple")
+		if not knob_apply_strategy in knob._strategies_available:
+			raise ValueError(f"Strategy '{knob_apply_strategy}' is not available. Possible options are {knob._strategies_available}.")
+
 		if not set(list(observables)).issubset(set(_obs_values)):
 			raise ValueError(f"The observables(s) '{observables}' are not supported")
 
+		iteration_type = extra_params.get("iteration_type", "with_cache")
+		if not iteration_type in _iteration_types:
+			raise ValueError(f"The following iteration type is not supported. Accepted options are {_iteration_types}")
+
 		observable_values = []
-		
-		if not hasattr(self, '_CACHE_LOCK'):
-			self._CACHE_LOCK = {'iterate_knob': False}	#the lock to prevent the cache from being modified by other functions
-			self.beamline.cache_lattice_data(knob.elements)
-		elif self._CACHE_LOCK['iterate_knob']:
-			# this corresponds to the case when the values from the cache were not uploaded to the lattice
-			# the reason for this could be the interruption of the execution of eval_obs() function
-			self.beamline.upload_from_cache(knob.elements)
-			self._CACHE_LOCK['iterate_knob'] = False
-		else:
-			self._CACHE_LOCK['iterate_knob'] = False
-			self.beamline.cache_lattice_data(knob.elements)
+
+		# saving the initial state of the knob for reference
+		knob.cache_state()
 
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
@@ -1346,51 +1369,70 @@ class Machine():
 			
 			return table
 
-		def _eval_obs(knob: Knob, amplitude: float):
+		def _eval_obs(knob: Knob, amplitude: float, iteration_type: str, knob_apply_strategy: str):
 			"""
 			Maybe this function can be used universally, Machine wide.
 
 			It sets the knob, runs the track, reverts the changes, and returns the observable values.
 			*I use the similar function to test the knob performance.
 			"""
-			self.apply_knob(knob, amplitude)
-			self._CACHE_LOCK['iterate_knob'] = True
-
+			self.apply_knob(knob, amplitude, knob_apply_strategy)
+			amp = knob.amplitude
 			obs = self.eval_obs(beam, observables, suppress_output = True)
+			if iteration_type == "with_cache":
+				knob.upload_state_from_cache(False)
 			
-			self.beamline.upload_from_cache(knob.elements)
-			self._CACHE_LOCK['iterate_knob'] = False
-
-			return obs
+			return amp, obs
 		
+		amplitudes_updated = []
 		if self.console_output:
 			table = console_table()	
 			
-			with Live(table, refresh_per_second = 10):
+			with Live(table, refresh_per_second = 10) as live:
+				amplitude_prev, obs = .0, None
 				for amplitude in knob_range:
-					obs = _eval_obs(knob, amplitude)
+					if iteration_type == "with_cache":
+						amp, obs = _eval_obs(knob, amplitude, iteration_type, knob_apply_strategy)
+					elif iteration_type == "natural":
+						amp, obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type, knob_apply_strategy)
+						amplitude_prev = amplitude
+					else:
+						continue
 					observable_values.append(obs)
-					table.add_row(str(amplitude), *list(map(lambda x: str(x), obs)))
+					amplitudes_updated.append(amp)
+					table.add_row(str(amp), *list(map(lambda x: str(x), obs)))
+				live.refresh()
 		else:
+			amplitude_prev, obs = .0, None
 			for amplitude in knob_range:
-				obs = _eval_obs(knob, amplitude)
+				if iteration_type == "with_cache":
+					amp, obs = _eval_obs(knob, amplitude, iteration_type, knob_apply_strategy)
+				elif iteration_type == "natural":
+					amp, obs = _eval_obs(knob, amplitude - amplitude_prev, iteration_type, knob_apply_strategy)
+					amplitude_prev = amplitude
+				else:
+					continue
 				observable_values.append(obs)
+				amplitudes_updated.append(amp)
+		
+		# if we iterated using the "natural" iteration type, we need to reset the knob
+		# back since currently the knob amplitude is equal to `knob_range[-1]`
+		if iteration_type == "natural":
+			knob.upload_state_from_cache(False)
 
-		new_observable_values = None
+		# rebulding observable_values into the different structure
+		#	[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..], ..] into
+		# 	[[obs1_value1, obs1_value2, ..], [obs2_value1, obs2_value2, ..], ..]
+		new_observable_values = []
+		for i, __ in enumerate(observables):
+			new_observable_values.append(list(map(lambda x: x[i], observable_values)))
 		if len(observables) == 1:
-			new_observable_values = observable_values
-		else:
-			# rebulding observable_values into the different structure
-			#	[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..], ..] into
-			# 	[[obs1_value1, obs1_value2, ..], [obs2_value1, obs2_value2, ..], ..]
-			new_observable_values = []
-			for i, __ in enumerate(observables):
-				new_observable_values.append(list(map(lambda x: x[i], observable_values)))
+			new_observable_values = new_observable_values[0]
 
-		iter_data = {'knob_range': list(knob_range), 'obs_data': new_observable_values}
+		iter_data = {'knob_range': amplitudes_updated, 'obs_data': new_observable_values}
 		obs_f_element = list(map(lambda x: x[0], observable_values))
 
-		fit_result = extra_params.get('fit')(knob_range, obs_f_element) if ('fit' in extra_params) and (len(observables) == 1) else None
+		fit_result = extra_params.get('fit')(amplitudes_updated, obs_f_element) if ('fit' in extra_params) and (len(observables) == 1) else None
 		
 		if self.console_output:
 			if fit_result is not None:
@@ -1400,9 +1442,9 @@ class Machine():
 
 		if ('plot' in extra_params) and len(observables) == 1:
 			if (fit_result != None) and fit_result[1] is not None:
-				extra_params.get('plot')(knob_range, obs_f_element, fit_result[1])
+				extra_params.get('plot')(amplitudes_updated, obs_f_element, fit_result[1])
 			else:
-				extra_params.get('plot')(knob_range, obs_f_element)
+				extra_params.get('plot')(amplitudes_updated, obs_f_element)
 		
 		if fit_result is not None:
 			if fit_result[1] is not None:
@@ -1448,6 +1490,22 @@ class Machine():
 		evaluate_optimal : bool
 			If `True` (default is `True`) reevaluates the emittance by running `track()`
 			function.
+		iteration_type : str
+			The type of the knob iteration scan to perform. The possible options are 
+			```
+			["natural", "with_cache"]
+			```
+			When it is "with_cache" (default), after each value from `knob_range` is applied
+			the knob is reset to the initial state. 
+			When it is "natural", the elements' offsets associated with a `knob` are not reset.
+			Since `Knob.apply()` is additive function, an amplitude difference between the 
+			previous and current is applied.
+		knob_apply_strategy : str
+			Strategy to use for calculations of the offsets when knob has `step_size` defined. 
+			Default is 'simple_memory'. Possible options are:
+			```
+			["simple", "simple_memory", "min_scale", "min_scale_memory"]
+			```
 
 		Returns
 		-------
@@ -1457,7 +1515,7 @@ class Machine():
 			['correction', 'positions_file', 'emittx', 'emitty', 'knob_value', 'scan_log']
 			```
 		"""
-		_options = ['plot', 'evaluate_optimal']
+		_options = ['plot', 'evaluate_optimal', 'iteration_type', 'knob_apply_strategy']
 
 		fit_data = self.iterate_knob(beam, knob, observable, knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
 
