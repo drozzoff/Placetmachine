@@ -1519,7 +1519,7 @@ class Machine():
 
 		fit_data = self.iterate_knob(beam, knob, observable, knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
 
-		self.apply_knob(knob, fit_data['fitted_value'])
+		self.apply_knob(knob, fit_data['fitted_value'], extra_params.get("knob_apply_strategy"))
 
 		best_obs = fit_data['best_obs']
 		if extra_params.get('evaluate_optimal', True):

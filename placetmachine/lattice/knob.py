@@ -287,7 +287,8 @@ class Knob:
 		amplitude : float
 			Amplitude of the knob to apply.
 		"""
-		i_min = self.values.index(min([abs(x) for x in self.values]))
+		abs_values = [abs(x) for x in self.values]
+		i_min = abs_values.index(min(abs_values))
 
 		coord_change_ref = self.values[i_min] * amplitude
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
@@ -352,7 +353,8 @@ class Knob:
 		amplitude : float
 			Amplitude of the knob to apply.
 		"""
-		i_min = self.values.index(min([abs(x) for x in self.values]))
+		abs_values = [abs(x) for x in self.values]
+		i_min = abs_values.index(min(abs_values))
 
 		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch) + self.mismatch[i_min]
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
