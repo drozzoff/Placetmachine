@@ -1490,6 +1490,22 @@ class Machine():
 		evaluate_optimal : bool
 			If `True` (default is `True`) reevaluates the emittance by running `track()`
 			function.
+		iteration_type : str
+			The type of the knob iteration scan to perform. The possible options are 
+			```
+			["natural", "with_cache"]
+			```
+			When it is "with_cache" (default), after each value from `knob_range` is applied
+			the knob is reset to the initial state. 
+			When it is "natural", the elements' offsets associated with a `knob` are not reset.
+			Since `Knob.apply()` is additive function, an amplitude difference between the 
+			previous and current is applied.
+		knob_apply_strategy : str
+			Strategy to use for calculations of the offsets when knob has `step_size` defined. 
+			Default is 'simple_memory'. Possible options are:
+			```
+			["simple", "simple_memory", "min_scale", "min_scale_memory"]
+			```
 
 		Returns
 		-------
@@ -1499,7 +1515,7 @@ class Machine():
 			['correction', 'positions_file', 'emittx', 'emitty', 'knob_value', 'scan_log']
 			```
 		"""
-		_options = ['plot', 'evaluate_optimal']
+		_options = ['plot', 'evaluate_optimal', 'iteration_type', 'knob_apply_strategy']
 
 		fit_data = self.iterate_knob(beam, knob, observable, knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
 
