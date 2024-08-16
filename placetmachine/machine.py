@@ -1364,6 +1364,8 @@ class Machine():
 		def console_table():
 			table = Table(title = f"Performing {knob.name} scan")
 			table.add_column("Amplitude", style = "green")
+			if knob_apply_strategy in ['min_scale', 'min_scale_memory']:
+				table.add_column("Amplitude adjusted", style = "green")
 			for observable in observables:
 				table.add_column(observable, style = "green")
 			
@@ -1400,7 +1402,10 @@ class Machine():
 						continue
 					observable_values.append(obs)
 					amplitudes_updated.append(amp)
-					table.add_row(str(amp), *list(map(lambda x: str(x), obs)))
+					if knob_apply_strategy in ['min_scale', 'min_scale_memory']:
+						table.add_row(str(amplitude), str(amp), *list(map(lambda x: str(x), obs)))
+					else:
+						table.add_row(str(amp), *list(map(lambda x: str(x), obs)))
 				live.refresh()
 		else:
 			amplitude_prev, obs = .0, None
@@ -1506,7 +1511,11 @@ class Machine():
 			```
 			["simple", "simple_memory", "min_scale", "min_scale_memory"]
 			```
-
+		minimization : bool
+			If `True` (default) the goal of the function is the minimization of the provided
+			`observable`. If `False` - maximization of `observable`. This is needed to evaluate
+			the best value of `observable` in case the fitted value is not smallest/largest.
+			
 		Returns
 		-------
 		DataFrame
@@ -1516,21 +1525,50 @@ class Machine():
 			```
 		"""
 		_options = ['plot', 'evaluate_optimal', 'iteration_type', 'knob_apply_strategy']
+		minimization = extra_params.get('minimization', True)
 
 		fit_data = self.iterate_knob(beam, knob, observable, knob_range, **dict(_extract_dict(_options, extra_params), fit = fit_func))
+
+		knob.cache_state()
 
 		self.apply_knob(knob, fit_data['fitted_value'], extra_params.get("knob_apply_strategy"))
 
 		best_obs = fit_data['best_obs']
+		# Further test are to verify that the fitted value is indeed
+		# the optimal value
+
+		min_obs = min(fit_data['scan_log']['obs_data'])
+		min_obs_index = fit_data['scan_log']['obs_data'].index(min_obs)
+		max_obs = max(fit_data['scan_log']['obs_data'])
+		max_obs_index = fit_data['scan_log']['obs_data'].index(max_obs)
+
 		if extra_params.get('evaluate_optimal', True):
-			best_obs = self._track(beam)[observable].values[0]
+			best_obs = self.eval_obs(beam, observable, suppress_output = True)
+			if self.console_output:
+				self.console.log(f"[green]{observable} evaluated for the optimal amplitude is {best_obs}")
+
+		if minimization and best_obs > min_obs:
+			if self.console_output:
+				self.console.log(f"'{observable}' evaluated for the optimal amplitude is larger than the minimum from the scan!")
+				self.console.log(f"Reseting the knob amplitude to {knob_range[min_obs_index]}")
+			knob.upload_state_from_cache()
+			self.apply_knob(knob, knob_range[min_obs_index], extra_params.get("knob_apply_strategy"))
+			best_obs = min_obs
+			
+		if not minimization and best_obs < max_obs:
+			if self.console_output:
+				self.console.log(f"'{observable}' evaluated for the optimal amplitude is smaller than the maximum from the scan!")
+				self.console.log(f"Reseting the knob amplitude to {knob_range[max_obs_index]}")
+			knob.upload_state_from_cache()
+			self.apply_knob(knob, knob_range[max_obs_index], extra_params.get("knob_apply_strategy"))
+			best_obs = max_obs
 
 		res = {
 			'correction' : knob.name,
 			'positions_file': None, 
 			'emittx': None, 
 			'emitty': best_obs,
-			'knob_value': fit_data['fitted_value'],
+			'knob_value': knob.amplitude,
 			'scan_log': fit_data['scan_log']
 		}
 		return pd.DataFrame([res])
