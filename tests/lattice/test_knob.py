@@ -376,6 +376,31 @@ class KnobTest(unittest.TestCase):
 		self.assertAlmostEqual(knob.mismatch[0], 0.4, delta = 1e-4)
 		self.assertAlmostEqual(knob.mismatch[1], -0.25, delta = 1e-4)
 
+	def test_reset(self):
+
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		knob = Knob([self.test_quad, second_quad], 'y', [3.25, 1.5], step_size = 1.0)
+
+		second_knob = Knob([self.test_quad, second_quad], 'y', [1.2, 3.5], step_size = 1.0)
+		
+		knob.apply(0.5, strategy = "min_scale_memory", use_global_mismatch = True)
+
+		knob.apply(1.0, strategy = "min_scale_memory", use_global_mismatch = True)
+
+		second_knob.apply(1.0, strategy = "min_scale_memory", use_global_mismatch = True)
+
+		knob.reset()
+		
+		self.assertAlmostEqual(self.test_quad._mismatch['y'], 0.0)
+		self.assertAlmostEqual(second_quad._mismatch['y'], -(3.0 - 1.0 / 1.2 * 3.5))
+		self.assertEqual(knob.mismatch, [0.0, 0.0])
+		self.assertEqual(knob.changes, [0.0, 0.0])
+		self.assertAlmostEqual(self.test_quad['y'], 1.0)
+		self.assertAlmostEqual(second_quad['y'], 3.0)
+		self.assertEqual(knob.amplitude, 0.0)
+		self.assertEqual(knob.amplitude_mismatch, 0.0)
+
 	def test_cache(self):
 
 		second_quad = Quadrupole({'name': "test_quad2"})
