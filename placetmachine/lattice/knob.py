@@ -78,7 +78,8 @@ class Knob:
 		self.mismatch, self.changes = [0.0] * len(elements), [0.0] * len(elements)
 		self.amplitude_mismatch = 0.0
 		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
-		
+		self.coord = coord
+
 		# checking the supported types and building the types involved
 		for element in self.elements:
 			if element.type not in self._accepted_types:
@@ -87,14 +88,17 @@ class Knob:
 			if element.type not in self.types_of_elements:
 				self.types_of_elements.append(element.type)
 		
-		self.coord = coord
+			# storing the info about mismatches
+			if not hasattr(element, '_mismatch'):
+				element._mismatch = {self.coord: 0.0}
+		
 		if self.coord not in self._cached_parameters:
 			raise ValueError(f"Incorrect coordinate. Acceptable are {self._cached_parameters}, received '{coord}'")
 
 		self.values = values
 		if len(self.values) != len(self.elements):
 			raise ValueError(f"The number of elements and values provided are different.")
-	
+
 	def reset(self):
 		"""
 		Reset the knob's data.
@@ -114,12 +118,12 @@ class Knob:
 
 		Amplitude defines the fraction of `values` to add to the `elements`s `coord` involved in 
 		the `Knob`. If `step_size` is not defined (default), coordinates changes are applied directly.
-		If `step_size` is defined, the values of the coordinates' changes are rounded to the closest
-		value that has a full number of `step_size`s. 
+		If `step_size` is defined, the actual coordinates' changes will be different from the ones defined
+		by attribute `values`. This difference also depends on the `strategy` used.
 
 		Parameters
 		----------
-		amplitude : float
+		amplitude
 			Amplitude of the knob to apply.
 
 		Other parameters
@@ -127,6 +131,12 @@ class Knob:
 		strategy : str
 			Strategy to use for calculations of the offsets when the `step_size` is defined. Default is
 			'simple_memory'.
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs. Only applicable to the strategies that memorize the mismatches, such as:
+			```
+			['simple_memory', 'min_scale_memory']
+			```
 		"""
 		
 
@@ -146,11 +156,11 @@ class Knob:
 			if strategy == "simple":
 				self.__appply_simple(amplitude)
 			if strategy == "simple_memory":
-				self.__apply_simple_memory(amplitude)
+				self.__apply_simple_memory(amplitude, use_global_mismatch = kwargs.get('use_global_mismatch', True))
 			if strategy == "min_scale":
 				self.__apply_min_scale(amplitude)
 			if strategy == "min_scale_memory":
-				self.__apply_min_scale_memory(amplitude)
+				self.__apply_min_scale_memory(amplitude, use_global_mismatch = kwargs.get('use_global_mismatch', True))
 
 	def cache_state(self):
 		"""
@@ -193,6 +203,7 @@ class Knob:
 		
 		for i, element in enumerate(self.elements):
 			element[self.coord] += self._cached_data['changes'][i] - self.changes[i]
+			element._mismatch[self.coord] += self._cached_data['mismatch'][i] - self.mismatch[i]
 
 		self.amplitude = self._cached_data['amplitude']
 		self.amplitude_mismatch = self._cached_data['amplitude_mismatch']
@@ -228,13 +239,18 @@ class Knob:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
+
+			old_mismatch = self.mismatch[i]
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
+
+			# mismatch is accumulated with respect to the individual elements
+			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
 
 			element[self.coord] += new_coord_change
 		
 		self.amplitude += amplitude
 
-	def __apply_simple_memory(self, amplitude):
+	def __apply_simple_memory(self, amplitude: float, **extra_params):
 		"""
 		Apply the the knob.
 
@@ -243,11 +259,19 @@ class Knob:
 
 		Parameters
 		----------
-		amplitude : float
+		amplitude
 			Amplitude of the knob to apply.
+
+		Other parameters
+		----------------
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs.
 		"""
 		for i, element in enumerate(self.elements):
-			coord_change = self.values[i] * amplitude + self.mismatch[i]
+			coord_change = self.values[i] * amplitude
+			coord_change += element._mismatch[self.coord] if extra_params.get('use_global_mismatch', True) else self.mismatch[i]
+
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
@@ -261,7 +285,11 @@ class Knob:
 
 			self.changes[i] += new_coord_change
 
+			old_mismatch = self.mismatch[i]
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
+
+			# mismatch is accumulated with respect to the individual elements
+			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
 
 			element[self.coord] += new_coord_change
 		
@@ -305,12 +333,6 @@ class Knob:
 		amplitude_adjusted = ref_offset / self.values[i_min]
 
 		for i, element in enumerate(self.elements):
-			if i == i_min:
-				self.changes[i] += ref_offset
-				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
-				element[self.coord] += ref_offset
-				continue
-
 			coord_change = self.values[i] * amplitude_adjusted
 			n_step_sizes = int(coord_change / self.step_size)
 			
@@ -324,12 +346,15 @@ class Knob:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
+			old_mismatch = self.mismatch[i]
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
+
 			element[self.coord] += new_coord_change
 
 		self.amplitude += amplitude_adjusted
 
-	def __apply_min_scale_memory(self, amplitude):
+	def __apply_min_scale_memory(self, amplitude, **extra_params):
 		"""
 		Apply the the knob.
 
@@ -352,11 +377,17 @@ class Knob:
 		----------
 		amplitude : float
 			Amplitude of the knob to apply.
+
+		Other parameters
+		----------------
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs.
 		"""
 		abs_values = [abs(x) for x in self.values]
 		i_min = abs_values.index(min(abs_values))
 
-		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch) + self.mismatch[i_min]
+		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch)
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
@@ -374,13 +405,12 @@ class Knob:
 		self.amplitude_mismatch = amplitude + self.amplitude_mismatch - amplitude_adjusted
 
 		for i, element in enumerate(self.elements):
-			if i == i_min:
-				self.changes[i] += ref_offset
-				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
-				element[self.coord] += ref_offset
-				continue
+			coord_change = self.values[i] * amplitude_adjusted
+			if extra_params.get("use_global_mismatch", True):
+				coord_change += self.elements[i_min]._mismatch[self.coord]
+			else:
+				coord_change += self.mismatch[i_min]
 
-			coord_change = self.values[i] * amplitude_adjusted + self.mismatch[i]
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
@@ -393,7 +423,9 @@ class Knob:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
+			old_mismatch = self.mismatch[i]
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
 			element[self.coord] += new_coord_change
 
 		self.amplitude += amplitude_adjusted
@@ -421,6 +453,7 @@ class Knob:
 			Knob data summary
 		"""
 		data_dict = {key: [] for key in ['name', 'type', 'girder', 's'] + [self.coord + "_amplitude", self.coord + "_current"]}
+		total_mismatch = []
 		for i, element in enumerate(self.elements):
 			data_dict['name'].append(element['name'])
 			
@@ -432,8 +465,11 @@ class Knob:
 			data_dict[self.coord + "_amplitude"].append(self.values[i])
 			data_dict[self.coord + "_current"].append(element[self.coord])
 
-		data_dict[self.coord + "_changes"] = self.changes
-		data_dict[self.coord + "_mismatch"] = self.mismatch
+			total_mismatch.append(element._mismatch[self.coord])
+
+		data_dict[f"{self.coord}_changes"] = self.changes
+		data_dict[f"{self.coord}_mismatch"] = self.mismatch
+		data_dict[f"{self.coord}_total_mismatch"] = total_mismatch
 
 		return DataFrame(data_dict)
 
