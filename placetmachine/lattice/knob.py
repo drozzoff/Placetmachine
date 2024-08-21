@@ -333,14 +333,6 @@ class Knob:
 		amplitude_adjusted = ref_offset / self.values[i_min]
 
 		for i, element in enumerate(self.elements):
-			if i == i_min:
-				self.changes[i] += ref_offset
-				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
-
-				element._mismatch[self.coord] += self.mismatch[i]
-				element[self.coord] += ref_offset
-				continue
-
 			coord_change = self.values[i] * amplitude_adjusted
 			n_step_sizes = int(coord_change / self.step_size)
 			
@@ -354,12 +346,15 @@ class Knob:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
+			old_mismatch = self.mismatch[i]
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
+
 			element[self.coord] += new_coord_change
 
 		self.amplitude += amplitude_adjusted
 
-	def __apply_min_scale_memory(self, amplitude):
+	def __apply_min_scale_memory(self, amplitude, **extra_params):
 		"""
 		Apply the the knob.
 
@@ -382,11 +377,17 @@ class Knob:
 		----------
 		amplitude : float
 			Amplitude of the knob to apply.
+
+		Other parameters
+		----------------
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs.
 		"""
 		abs_values = [abs(x) for x in self.values]
 		i_min = abs_values.index(min(abs_values))
 
-		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch) + self.mismatch[i_min]
+		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch)
 		n_step_sizes_ref = int(coord_change_ref / self.step_size)
 		
 		ref_offset = None
@@ -404,13 +405,12 @@ class Knob:
 		self.amplitude_mismatch = amplitude + self.amplitude_mismatch - amplitude_adjusted
 
 		for i, element in enumerate(self.elements):
-			if i == i_min:
-				self.changes[i] += ref_offset
-				self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
-				element[self.coord] += ref_offset
-				continue
+			coord_change = self.values[i] * amplitude_adjusted
+			if extra_params.get("use_global_mismatch", True):
+				coord_change += self.elements[i_min]._mismatch[self.coord]
+			else:
+				coord_change += self.mismatch[i_min]
 
-			coord_change = self.values[i] * amplitude_adjusted + self.mismatch[i]
 			n_step_sizes = int(coord_change / self.step_size)
 			
 			new_coord_change = None
@@ -423,7 +423,9 @@ class Knob:
 					new_coord_change = (n_step_sizes - 1) * self.step_size
 
 			self.changes[i] += new_coord_change
+			old_mismatch = self.mismatch[i]
 			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
+			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
 			element[self.coord] += new_coord_change
 
 		self.amplitude += amplitude_adjusted
