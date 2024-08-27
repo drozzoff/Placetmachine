@@ -110,6 +110,7 @@ class Knob:
 		self.amplitude, self.amplitude_mismatch = 0.0, 0.0
 		for i, element in enumerate(self.elements):
 			element[self.coord] -= self.changes[i]
+			element._mismatch[self.coord] -= self.mismatch[i]
 		self.mismatch, self.changes = [0.0] * len(self.elements), [0.0] * len(self.elements)
 
 	def apply(self, amplitude: float, **kwargs):
@@ -406,10 +407,7 @@ class Knob:
 
 		for i, element in enumerate(self.elements):
 			coord_change = self.values[i] * amplitude_adjusted
-			if extra_params.get("use_global_mismatch", True):
-				coord_change += self.elements[i_min]._mismatch[self.coord]
-			else:
-				coord_change += self.mismatch[i_min]
+			coord_change += element._mismatch[self.coord] if extra_params.get("use_global_mismatch", True) else self.mismatch[i]
 
 			n_step_sizes = int(coord_change / self.step_size)
 			

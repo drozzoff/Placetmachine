@@ -1058,7 +1058,7 @@ class Machine():
 		track_results.correction = "RF align"
 		return track_results
 
-	def apply_knob(self, knob: Knob, amplitude: float, strategy: str):
+	def apply_knob(self, knob: Knob, amplitude: float, strategy: str, **extra_params):
 		"""
 		Apply the knob and update the beamline offsets.
 
@@ -1076,10 +1076,16 @@ class Machine():
 		strategy
 			Strategy to use for calculations of the offsets when the knob has `step_size` 
 			defined. Default is 'simple_memory'.
+
+		Other parameters
+		----------------
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs.
 		"""
 		if knob not in self.beamline.attached_knobs:
 			raise ValueError("The knob provided does not exist!")
-		knob.apply(amplitude, strategy = strategy)
+		knob.apply(amplitude, strategy = strategy, use_global_mismatch = extra_params.get("use_global_mismatch", True))
 
 	@verify_beam
 	def eval_track_results(self, beam: Beam, **extra_params) -> (pd.DataFrame, float, float):
@@ -1313,6 +1319,12 @@ class Machine():
 		plot : Callable
 			Function to plot the iteration data.
 			**!!** Only works if the amound of observables is equaly **1**.
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs. Only applicable to the strategies that memorize the mismatches, such as:
+			```
+			['simple_memory', 'min_scale_memory']
+			```
 
 		Returns
 		------
@@ -1345,7 +1357,8 @@ class Machine():
 		_iteration_types = ["natural", "with_cache"]
 		if isinstance(observables, str):
 			observables = [observables]
-		knob_apply_strategy = extra_params.get("knob_apply_strategy", "simple")
+		knob_apply_strategy = extra_params.get("knob_apply_strategy", "simple_memory")
+		use_global_mismatch = extra_params.get("use_global_mismatch", True)
 		if not knob_apply_strategy in knob._strategies_available:
 			raise ValueError(f"Strategy '{knob_apply_strategy}' is not available. Possible options are {knob._strategies_available}.")
 
@@ -1378,7 +1391,7 @@ class Machine():
 			It sets the knob, runs the track, reverts the changes, and returns the observable values.
 			*I use the similar function to test the knob performance.
 			"""
-			self.apply_knob(knob, amplitude, knob_apply_strategy)
+			self.apply_knob(knob, amplitude, knob_apply_strategy, use_global_mismatch = use_global_mismatch)
 			amp = knob.amplitude
 			obs = self.eval_obs(beam, observables, suppress_output = True)
 			if iteration_type == "with_cache":
@@ -1453,9 +1466,9 @@ class Machine():
 		
 		if fit_result is not None:
 			if fit_result[1] is not None:
-				return {'scan_log': iter_data, 'fitted_value': fit_result[0], 'best_obs': fit_result[1](fit_result[0])}
+				return {'scan_log': iter_data, 'fitted_value': fit_result[0], 'best_obs': fit_result[1](fit_result[0]), 'fit_func': fit_result[1]}
 			else:
-				return {'scan_log': iter_data, 'fitted_value': fit_result[0], 'best_obs': None}
+				return {'scan_log': iter_data, 'fitted_value': fit_result[0], 'best_obs': None, 'fit_func': fit_result[1]}
 		else: 
 			return {'scan_log': iter_data, 'fitted_value': None, 'best_obs': None}
 
@@ -1515,6 +1528,12 @@ class Machine():
 			If `True` (default) the goal of the function is the minimization of the provided
 			`observable`. If `False` - maximization of `observable`. This is needed to evaluate
 			the best value of `observable` in case the fitted value is not smallest/largest.
+		use_global_mismatch : bool
+			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
+			caused by other knobs. Only applicable to the strategies that memorize the mismatches, such as:
+			```
+			['simple_memory', 'min_scale_memory']
+			```
 			
 		Returns
 		-------

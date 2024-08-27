@@ -369,15 +369,15 @@ class Beamline:
 					raise ValueError(f"Parameter '{parameter}' either cannot be reset or does not exist!")
 				parameters_to_reset.append(parameter)
 
-		
-		for element in self.lattice:
-			for parameter in parameters_to_reset:
-				element.settings[parameter] = 0.0
-		
 		# reseting the attached knobs
 		for knob in self.attached_knobs:
 			if knob.coord in parameters_to_reset:
 				knob.reset()
+
+		for element in self.lattice:
+			for parameter in parameters_to_reset:
+				element.settings[parameter] = 0.0
+		
 
 	def cache_lattice_data(self, elements: List[Element]):
 		"""
