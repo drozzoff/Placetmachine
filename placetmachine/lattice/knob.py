@@ -31,6 +31,12 @@ class Knob:
 		List of the coordinates changes for each [`Element`][placetmachine.lattice.element.Element] in `elements`.
 	step_size : Optional[float]
 		The smallest step that can be implemented when applying the knob
+	supported_amplitudes : Optional[List[float]]
+		A list of the supported amplitudes. When provided, only the amplitudes from the list are applied. This list
+		contains the amplitudes that an attribute `amplitude` can take. That means that amplitude given
+		in  `Knob.apply()` is adjusted so that the sum `Knob.amplitude + amplitude` eqists in `supported_amplitudes`.
+		Since, strategies, like `min_scale` and `min_scale_memory` have their own amplitude selection, attribute
+		`supported_amplitudes` has no effect on them.
 	mismatch : List[float]
 		A mismatch between the actual coordinates changes given by `changes` and the ones given by the current amplitude. 
 		When `step_size` is not provided, is a list of `0.0`.
@@ -73,11 +79,14 @@ class Knob:
 			The name of the knob. If not provided, defaults to "".
 		step_size : Optional[float]
 			Step size for the coordinates changes.
+		supported_amplitudes : Optional[List[float]]
+			A list of the supported amplitudes.
 		"""
 		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
 		self.mismatch, self.changes = [0.0] * len(elements), [0.0] * len(elements)
 		self.amplitude_mismatch = 0.0
 		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
+		self.supported_amplitudes = extra_params.get("supported_amplitudes", None)
 		self.coord = coord
 
 		# checking the supported types and building the types involved
@@ -221,11 +230,32 @@ class Knob:
 		The offsets to apply are evaluated by rounding the offsets' amplitude.
 		Is prone to accumulating the missmatches of the knobs offsets.
 
+		If `supported_amplitudes` is provided, it takes the closest value such that
+		`amplitude + Knob.amplitude` exist in the `Knob.supported_amplitudes` and 
+		applies it. The difference between the applied and requested amplitudes is 
+		added to `amplitude_mismatch` attribute.
+
 		Parameters
 		----------
 		amplitude : float
 			Amplitude of the knob to apply.
 		"""
+		amplitude_tmp = amplitude + self.amplitude # absolute amplitude currently
+		# evaluating the amplitude to apply from the list
+		if self.supported_amplitudes is not None:
+			for i, amp in enumerate(self.supported_amplitudes):
+				if amp > amplitude_tmp:
+					if amp - amplitude_tmp <= amplitude_tmp - self.supported_amplitudes[i - 1]:
+						amplitude_tmp = amp
+					else:
+						amplitude_tmp = self.supported_amplitudes[i - 1]
+					
+					break
+			
+			self.amplitude_mismatch += amplitude + self.amplitude - amplitude_tmp
+
+		amplitude = amplitude_tmp - self.amplitude # new amplitude to apply
+
 		for i, element in enumerate(self.elements):
 			coord_change = self.values[i] * amplitude
 			n_step_sizes = int(coord_change / self.step_size)
@@ -255,8 +285,14 @@ class Knob:
 		"""
 		Apply the the knob.
 
-		The offsets to apply are evaluated by rounding the offsets' amplitude taking into account also
-		the the accumulated mismatch.
+		The offsets to apply are evaluated by rounding the offsets' amplitude taking 
+		into account also the the accumulated mismatch. It also takes into account the 
+		present amplitude mismatch `Knob.amplitude_mismatch`.
+
+		If `supported_amplitudes` is provided, it takes the closest value such that
+		`amplitude + Knob.amplitude` exist in the `knob.supported_amplitudes` and 
+		applies it. The difference between the applied and requested amplitudes is 
+		added to `amplitude_mismatch` attribute.
 
 		Parameters
 		----------
@@ -269,6 +305,24 @@ class Knob:
 			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
 			caused by other knobs.
 		"""
+		# absolute amplitude expected
+		amplitude_tmp = amplitude + self.amplitude + self.amplitude_mismatch
+		
+		# evaluating the amplitude to apply from the list
+		if self.supported_amplitudes is not None:
+			for i, amp in enumerate(self.supported_amplitudes):
+				if amp > amplitude_tmp:
+					if amp - amplitude_tmp < amplitude_tmp - self.supported_amplitudes[i - 1]:
+						amplitude_tmp = amp
+					else:
+						amplitude_tmp = self.supported_amplitudes[i - 1]
+					
+					break
+			
+			self.amplitude_mismatch += amplitude + self.amplitude - amplitude_tmp
+
+		amplitude = amplitude_tmp - self.amplitude # new amplitude to apply
+		
 		for i, element in enumerate(self.elements):
 			coord_change = self.values[i] * amplitude
 			coord_change += element._mismatch[self.coord] if extra_params.get('use_global_mismatch', True) else self.mismatch[i]
@@ -403,7 +457,7 @@ class Knob:
 		amplitude_adjusted = ref_offset / self.values[i_min]
 		# this could be different from the correct amplitude required:
 		# which is amplitude + self.amplitude_mismatch
-		self.amplitude_mismatch = amplitude + self.amplitude_mismatch - amplitude_adjusted
+		self.amplitude_mismatch += amplitude - amplitude_adjusted
 
 		for i, element in enumerate(self.elements):
 			coord_change = self.values[i] * amplitude_adjusted
