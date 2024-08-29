@@ -376,6 +376,67 @@ class KnobTest(unittest.TestCase):
 		self.assertAlmostEqual(knob.mismatch[0], 0.4, delta = 1e-4)
 		self.assertAlmostEqual(knob.mismatch[1], -0.25, delta = 1e-4)
 
+	def test_apply8(self):
+		# testing apple when the list of supported amplitudes is provided
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		supported_amplitudes = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+		knob = Knob([self.test_quad, second_quad], 'y', [-3.2, 1.5], step_size = 1.0, 
+			  supported_amplitudes = supported_amplitudes)
+		self.assertEqual(knob.supported_amplitudes, supported_amplitudes)
+
+		knob.apply(0.15, strategy = "simple")
+		# amplitude to apply 0.15 | Total amp to get: 0.0 + 0.15 = 0.15
+		# Closest valid amplitude 0.2 | To apply 0.2 - 0.0 = 0.2
+		# Mismatch 0.0 + (0.15 - 0.2) = -0.05
+		self.assertAlmostEqual(knob.amplitude, 0.2)
+		self.assertAlmostEqual(knob.amplitude_mismatch, -0.05)
+
+		knob.apply(0.51, strategy = 'simple')
+		# amplitude to apply 0.51 | Total amp to get: 0.2 + 0.51 = 0.71
+		# Closest valid amplitude 0.8 | To apply 0.8 - 0.2 = 0.6
+		# Mismatch -0.05 + (0.51 - 0.6) = -0.14
+		self.assertAlmostEqual(knob.amplitude, 0.8)
+		self.assertAlmostEqual(knob.amplitude_mismatch, -0.14)
+
+		knob.apply(-0.29, strategy = 'simple')
+		# amplitude to apply -0.29 | Total amp to get: 0.8 - 0.29 = 0.51
+		# Closest valid amplitude 0.6 | To apply 0.6 - 0.8 = -0.2
+		# Mismatch -0.14 + (-0.29 + 0.2) = -0.23
+		self.assertAlmostEqual(knob.amplitude, 0.6)
+		self.assertAlmostEqual(knob.amplitude_mismatch, -0.23)
+
+
+	def test_apply9(self):
+		# testing apple when the list of supported amplitudes is provided
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		supported_amplitudes = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+		knob = Knob([self.test_quad, second_quad], 'y', [-3.2, 1.5], step_size = 1.0, 
+			  supported_amplitudes = supported_amplitudes)
+
+		knob.apply(0.15, strategy = "simple_memory")
+		# amplitude to apply 0.15 | Total amp to get: 0.0 + 0.15 + 0.0 = 0.15
+		# Closest valid amplitude 0.2 | To apply 0.2 - 0.0 = 0.2
+		# Mismatch 0.0 + (0.15 - 0.2) = -0.05
+		self.assertAlmostEqual(knob.amplitude, 0.2)
+		self.assertAlmostEqual(knob.amplitude_mismatch, -0.05)
+
+		knob.apply(0.51, strategy = 'simple_memory')
+		# amplitude to apply 0.51 | Total amp to get: 0.2 + 0.51 + (-0.05) = 0.66
+		# Closest valid amplitude 0.6 | To apply 0.6 - 0.2 = 0.4
+		# Mismatch -0.05 + (0.51 - 0.4) = 0.06
+		self.assertAlmostEqual(knob.amplitude, 0.6)
+		self.assertAlmostEqual(knob.amplitude_mismatch, 0.06)
+
+		knob.apply(-0.29, strategy = 'simple_memory')
+		# amplitude to apply -0.29 | Total amp to get: 0.6 - 0.29 = 0.31
+		# Closest valid amplitude 0.4 | To apply 0.4 - 0.6 = -0.2
+		# Mismatch 0.06 + (-0.29 + 0.2) = -0.03
+		self.assertAlmostEqual(knob.amplitude, 0.4)
+		self.assertAlmostEqual(knob.amplitude_mismatch, -0.03)
+
+
 	def test_reset(self):
 
 		second_quad = Quadrupole({'name': "test_quad2"})
