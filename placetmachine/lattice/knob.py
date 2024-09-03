@@ -25,12 +25,26 @@ class Knob:
 	----------
 	elements : List[Element]
 		List of the elements that used in this Knob.
-	coord : str
-		Coordinate that is going to be modified.
-	values : List[float]
-		List of the coordinates changes for each [`Element`][placetmachine.lattice.element.Element] in `elements`.
-	step_size : Optional[float]
-		The smallest step that can be implemented when applying the knob
+	variables : List[dict]
+		A list containing dictionaries that describe the changes that are performed to the elements when `Knob ` is
+		applied. Number of elements in the list should be the same as the number of the elements. An example of the 
+		dict that describes that `Element` must be moved vertically by 5.0 micron and horizontaly by -2.0 micron:
+		```
+		{
+			'y': {
+				'amplitude': 5.0,
+				'step_size': 0.5
+			}
+			'x': {
+				'amplitude': -2.0,
+				'step_size': 0.5
+			}
+		}
+		```
+		Both vertical and horizontal movers are anticipated to have a step size of 0.5 micron.
+	step_size : bool
+		If `True` (default is `False`) uses the step sizes to evaluate coordinates changes (if `step_size` parameter
+		is provided).
 	supported_amplitudes : Optional[List[float]]
 		A list of the supported amplitudes. When provided, only the amplitudes from the list are applied. This list
 		contains the amplitudes that an attribute `amplitude` can take. That means that amplitude given
