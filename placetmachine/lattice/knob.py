@@ -27,22 +27,30 @@ class Knob:
 		List of the elements that used in this Knob.
 	variables : List[dict]
 		A list containing dictionaries that describe the changes that are performed to the elements when `Knob ` is
-		applied. Number of elements in the list should be the same as the number of the elements. An example of the 
+		applied. Number of elements in the list should be the same as the number of the elements. It contains the info
+		on the amplitude for each coordinate to change for the given `Element` as well as the total accumulated changes,
+		mismatches and step sizes.
+		An example of the 
 		dict that describes that `Element` must be moved vertically by 5.0 micron and horizontaly by -2.0 micron:
 		```
 		{
 			'y': {
 				'amplitude': 5.0,
-				'step_size': 0.5
+				'changes': 0.0,
+				'step_size': 0.5,
+				'mismatch': 0.0
 			}
 			'x': {
 				'amplitude': -2.0,
-				'step_size': 0.5
+				'changes': 0.0
+				'step_size': 0.5,
+				'mismatch': 0.0
 			}
 		}
 		```
-		Both vertical and horizontal movers are anticipated to have a step size of 0.5 micron.
-	step_size : bool
+		Both vertical and horizontal movers are anticipated to have a step size of 0.5 micron in this example. Also, 
+		for each coordinate a mismatch and total accumnulated coordinate changes are kept.
+	use_step_size : bool
 		If `True` (default is `False`) uses the step sizes to evaluate coordinates changes (if `step_size` parameter
 		is provided).
 	supported_amplitudes : Optional[List[float]]
@@ -51,15 +59,10 @@ class Knob:
 		in  `Knob.apply()` is adjusted so that the sum `Knob.amplitude + amplitude` eqists in `supported_amplitudes`.
 		Since, strategies, like `min_scale` and `min_scale_memory` have their own amplitude selection, attribute
 		`supported_amplitudes` has no effect on them.
-	mismatch : List[float]
-		A mismatch between the actual coordinates changes given by `changes` and the ones given by the current amplitude. 
-		When `step_size` is not provided, is a list of `0.0`.
 	amplitude_mismatch : float
 		A mismatch between the amplitude requested and the amplitude applied. By default is `0.0`.
 		It is modified when the `apply()` strategy foresees the automatic adjustment of the amplitude. So
 		`amplitude_mismatch` accomodates this mismatch between multiple `apply()` calls.
-	changes : List[float]
-		A total coordinate change performed with a knob.
 	name : str
 		Name of the Knob.
 	types_of_elements : List[str]
@@ -70,80 +73,103 @@ class Knob:
 
 	_cached_parameters = ['x', 'y', 'xp', 'yp']
 	_accepted_types = ['Quadrupole', 'Cavity']
-	_strategies_available = ["simple", "simple_memory", "min_scale", "min_scale_memory"]
+	_strategies_available = [None, "simple", "simple_memory", "min_scale", "min_scale_memory"]
 
-	def __init__(self, elements: List[Element], coord: str, values: List[float], **extra_params):
+	def __init__(self, elements: List[Element], knob_structure: List[dict], **extra_params):
 		"""
 		Parameters
 		----------
 		elements
 			List of elements to be used for this `Knob`.
 			Elements provided here must be the elements that are the part of the Beamline.
-		coord
-			Coordinate that to be used for modifications.
-
-			**!!** *So far, we implement the simple model of the Knob, where only 1 parameter is 
-			modified. It is the same parameter for all the parameters, Eg. `x`.*
-		values
-			Values of the given coordinates for the given elements to apply as a Knob.
+		knobs_structure
+			A list containing info about the elements' amplitudes and step sizes. An example of such a list for
+			a knob containing 2 elements:
+			```
+			[{'y':{'amplitude': 2.0, 'step_size': 0.5}}, {'x': {'amplitude': 2.5}, 'y': {'amplitude': -0.5}}]
+			```
+			Here, the first element has an amplitude `2.0` for the coordinate `y`, while the second element
+			requires a combination of `x` and `y` changes of `2.5` and `-0.5` respectively.
 		
 		Other parameters
 		----------------
 		name : str
 			The name of the knob. If not provided, defaults to "".
-		step_size : Optional[float]
-			Step size for the coordinates changes.
 		supported_amplitudes : Optional[List[float]]
 			A list of the supported amplitudes.
 		"""
-		self.elements, self.types_of_elements, self.amplitude = elements, [], 0.0
-		self.mismatch, self.changes = [0.0] * len(elements), [0.0] * len(elements)
-		self.amplitude_mismatch = 0.0
-		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('step_size', None)
+		if len(elements) != len(knob_structure):
+			raise ValueError(f"The number of elements and values provided are different.")
+	
+		self.elements, self.types_of_elements, self.amplitude, self.amplitude_mismatch = elements, [], 0.0, 0.0
+		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('use_step_size', None)
 		self.supported_amplitudes = extra_params.get("supported_amplitudes", None)
-		self.coord = coord
+		self.variables = []
+
+		# building variables
+
+		for tmp in knob_structure:
+			dict_tmp = {}
+			for coord in tmp:
+				if coord not in self._cached_parameters:
+					raise ValueError(f"Incorrect coordinate. Acceptable are {self._cached_parameters}, received '{coord}'")
+				
+				dict_tmp[coord] = {
+					'amplitude': tmp[coord]['amplitude'],
+					'step_size': tmp[coord]['step_size'] if 'step_size' in coord else None,
+					'changes': 0.0,
+					'mismatch': 0.0
+				}
+				if dict_tmp[coord]['step_size'] == 0.0:
+					dict_tmp[coord]['step_size'] = None
+
+			self.variables.append(dict_tmp)
+			
 
 		# checking the supported types and building the types involved
-		for element in self.elements:
+		for i, element in enumerate(self.elements):
 			if element.type not in self._accepted_types:
 				raise TypeError(f"Inappropriate element type. Acceptable are {self._accepted_types}, received '{element.type}'")
 
 			if element.type not in self.types_of_elements:
 				self.types_of_elements.append(element.type)
 		
-			# storing the info about mismatches
+			# storing the info about mismatches globally
 			if not hasattr(element, '_mismatch'):
-				element._mismatch = {self.coord: 0.0}
+				element._mismatch = {}
+				for coord in self.variables[i]:
+					element._mismatch[coord] = 0.0
+			else:
+				for coord in self.variables[i]:
+					if coord not in element._mismatch:
+						element._mismatch[coord] = 0.0
 		
-		if self.coord not in self._cached_parameters:
-			raise ValueError(f"Incorrect coordinate. Acceptable are {self._cached_parameters}, received '{coord}'")
-
-		self.values = values
-		if len(self.values) != len(self.elements):
-			raise ValueError(f"The number of elements and values provided are different.")
-
 	def reset(self):
 		"""
 		Reset the knob's data.
 		
-		It resets the knob to 0.0 amplitude. The means the elements' offsets changes done 
+		It resets the knob to 0.0 amplitude. That means the elements' offsets changes done 
 		by the knob are removed.
 		Consequently resets the following attributes: `amplitude`, `mismatch`, and `changes`. 
 		"""
 		self.amplitude, self.amplitude_mismatch = 0.0, 0.0
 		for i, element in enumerate(self.elements):
-			element[self.coord] -= self.changes[i]
-			element._mismatch[self.coord] -= self.mismatch[i]
-		self.mismatch, self.changes = [0.0] * len(self.elements), [0.0] * len(self.elements)
+			for coord in self.variables[i]:
+				element[coord] -= self.variables[i][coord]['changes']
+				element._mismatch[coord] -= self.variables[i][coord]['mismatch']
+
+				self.variables[i][coord]['changes'] = 0.0			
+				self.variables[i][coord]['mismatch'] = 0.0
+
 
 	def apply(self, amplitude: float, **kwargs):
 		"""
 		Apply the knob.
 
-		Amplitude defines the fraction of `values` to add to the `elements`s `coord` involved in 
-		the `Knob`. If `step_size` is not defined (default), coordinates changes are applied directly.
-		If `step_size` is defined, the actual coordinates' changes will be different from the ones defined
-		by attribute `values`. This difference also depends on the `strategy` used.
+		Amplitude defines the fraction of the amplitudes of each individual coordinates to add to the 
+		`elements`s involved in the `Knob`. If `step_size` is not defined (default), coordinate change 
+		is applied directly. If `step_size` is defined, the actual coordinate change may be different
+		from anticipated. This difference may also depend on the `strategy` used.
 
 		Parameters
 		----------
@@ -154,7 +180,11 @@ class Knob:
 		----------------
 		strategy : str
 			Strategy to use for calculations of the offsets when the `step_size` is defined. Default is
-			'simple_memory'.
+			`None`. Possible options are:
+			```
+			[None, 'simple', 'simple_memory', 'min_scale', 'min_scale_memory']
+			```
+			If strategy is `None` all of the step sizes are ignored.
 		use_global_mismatch : bool
 			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
 			caused by other knobs. Only applicable to the strategies that memorize the mismatches, such as:
@@ -162,29 +192,23 @@ class Knob:
 			['simple_memory', 'min_scale_memory']
 			```
 		"""
-		
+		strategy = kwargs.get("strategy", None)
 
-		if self.step_size == 0:
-			self.step_size = None
-
-		if self.step_size is None:
+		if strategy is None:
 			for i, element in enumerate(self.elements):
-				element[self.coord] += self.values[i] * amplitude
-				self.changes[i] += self.values[i] * amplitude
+				for coord in self.variables[i]:
+					element[coord] += self.variables[i][coord]['amplitude'] * amplitude
+					self.variables[i][coord]['changes'] += self.variables[i][coord]['amplitude'] * amplitude
 			self.amplitude += amplitude
-		else:
-			strategy = kwargs.get("strategy", "simple_memory")
-			if strategy not in self._strategies_available:
-				raise ValueError(f"Strategy '{strategy}' is not available. Possible options are {self._strategies_available}.")
 
-			if strategy == "simple":
-				self.__appply_simple(amplitude)
-			if strategy == "simple_memory":
-				self.__apply_simple_memory(amplitude, use_global_mismatch = kwargs.get('use_global_mismatch', True))
-			if strategy == "min_scale":
-				self.__apply_min_scale(amplitude)
-			if strategy == "min_scale_memory":
-				self.__apply_min_scale_memory(amplitude, use_global_mismatch = kwargs.get('use_global_mismatch', True))
+		if strategy == "simple":
+			self.__appply_simple(amplitude)
+		if strategy == "simple_memory":
+			self.__apply_simple_memory(amplitude, use_global_mismatch = kwargs.get('use_global_mismatch', True))
+		if strategy == "min_scale":
+			self.__apply_min_scale(amplitude)
+		if strategy == "min_scale_memory":
+			self.__apply_min_scale_memory(amplitude, use_global_mismatch = kwargs.get('use_global_mismatch', True))
 
 	def cache_state(self):
 		"""

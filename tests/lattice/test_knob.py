@@ -10,39 +10,65 @@ class KnobTest(unittest.TestCase):
 
 	def test_init(self):
 
-		knob = Knob([self.test_quad], 'y', [40.0], name = "test_knob")
+		knob_setup = [
+			{'y': {
+				'amplitude': 40.0
+			}
+		}
+		]
+		knob = Knob([self.test_quad], knob_setup, name = "test_knob")
 
-		self.assertEqual(knob.values, [40.0])
+		self.assertEqual(knob.variables, [{'y': {'amplitude': 40.0, 'step_size': None, 'changes': 0.0, 'mismatch': 0.0}}])
 
 		self.assertEqual(knob.amplitude, 0.0)
 
 		self.assertEqual(knob.name, "test_knob")
 
-		self.assertEqual(knob.changes, [0.0])
-
-		self.assertEqual(knob.mismatch, [0.0])
-
 	def test_init_unsupported_type(self):
 		
 		bpm = Bpm()
+
+		knob_setup = [
+			{'y': {
+				'amplitude': 40.0
+			}
+		}
+		]
 		with self.assertRaises(TypeError):
-			knob = Knob([bpm], 'y', [40.0])
+			knob = Knob([bpm], knob_setup)
 
 	def test_init_unsupported_variable(self):
-		
+		knob_setup = [
+			{'k1': {
+				'amplitude': 40.0
+			}
+		}
+		]
 		with self.assertRaises(ValueError):
-			knob = Knob([self.test_quad], 'k1', [40.0])
+			knob = Knob([self.test_quad], knob_setup)
 
 	def test_init_incorrect_length(self):
 		
 		quad2 = Quadrupole()
+		knob_setup = [
+			{'k1': {
+				'amplitude': 40.0
+			}
+		}
+		]
 
 		with self.assertRaises(ValueError):
-			knob = Knob([self.test_quad, quad2], 'y', [40.0])
+			knob = Knob([self.test_quad, quad2], knob_setup)
 
 	def test_apply(self):
 
-		knob = Knob([self.test_quad], 'y', [40.0])
+		knob_setup = [
+			{'y': {
+				'amplitude': 40.0
+			}
+		}
+		]
+		knob = Knob([self.test_quad], knob_setup)
 
 		knob.apply(0.5)
 
