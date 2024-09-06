@@ -36,13 +36,13 @@ class Knob:
 		{
 			'y': {
 				'amplitude': 5.0,
-				'changes': 0.0,
+				'change': 0.0,
 				'step_size': 0.5,
 				'mismatch': 0.0
 			}
 			'x': {
 				'amplitude': -2.0,
-				'changes': 0.0
+				'change': 0.0
 				'step_size': 0.5,
 				'mismatch': 0.0
 			}
@@ -50,9 +50,6 @@ class Knob:
 		```
 		Both vertical and horizontal movers are anticipated to have a step size of 0.5 micron in this example. Also, 
 		for each coordinate a mismatch and total accumnulated coordinate changes are kept.
-	use_step_size : bool
-		If `True` (default is `False`) uses the step sizes to evaluate coordinates changes (if `step_size` parameter
-		is provided).
 	supported_amplitudes : Optional[List[float]]
 		A list of the supported amplitudes. When provided, only the amplitudes from the list are applied. This list
 		contains the amplitudes that an attribute `amplitude` can take. That means that amplitude given
@@ -102,7 +99,7 @@ class Knob:
 			raise ValueError(f"The number of elements and values provided are different.")
 	
 		self.elements, self.types_of_elements, self.amplitude, self.amplitude_mismatch = elements, [], 0.0, 0.0
-		self.name, self.step_size = extra_params.get('name', ""), extra_params.get('use_step_size', None)
+		self.name = extra_params.get('name', "")
 		self.supported_amplitudes = extra_params.get("supported_amplitudes", None)
 		self.variables = []
 
@@ -113,11 +110,10 @@ class Knob:
 			for coord in tmp:
 				if coord not in self._cached_parameters:
 					raise ValueError(f"Incorrect coordinate. Acceptable are {self._cached_parameters}, received '{coord}'")
-				
 				dict_tmp[coord] = {
 					'amplitude': tmp[coord]['amplitude'],
-					'step_size': tmp[coord]['step_size'] if 'step_size' in coord else None,
-					'changes': 0.0,
+					'step_size': tmp[coord]['step_size'] if 'step_size' in tmp[coord] else None,
+					'change': 0.0,
 					'mismatch': 0.0
 				}
 				if dict_tmp[coord]['step_size'] == 0.0:
@@ -143,7 +139,6 @@ class Knob:
 				for coord in self.variables[i]:
 					if coord not in element._mismatch:
 						element._mismatch[coord] = 0.0
-		
 	def reset(self):
 		"""
 		Reset the knob's data.
@@ -198,7 +193,7 @@ class Knob:
 			for i, element in enumerate(self.elements):
 				for coord in self.variables[i]:
 					element[coord] += self.variables[i][coord]['amplitude'] * amplitude
-					self.variables[i][coord]['changes'] += self.variables[i][coord]['amplitude'] * amplitude
+					self.variables[i][coord]['change'] += self.variables[i][coord]['amplitude'] * amplitude
 			self.amplitude += amplitude
 
 		if strategy == "simple":
@@ -295,28 +290,39 @@ class Knob:
 		amplitude = amplitude_tmp - self.amplitude # new amplitude to apply
 
 		for i, element in enumerate(self.elements):
-			coord_change = self.values[i] * amplitude
-			n_step_sizes = int(coord_change / self.step_size)
+			for coord in self.variables[i]:
+				coord_amplitude = self.variables[i][coord]['amplitude']
+				coord_step_size = self.variables[i][coord]['step_size']
 
-			new_coord_change = None
-			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
-				new_coord_change = n_step_sizes * self.step_size
-			else:
-				if coord_change > 0:
-					new_coord_change = (n_step_sizes + 1) * self.step_size
+				coord_change = coord_amplitude * amplitude
+
+				if coord_step_size is not None:
+					n_step_sizes = int(coord_change / coord_step_size)
+
+					new_coord_change = None
+					if abs(coord_change - n_step_sizes * coord_step_size) < 0.5 * coord_step_size:
+						new_coord_change = n_step_sizes * coord_step_size
+					else:
+						if coord_change > 0:
+							new_coord_change = (n_step_sizes + 1) * coord_step_size
+						else:
+							new_coord_change = (n_step_sizes - 1) * coord_step_size
+
+					# updating the values
+					self.variables[i][coord]['change'] += new_coord_change
+
+					old_mismatch = self.variables[i][coord]['mismatch']
+
+					self.variables[i][coord]['mismatch'] = coord_amplitude * (self.amplitude + amplitude) - self.variables[i][coord]['change']
+
+					# mismatch is accumulated with respect to the individual elements
+					element._mismatch[coord] += self.variables[i][coord]['mismatch'] - old_mismatch
+
+					element[coord] += new_coord_change
 				else:
-					new_coord_change = (n_step_sizes - 1) * self.step_size
+					element[coord] += coord_change
+					self.variables[i][coord]['change'] += coord_change
 
-			self.changes[i] += new_coord_change
-
-			old_mismatch = self.mismatch[i]
-			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
-
-			# mismatch is accumulated with respect to the individual elements
-			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
-
-			element[self.coord] += new_coord_change
-		
 		self.amplitude += amplitude
 
 	def __apply_simple_memory(self, amplitude: float, **extra_params):
@@ -362,29 +368,38 @@ class Knob:
 		amplitude = amplitude_tmp - self.amplitude # new amplitude to apply
 		
 		for i, element in enumerate(self.elements):
-			coord_change = self.values[i] * amplitude
-			coord_change += element._mismatch[self.coord] if extra_params.get('use_global_mismatch', True) else self.mismatch[i]
+			for coord in self.variables[i]:
+				coord_amplitude = self.variables[i][coord]['amplitude']
+				coord_step_size = self.variables[i][coord]['step_size']
 
-			n_step_sizes = int(coord_change / self.step_size)
-			
-			new_coord_change = None
-			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
-				new_coord_change = n_step_sizes * self.step_size
-			else:
-				if coord_change > 0:
-					new_coord_change = (n_step_sizes + 1) * self.step_size
+				coord_change = coord_amplitude * amplitude
+				coord_change += element._mismatch[coord] if extra_params.get('use_global_mismatch', True) else self.variables[i][coord]['mismatch']
+
+				if coord_step_size is not None:
+					n_step_sizes = int(coord_change / coord_step_size)
+					
+					new_coord_change = None
+					if abs(coord_change - n_step_sizes * coord_step_size) < 0.5 * coord_step_size:
+						new_coord_change = n_step_sizes * coord_step_size
+					else:
+						if coord_change > 0:
+							new_coord_change = (n_step_sizes + 1) * coord_step_size
+						else:
+							new_coord_change = (n_step_sizes - 1) * coord_step_size
+
+					# updating the values
+					self.variables[i][coord]['change'] += new_coord_change
+
+					old_mismatch = self.variables[i][coord]['mismatch']
+					self.variables[i][coord]['mismatch'] = coord_amplitude * (self.amplitude + amplitude) - self.variables[i][coord]['change']
+
+					# mismatch is accumulated with respect to the individual elements
+					element._mismatch[coord] += self.variables[i][coord]['mismatch'] - old_mismatch
+
+					element[coord] += new_coord_change
 				else:
-					new_coord_change = (n_step_sizes - 1) * self.step_size
-
-			self.changes[i] += new_coord_change
-
-			old_mismatch = self.mismatch[i]
-			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude) - self.changes[i]
-
-			# mismatch is accumulated with respect to the individual elements
-			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
-
-			element[self.coord] += new_coord_change
+					element[coord] += coord_change
+					self.variables[i][coord]['change'] += coord_change
 		
 		self.amplitude += amplitude
 
@@ -542,8 +557,19 @@ class Knob:
 		DataFrame
 			Knob data summary
 		"""
-		data_dict = {key: [] for key in ['name', 'type', 'girder', 's'] + [self.coord + "_amplitude", self.coord + "_current"]}
-		total_mismatch = []
+		columns = ['name', 'type', 'girder', 's']
+		
+		# setting up the full list of the corodinates used in the 
+		coords_list = []
+		for tmp in self.variables:
+			for coord in tmp:
+				if coord not in coords_list:
+					coords_list.append(coord)
+		
+		for coord in coords_list:
+			columns += [f'{coord}_amplitude', f'{coord}_step_size', f'{coord}_current', f'{coord}_change', f'{coord}_mismatch', f'{coord}_total_mismatch']
+		data_dict = {key: [] for key in columns}
+
 		for i, element in enumerate(self.elements):
 			data_dict['name'].append(element['name'])
 			
@@ -552,14 +578,14 @@ class Knob:
 			data_dict['type'].append(element.type)
 			data_dict['girder'].append(element.girder.name if element.girder is not None else None)
 
-			data_dict[self.coord + "_amplitude"].append(self.values[i])
-			data_dict[self.coord + "_current"].append(element[self.coord])
-
-			total_mismatch.append(element._mismatch[self.coord])
-
-		data_dict[f"{self.coord}_changes"] = self.changes
-		data_dict[f"{self.coord}_mismatch"] = self.mismatch
-		data_dict[f"{self.coord}_total_mismatch"] = total_mismatch
+			for coord in self.variables[i]:
+				step_size = self.variables[i][coord]['step_size']
+				data_dict[f"{coord}_amplitude"].append(self.variables[i][coord]['amplitude'])
+				data_dict[f"{coord}_step_size"].append(step_size if step_size is not None else '-')
+				data_dict[f"{coord}_current"].append(element[coord])
+				data_dict[f"{coord}_change"].append(self.variables[i][coord]['change'])
+				data_dict[f"{coord}_mismatch"].append(self.variables[i][coord]['mismatch'])
+				data_dict[f"{coord}_total_mismatch"].append(element._mismatch[coord])
 
 		return DataFrame(data_dict)
 

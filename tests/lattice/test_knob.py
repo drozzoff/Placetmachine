@@ -80,43 +80,80 @@ class KnobTest(unittest.TestCase):
 		
 		second_quad = Quadrupole({'name': "test_quad2"})
 
-		knob = Knob([self.test_quad, second_quad], 'y', [3.0, 1.5], step_size = 1.0)
-		
+		knob_setup = [
+			{'y': {
+				'amplitude': 3.0,
+				'step_size': 1.0
+			}
+		},
+		{
+			'y':{
+				'amplitude': 1.5,
+				'step_size': 1.0
+			}
+		}
+		]
+
+		knob = Knob([self.test_quad, second_quad], knob_setup)
+	
+
 		knob.apply(0.5, strategy = "simple_memory", use_global_mismatch = False)
 		# offsets = 1.5, 0.75
 		# applied 2.0, 1.0 | missmatch -0.5, -0.25
 
-#		print(knob)
-
 		self.assertEqual(self.test_quad['y'], 2.0)
-		self.assertEqual(knob.mismatch, [-0.5, -0.25])
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -0.5)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], -0.25)
 
 		knob.apply(0.5, strategy = "simple_memory", use_global_mismatch = False)
 		# offsets = 1.5, 0.75
 		# applied 1.0 (3.0), 1.0(2.0) | missmatch 0.0, -0.5
 #		print(knob)
 		self.assertEqual(self.test_quad['y'], 3.0)
-		self.assertEqual(knob.mismatch, [0.0, -0.5])
+		self.assertEqual(knob.variables[0]['y']['mismatch'], 0.0)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], -0.5)
 		self.assertEqual(second_quad['y'], 2.0)
 
 		knob.apply(1.0, strategy = "simple_memory", use_global_mismatch = False)
 		# offsets = 3.0, 1.5
 		# applied 3.0(6.0), 1.0(2.0) | mismatch 0.0, 0.0
 #		print(knob)
-		self.assertEqual(knob.mismatch, [0.0, 0.0])
+		self.assertEqual(knob.variables[0]['y']['mismatch'], 0.0)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], 0.0)
 
 	def test_apply2_2(self):
 		second_quad = Quadrupole({'name': "test_quad2"})
 
-		knob = Knob([self.test_quad, second_quad], 'y', [3.0, 1.5], step_size = 1.0)
+		knob_setup = [
+			{'y': {
+				'amplitude': 3.0,
+				'step_size': 1.0
+			}
+		},
+		{
+			'y':{
+				'amplitude': 1.5,
+				'step_size': 1.0
+			}
+		}
+		]
 
-		second_knob = Knob([self.test_quad], 'y', [0.4], step_size = 1.0)
+		knob = Knob([self.test_quad, second_quad], knob_setup)
+
+		knob_setup2 = [
+			{'y': {
+				'amplitude': 0.4,
+				'step_size': 1.0
+			}
+		},
+		]
+
+		second_knob = Knob([self.test_quad], knob_setup2)
 
 		knob.apply(0.5, strategy = "simple_memory", use_global_mismatch = False)
 		# offsets = 1.5, 0.75
 		# applied 2.0, 1.0 | missmatch -0.5, -0.25 | global_mismatch -0.5, -0.25
 
-#		print(knob)
 
 		second_knob.apply(2.0, strategy = "simple_memory", use_global_mismatch = False)
 		# offset = 0.8
@@ -125,14 +162,33 @@ class KnobTest(unittest.TestCase):
 		self.assertEqual(self.test_quad._mismatch['y'], -0.7)
 		self.assertEqual(second_quad._mismatch['y'], -0.25)
 
-#		print(second_knob)
 
 	def test_apply2_3(self):
 		second_quad = Quadrupole({'name': "test_quad2"})
 
-		knob = Knob([self.test_quad, second_quad], 'y', [3.0, 1.5], step_size = 1.0)
+		knob_setup = [
+			{'y': {
+				'amplitude': 3.0,
+				'step_size': 1.0
+			}
+		},
+		{
+			'y':{
+				'amplitude': 1.5,
+				'step_size': 1.0
+			}
+		}
+		]
+		knob = Knob([self.test_quad, second_quad], knob_setup)
 
-		second_knob = Knob([self.test_quad], 'y', [0.7], step_size = 1.0)
+		knob_setup2 = [
+			{'y': {
+				'amplitude': 0.7,
+				'step_size': 1.0
+			}
+		},
+		]
+		second_knob = Knob([self.test_quad], knob_setup2)
 
 		knob.apply(0.5, strategy = "simple_memory", use_global_mismatch = True)
 		# offsets = 1.5, 0.75
@@ -148,34 +204,102 @@ class KnobTest(unittest.TestCase):
 #		print(second_knob)
 
 		self.assertAlmostEqual(self.test_quad._mismatch['y'], -0.1)
-		self.assertAlmostEqual(second_knob.mismatch[0], 0.4)
+
+		self.assertAlmostEqual(second_knob.variables[0]['y']['mismatch'], 0.4)
 
 	def test_apply3(self):
 		
+		knob_structure = [
+			{
+				'y': {
+					'amplitude': 3.0,
+					'step_size': 1.0
+				}
+			},
+			{
+				'y': {
+					'amplitude': 1.5,
+					'step_size': 1.0
+				}
+			}
+		]
+
 		second_quad = Quadrupole({'name': "test_quad2"})
 
-		knob = Knob([self.test_quad, second_quad], 'y', [3.0, 1.5], step_size = 1.0)
+		knob = Knob([self.test_quad, second_quad], knob_structure)
 		
 		knob.apply(0.5, strategy = "simple")
 		# offsets = 1.5, 0.75
 		# applied 2.0, 1.0 | missmatch -0.5, -0.25
 
 		self.assertEqual(self.test_quad['y'], 2.0)
-		self.assertEqual(knob.mismatch, [-0.5, -0.25])
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -0.5)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], -0.25)
 
 		knob.apply(0.5, strategy = "simple")
 		# offsets = 1.5, 0.75
 		# applied 2.0 (4.0), 1.0(2.0) | missmatch -1.0, -0.5
 
 		self.assertEqual(self.test_quad['y'], 4.0)
-		self.assertEqual(knob.mismatch, [-1.0, -0.5])
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -1.0)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], -0.5)
 		self.assertEqual(second_quad['y'], 2.0)
 
 		knob.apply(1.0, strategy = "simple")
 		# offsets = 3.0, 1.5
 		# applied 3.0(7.0), 2.0(4.0) | mismatch -1.0, -1.0
 
-		self.assertEqual(knob.mismatch, [-1.0, -1.0])
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -1.0)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], -1.0)
+
+	def test_apply3_2(self):
+		"""
+		Testing the case when the step size is not defined for
+		one of the knobs
+		"""
+		knob_structure = [
+			{
+				'y': {
+					'amplitude': 3.0,
+					'step_size': 1.0
+				}
+			},
+			{
+				'y': {
+					'amplitude': 1.5,
+				}
+			}
+		]
+
+		second_quad = Quadrupole({'name': "test_quad2"})
+
+		knob = Knob([self.test_quad, second_quad], knob_structure)
+		
+		knob.apply(0.5, strategy = "simple")
+		# offsets = 1.5, 0.75
+		# applied 2.0, 1.5 | missmatch -0.5, 0.0
+
+		self.assertEqual(self.test_quad['y'], 2.0)
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -0.5)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], 0.0)
+
+		knob.apply(0.5, strategy = "simple")
+		# offsets = 1.5, 0.75
+		# applied 2.0 (4.0), 1.5(3.0) | missmatch -1.0, 0.0
+
+		self.assertEqual(self.test_quad['y'], 4.0)
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -1.0)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], 0.0)
+		self.assertEqual(second_quad['y'], 1.5)
+
+		knob.apply(1.0, strategy = "simple")
+		# offsets = 3.0, 1.5
+		# applied 3.0(7.0), 1.5(4.5) | mismatch -1.0, 0.0
+
+		self.assertEqual(knob.variables[0]['y']['mismatch'], -1.0)
+		self.assertEqual(knob.variables[1]['y']['mismatch'], 0.0)
+
+		print(knob)
 
 	def test_apply4(self):
 		
@@ -536,9 +660,16 @@ class KnobTest(unittest.TestCase):
 #		print(knob._cached_data)
 
 	def test_to_dataframe(self):
+		
+		knob_setup = [
+			{'y': {
+				'amplitude': 40.0,
+			}
+		}
+		]
+		knob = Knob([self.test_quad], knob_setup)
 
-		knob = Knob([self.test_quad], 'y', [40.0], step_size = 5.0)
-
+		print(knob.to_dataframe())
 		knob.apply(0.5)
 
 		test_dataframe_dict = {
@@ -547,8 +678,9 @@ class KnobTest(unittest.TestCase):
 			'girder': [None],
 			's': [None],
 			'y_amplitude': [40.0],
+			'y_step_size': ['-'],
 			'y_current': [20.0],
-			'y_changes': [20.0],
+			'y_change': [20.0],
 			'y_mismatch': [0.0],
 			'y_total_mismatch': [0.0]
 			}
