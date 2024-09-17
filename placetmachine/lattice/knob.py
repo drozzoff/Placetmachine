@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Tuple
 from pandas import DataFrame
 import warnings
 from placetmachine.lattice import Element
@@ -189,6 +189,9 @@ class Knob:
 		"""
 		strategy = kwargs.get("strategy", None)
 
+		if strategy not in self._strategies_available:
+			raise ValueError(f"Unacceptable apply strategy - '{strategy}'")
+		
 		if strategy is None:
 			for i, element in enumerate(self.elements):
 				for coord in self.variables[i]:
@@ -256,7 +259,7 @@ class Knob:
 		if clear_cache:
 			self._cached_data = None
 
-	def __appply_simple(self, amplitude):
+	def __appply_simple(self, amplitude, **extra_params):
 		"""
 		Apply the the knob.
 
@@ -272,10 +275,16 @@ class Knob:
 		----------
 		amplitude : float
 			Amplitude of the knob to apply.
+
+		Other parameters
+		----------------
+		ignore_supported_amplitudes : bool
+			If `True` (default is `False`) ignores the `supported_amplitudes` attribute even if present.
+		
 		"""
 		amplitude_tmp = amplitude + self.amplitude # absolute amplitude currently
 		# evaluating the amplitude to apply from the list
-		if self.supported_amplitudes is not None:
+		if self.supported_amplitudes is not None and not extra_params.get('ignore_amplitudes_list', False):
 			for i, amp in enumerate(self.supported_amplitudes):
 				if amp > amplitude_tmp:
 					if amp - amplitude_tmp <= amplitude_tmp - self.supported_amplitudes[i - 1]:
@@ -345,6 +354,8 @@ class Knob:
 
 		Other parameters
 		----------------
+		ignore_supported_amplitudes : bool
+			If `True` (default is `False`) ignores the `supported_amplitudes` attribute even if present.
 		use_global_mismatch : bool
 			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
 			caused by other knobs.
@@ -353,7 +364,7 @@ class Knob:
 		amplitude_tmp = amplitude + self.amplitude + self.amplitude_mismatch
 		
 		# evaluating the amplitude to apply from the list
-		if self.supported_amplitudes is not None:
+		if self.supported_amplitudes is not None and not extra_params.get('ignore_supported_amplitudes', False):
 			for i, amp in enumerate(self.supported_amplitudes):
 				if amp > amplitude_tmp:
 					if amp - amplitude_tmp < amplitude_tmp - self.supported_amplitudes[i - 1]:
@@ -403,6 +414,40 @@ class Knob:
 		
 		self.amplitude += amplitude
 
+	def __evaluate_sensitive_coordinate(self) -> Tuple[Optional[int], Optional[str]]:
+		"""
+		Evaluate the most sensitive coordinate and element by checking the relation between
+		their absolute amplitudes and step sizes. The smaller value is - the more sensitive
+		the element/coordinate is.
+
+		Returns
+		-------
+		The id of the element and the coordinate of the most sensitive point. If no such found
+		(eg. no step sizes defined) returns `None, None`.
+		"""
+		# evaluating the smallest coord change wrt to the corresponding step size
+		coords_list = []
+		for variable in self.variables:
+			for coord in variable:
+				if coord not in coords_list:
+					coords_list.append(coord)
+
+		coord_to_scale, i_min, tmp = None, -1, None
+		for coord in coords_list:
+			abs_coord_values = list(map(lambda x: abs(x[coord]['amplitude'] / x[coord]['step_size']) if 'step_size' in x[coord] else None, self.variables))
+			abs_coord_values_filtered = filter(lambda x: x is not None, abs_coord_values)
+			if abs_coord_values_filtered == []:
+				# the following coordinate has no step size
+				continue
+			
+			min_value = min(abs_coord_values_filtered)
+			if (tmp is not None and min_value < tmp) or tmp is None:
+				coord_to_scale = coord
+				tmp = min_value
+				i_min = abs_coord_values.index(min_value)
+		
+		return i_min, coord_to_scale
+
 	def __apply_min_scale(self, amplitude):
 		"""
 		Apply the the knob.
@@ -423,45 +468,37 @@ class Knob:
 		amplitude : float
 			Amplitude of the knob to apply.
 		"""
-		abs_values = [abs(x) for x in self.values]
-		i_min = abs_values.index(min(abs_values))
 
-		coord_change_ref = self.values[i_min] * amplitude
-		n_step_sizes_ref = int(coord_change_ref / self.step_size)
+		i_min, coord_to_scale = self.__evaluate_sensitive_coordinate()
+
+		if coord_to_scale is None:
+			# none of the coordinates have a step size
+			warnings.warn(f"There are no step sizes associated with current knob. Running apply() with `strategy = None`.")
+			self.apply(amplitude, strategy = None)
+			return
+
+		coord_amplitude = self.variables[i_min][coord_to_scale]['amplitude']
+		coord_stepsize = self.variables[i_min][coord_to_scale]['step_size']
+		
+		coord_change_ref = coord_amplitude * amplitude
+		
+		n_step_sizes_ref = int(coord_change_ref / coord_stepsize)
 		
 		ref_offset = None
-		if abs(coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
-			ref_offset = n_step_sizes_ref * self.step_size
+		if abs(coord_change_ref - n_step_sizes_ref * coord_stepsize) < 0.5 * coord_stepsize:
+			ref_offset = n_step_sizes_ref * coord_stepsize
 		else:
 			if coord_change_ref > 0:
-				ref_offset = (n_step_sizes_ref + 1) * self.step_size
+				ref_offset = (n_step_sizes_ref + 1) * coord_stepsize
 			else:
-				ref_offset = (n_step_sizes_ref - 1) * self.step_size
+				ref_offset = (n_step_sizes_ref - 1) * coord_stepsize
 
-		amplitude_adjusted = ref_offset / self.values[i_min]
+		amplitude_adjusted = ref_offset / coord_amplitude
 
-		for i, element in enumerate(self.elements):
-			coord_change = self.values[i] * amplitude_adjusted
-			n_step_sizes = int(coord_change / self.step_size)
-			
-			new_coord_change = None
-			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
-				new_coord_change = n_step_sizes * self.step_size
-			else:
-				if coord_change > 0:
-					new_coord_change = (n_step_sizes + 1) * self.step_size
-				else:
-					new_coord_change = (n_step_sizes - 1) * self.step_size
+		self.__appply_simple(amplitude_adjusted, ignore_supported_amplitudes = True)
 
-			self.changes[i] += new_coord_change
-			old_mismatch = self.mismatch[i]
-			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
-			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
-
-			element[self.coord] += new_coord_change
-
-		self.amplitude += amplitude_adjusted
-
+		self.amplitude_mismatch += amplitude - amplitude_adjusted
+		
 	def __apply_min_scale_memory(self, amplitude, **extra_params):
 		"""
 		Apply the the knob.
@@ -492,46 +529,62 @@ class Knob:
 			If `True` (default) coordinates' changes are evaluated to also compensate the possible mismatches
 			caused by other knobs.
 		"""
-		abs_values = [abs(x) for x in self.values]
-		i_min = abs_values.index(min(abs_values))
 
-		coord_change_ref = self.values[i_min] * (amplitude + self.amplitude_mismatch)
-		n_step_sizes_ref = int(coord_change_ref / self.step_size)
+		i_min, coord_to_scale = self.__evaluate_sensitive_coordinate()
+		
+		if coord_to_scale is None:
+			# none of the coordinates have a step size
+			warnings.warn(f"There are no step sizes associated with current knob. Running apply() with `strategy = None`.")
+			self.apply(amplitude, strategy = None)
+			return
+
+		coord_amplitude = self.variables[i_min][coord_to_scale]['amplitude']
+		coord_stepsize = self.variables[i_min][coord_to_scale]['step_size']
+
+		coord_change_ref = coord_amplitude * (amplitude + self.amplitude_mismatch)
+		n_step_sizes_ref = int(coord_change_ref / coord_stepsize)
 		
 		ref_offset = None
-		if abs(coord_change_ref - n_step_sizes_ref * self.step_size) < 0.5 * self.step_size:
-			ref_offset = n_step_sizes_ref * self.step_size
+		if abs(coord_change_ref - n_step_sizes_ref * coord_stepsize) < 0.5 * coord_stepsize:
+			ref_offset = n_step_sizes_ref * coord_stepsize
 		else:
 			if coord_change_ref > 0:
-				ref_offset = (n_step_sizes_ref + 1) * self.step_size
+				ref_offset = (n_step_sizes_ref + 1) * coord_stepsize
 			else:
-				ref_offset = (n_step_sizes_ref - 1) * self.step_size
+				ref_offset = (n_step_sizes_ref - 1) * coord_stepsize
 
-		amplitude_adjusted = ref_offset / self.values[i_min]
+		amplitude_adjusted = ref_offset / coord_amplitude
 		# this could be different from the correct amplitude required:
 		# which is amplitude + self.amplitude_mismatch
 		self.amplitude_mismatch += amplitude - amplitude_adjusted
 
 		for i, element in enumerate(self.elements):
-			coord_change = self.values[i] * amplitude_adjusted
-			coord_change += element._mismatch[self.coord] if extra_params.get("use_global_mismatch", True) else self.mismatch[i]
+			for coord in self.variables[i]:
+				coord_amplitude = self.variables[i][coord]['amplitude']
+				coord_step_size = self.variables[i][coord]['step_size']
+				
+				coord_change = coord_amplitude * amplitude_adjusted
+				coord_change += element._mismatch[coord] if extra_params.get('use_global_mismatch', True) else self.variables[i][coord]['mismatch']
 
-			n_step_sizes = int(coord_change / self.step_size)
-			
-			new_coord_change = None
-			if abs(coord_change - n_step_sizes * self.step_size) < 0.5 * self.step_size:
-				new_coord_change = n_step_sizes * self.step_size
-			else:
-				if coord_change > 0:
-					new_coord_change = (n_step_sizes + 1) * self.step_size
+				n_step_sizes = int(coord_change / coord_step_size)
+				
+				new_coord_change = None
+				if abs(coord_change - n_step_sizes * coord_step_size) < 0.5 * coord_step_size:
+					new_coord_change = n_step_sizes * coord_step_size
 				else:
-					new_coord_change = (n_step_sizes - 1) * self.step_size
+					if coord_change > 0:
+						new_coord_change = (n_step_sizes + 1) * coord_step_size
+					else:
+						new_coord_change = (n_step_sizes - 1) * coord_step_size
 
-			self.changes[i] += new_coord_change
-			old_mismatch = self.mismatch[i]
-			self.mismatch[i] = self.values[i] * (self.amplitude + amplitude_adjusted) - self.changes[i]
-			element._mismatch[self.coord] += self.mismatch[i] - old_mismatch
-			element[self.coord] += new_coord_change
+				self.variables[i][coord]['change'] += new_coord_change
+				
+				old_mismatch = self.variables[i][coord]['mismatch']
+				
+				self.variables[i][coord]['mismatch'] = coord_amplitude * (self.amplitude + amplitude_adjusted) - self.variables[i][coord]['change']
+				
+				element._mismatch[coord] += self.variables[i][coord]['mismatch'] - old_mismatch
+				element[coord] += new_coord_change
 
 		self.amplitude += amplitude_adjusted
 
