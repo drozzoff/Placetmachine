@@ -236,10 +236,12 @@ class ElementElementaryTest(unittest.TestCase):
 		self.beamline.append(self.test_quad)
 		self.beamline.append(self.test_cavity)
 
-		self.beamline.misalign_element(element_index = 1, y = 40.0)
+		self.beamline.misalign_element(element_index = 1, y = 40.0, yp = 1.0)
 
 		self.assertEqual(self.beamline[0]['y'], 0.0)
+		self.assertEqual(self.beamline[0]['yp'], 0.0)
 		self.assertEqual(self.beamline[1]['y'], 40.0)
+		self.assertEqual(self.beamline[1]['yp'], 1.0)
 
 	def test_misalign_elements(self):
 
@@ -365,6 +367,19 @@ class ElementElementaryTest(unittest.TestCase):
 		self.assertAlmostEqual(self.beamline[3]['y'], 0.0, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[4]['y'], 8.0, delta = 1e-5)
 
+		# girder angles
+		self.assertAlmostEqual(self.beamline[0]['xp'], 1.0)
+		self.assertAlmostEqual(self.beamline[1]['xp'], 0.0)
+		self.assertAlmostEqual(self.beamline[2]['xp'], 0.0)
+		self.assertAlmostEqual(self.beamline[3]['xp'], 0.0)
+		self.assertAlmostEqual(self.beamline[4]['xp'], 1.0)
+
+		self.assertAlmostEqual(self.beamline[0]['yp'], 4.0)
+		self.assertAlmostEqual(self.beamline[1]['yp'], 0.0)
+		self.assertAlmostEqual(self.beamline[2]['yp'], 0.0)
+		self.assertAlmostEqual(self.beamline[3]['yp'], 0.0)
+		self.assertAlmostEqual(self.beamline[4]['yp'], 4.0)
+		
 		#incorrect type
 		with self.assertRaises(ValueError):
 			self.beamline.misalign_girder_general(girder = 1, x_right = x_right, x_left = x_left, y_right = y_right, y_left = y_left, filter_types = ['MyType'])
@@ -464,6 +479,19 @@ class ElementElementaryTest(unittest.TestCase):
 		self.assertAlmostEqual(self.beamline[3]['y'], 0.0, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[4]['y'], -9.0, delta = 1e-5)
 
+		# angles
+		self.assertAlmostEqual(self.beamline[0]['xp'], 1.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['xp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[2]['xp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['xp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[4]['xp'], 1.0, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[0]['yp'], -2.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[1]['yp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[2]['yp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[3]['yp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[4]['yp'], -2.0, delta = 1e-5)
+
 		# girder 2
 		self.assertAlmostEqual(self.beamline[5]['x'], 4.5, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[6]['x'], 0.0, delta = 1e-5)
@@ -476,6 +504,19 @@ class ElementElementaryTest(unittest.TestCase):
 		self.assertAlmostEqual(self.beamline[7]['y'], 0.0, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[8]['y'], 0.0, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[9]['y'], -1.0, delta = 1e-5)
+
+		# angles
+		self.assertAlmostEqual(self.beamline[5]['xp'], -1.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[6]['xp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[7]['xp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[8]['xp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[9]['xp'], -1.0, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[5]['yp'], 2.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[6]['yp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[7]['yp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[8]['yp'], 0.0, delta = 1e-5)
+		self.assertAlmostEqual(self.beamline[9]['yp'], 2.0, delta = 1e-5)
 
 		# incorrect girder ids (< 0 or > N girders)
 		with self.assertRaises(ValueError):
@@ -505,12 +546,12 @@ class ElementElementaryTest(unittest.TestCase):
 		# bulding the girder 1
 		self.beamline.append(quad, new_girder = True)
 		self.beamline.append(drift)
-		# 1.0 - 0.5
+		# 1.5 - 0.5
 
 		# building the second girder
 		self.beamline.append(quad, new_girder = True)
 		self.beamline.append(drift)
-		# 1.0 - 0.5
+		# 1.5 - 0.5
 
 		#building the girder 3
 		self.beamline.append(cavity, new_girder = True)
@@ -525,21 +566,36 @@ class ElementElementaryTest(unittest.TestCase):
 
 		self.assertAlmostEqual(self.beamline[0]['x'], 3.125, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[1]['x'], 0.625, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[0]['xp'], -2.5)
+		self.assertAlmostEqual(self.beamline[1]['xp'], -2.5)
 		
 		self.assertAlmostEqual(self.beamline[0]['y'], -6.25, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[1]['y'], -1.25, delta = 1e-5)
 		
+		self.assertAlmostEqual(self.beamline[0]['yp'], 5.0)
+		self.assertAlmostEqual(self.beamline[1]['yp'], 5.0)
+
 		for i in [2, 3]:
 			self.assertEqual(self.beamline[i]['x'], 0.0)
 			self.assertEqual(self.beamline[i]['y'], 0.0)
+			self.assertAlmostEqual(self.beamline[i]['xp'], 0.0)
+			self.assertAlmostEqual(self.beamline[i]['xp'], 0.0)
+			self.assertAlmostEqual(self.beamline[i]['yp'], 0.0)
+			self.assertAlmostEqual(self.beamline[i]['yp'], 0.0)
 
 		self.assertAlmostEqual(self.beamline[4]['x'], 2.0, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[5]['x'], 4.5, delta = 1e-5)
+
+		self.assertAlmostEqual(self.beamline[4]['xp'], 2.0)
+		self.assertAlmostEqual(self.beamline[5]['xp'], 2.0)
 		
 		self.assertAlmostEqual(self.beamline[4]['y'], -4.0, delta = 1e-5)
 		self.assertAlmostEqual(self.beamline[5]['y'], -9.0, delta = 1e-5)
-		
 
+		self.assertAlmostEqual(self.beamline[4]['yp'], -4.0)
+		self.assertAlmostEqual(self.beamline[5]['yp'], -4.0)
+		
 		with self.assertRaises(ValueError):
 			self.beamline.misalign_articulation_point(girder_left = 0, girder_right = 2, x = x, y = y, filter_types = ['Quadrupole'])	
 
