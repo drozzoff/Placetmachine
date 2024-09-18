@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple
 from pandas import DataFrame
 import warnings
+import copy
 from placetmachine.lattice import Element
 
 
@@ -150,10 +151,10 @@ class Knob:
 		self.amplitude, self.amplitude_mismatch = 0.0, 0.0
 		for i, element in enumerate(self.elements):
 			for coord in self.variables[i]:
-				element[coord] -= self.variables[i][coord]['changes']
+				element[coord] -= self.variables[i][coord]['change']
 				element._mismatch[coord] -= self.variables[i][coord]['mismatch']
 
-				self.variables[i][coord]['changes'] = 0.0			
+				self.variables[i][coord]['change'] = 0.0			
 				self.variables[i][coord]['mismatch'] = 0.0
 
 
@@ -221,8 +222,7 @@ class Knob:
 		self._cached_data = {
 			'amplitude': self.amplitude,
 			'amplitude_mismatch': self.amplitude_mismatch,
-			'changes': self.changes.copy(),
-			'mismatch': self.mismatch.copy()
+			'variables': copy.deepcopy(self.variables)
 		}
 	
 	def upload_state_from_cache(self, clear_cache: bool = False):
@@ -246,15 +246,16 @@ class Knob:
 		elif self._cached_data is None:
 			warnings.warn(f"Cannot upload, cache is empty!")
 			return 
-		
+
 		for i, element in enumerate(self.elements):
-			element[self.coord] += self._cached_data['changes'][i] - self.changes[i]
-			element._mismatch[self.coord] += self._cached_data['mismatch'][i] - self.mismatch[i]
+			for coord in self.variables[i]:
+				element[coord] += self._cached_data['variables'][i][coord]['change'] - self.variables[i][coord]['change']
+				element._mismatch[coord] += self._cached_data['variables'][i][coord]['mismatch'] - self.variables[i][coord]['mismatch']
 
 		self.amplitude = self._cached_data['amplitude']
 		self.amplitude_mismatch = self._cached_data['amplitude_mismatch']
-		self.changes = self._cached_data['changes'].copy()
-		self.mismatch = self._cached_data['mismatch'].copy()
+		
+		self.variables = copy.deepcopy(self._cached_data['variables'])
 
 		if clear_cache:
 			self._cached_data = None
