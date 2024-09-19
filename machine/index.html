@@ -1,0 +1,5140 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../beam/beam/">
+      
+      
+        <link rel="next" href="../examples/example1/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.2.7">
+    
+    
+      
+        <title>Machine - Placetmachine</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.046329b4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#machine-documentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Placetmachine" class="md-header__button md-logo" aria-label="Placetmachine" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Placetmachine
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Machine
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/drozzoff/Placetmachine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../placet/communicator/" class="md-tabs__link">
+          
+  
+  Documentation
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../examples/example1/" class="md-tabs__link">
+          
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Main
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Placetmachine" class="md-nav__button md-logo" aria-label="Placetmachine" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Placetmachine
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/drozzoff/Placetmachine" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_1" >
+        
+          <label class="md-nav__link" for="__nav_1_1" id="__nav_1_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Placet module
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            Placet module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../placet/communicator/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicator
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../placet/pyplacet/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Placetpy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../placet/placetwrap/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Placet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2" >
+        
+          <label class="md-nav__link" for="__nav_1_2" id="__nav_1_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Lattice module
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_2">
+            <span class="md-nav__icon md-icon"></span>
+            Lattice module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/element/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Element
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/quadrupole/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quadrupole
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/sbend/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Sbend
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/multipole/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Multipole
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/drift/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Drift
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/dipole/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dipole
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/cavity/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cavity
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/bpm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Bpm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/knob/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Knob
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lattice/lattice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Beamline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Beam module
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            Beam module
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../beam/beam/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Beam
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Machine
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Machine
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine" class="md-nav__link">
+    Machine
+  </a>
+  
+    <nav class="md-nav" aria-label="Machine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.DFS" class="md-nav__link">
+    DFS()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.RF_align" class="md-nav__link">
+    RF_align()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.apply_cavs_errors" class="md-nav__link">
+    apply_cavs_errors()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.apply_knob" class="md-nav__link">
+    apply_knob()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.apply_quads_errors" class="md-nav__link">
+    apply_quads_errors()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.assign_errors" class="md-nav__link">
+    assign_errors()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.cavities_setup" class="md-nav__link">
+    cavities_setup()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.create_beamline" class="md-nav__link">
+    create_beamline()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.default_clic" class="md-nav__link">
+    default_clic()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.empty" class="md-nav__link">
+    empty()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_obs" class="md-nav__link">
+    eval_obs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_orbit" class="md-nav__link">
+    eval_orbit()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_track_results" class="md-nav__link">
+    eval_track_results()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_twiss" class="md-nav__link">
+    eval_twiss()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.from_file" class="md-nav__link">
+    from_file()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.import_beamline" class="md-nav__link">
+    import_beamline()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.iterate_knob" class="md-nav__link">
+    iterate_knob()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.make_beam_many" class="md-nav__link">
+    make_beam_many()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.make_beam_slice_energy_gradient" class="md-nav__link">
+    make_beam_slice_energy_gradient()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_articulation_point" class="md-nav__link">
+    misalign_articulation_point()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_element" class="md-nav__link">
+    misalign_element()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_elements" class="md-nav__link">
+    misalign_elements()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_girder" class="md-nav__link">
+    misalign_girder()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_girder_general" class="md-nav__link">
+    misalign_girder_general()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_girders" class="md-nav__link">
+    misalign_girders()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.one_2_one" class="md-nav__link">
+    one_2_one()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.phase_advance" class="md-nav__link">
+    phase_advance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.random_reset" class="md-nav__link">
+    random_reset()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.save_beam" class="md-nav__link">
+    save_beam()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.save_sliced_beam" class="md-nav__link">
+    save_sliced_beam()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.scan_knob" class="md-nav__link">
+    scan_knob()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.set_callback" class="md-nav__link">
+    set_callback()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.survey_errors_set" class="md-nav__link">
+    survey_errors_set()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.track" class="md-nav__link">
+    track()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Examples
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/example1/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Example 1
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Main
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine" class="md-nav__link">
+    Machine
+  </a>
+  
+    <nav class="md-nav" aria-label="Machine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.DFS" class="md-nav__link">
+    DFS()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.RF_align" class="md-nav__link">
+    RF_align()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.apply_cavs_errors" class="md-nav__link">
+    apply_cavs_errors()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.apply_knob" class="md-nav__link">
+    apply_knob()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.apply_quads_errors" class="md-nav__link">
+    apply_quads_errors()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.assign_errors" class="md-nav__link">
+    assign_errors()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.cavities_setup" class="md-nav__link">
+    cavities_setup()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.create_beamline" class="md-nav__link">
+    create_beamline()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.default_clic" class="md-nav__link">
+    default_clic()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.empty" class="md-nav__link">
+    empty()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_obs" class="md-nav__link">
+    eval_obs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_orbit" class="md-nav__link">
+    eval_orbit()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_track_results" class="md-nav__link">
+    eval_track_results()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.eval_twiss" class="md-nav__link">
+    eval_twiss()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.from_file" class="md-nav__link">
+    from_file()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.import_beamline" class="md-nav__link">
+    import_beamline()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.iterate_knob" class="md-nav__link">
+    iterate_knob()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.make_beam_many" class="md-nav__link">
+    make_beam_many()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.make_beam_slice_energy_gradient" class="md-nav__link">
+    make_beam_slice_energy_gradient()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_articulation_point" class="md-nav__link">
+    misalign_articulation_point()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_element" class="md-nav__link">
+    misalign_element()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_elements" class="md-nav__link">
+    misalign_elements()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_girder" class="md-nav__link">
+    misalign_girder()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_girder_general" class="md-nav__link">
+    misalign_girder_general()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.misalign_girders" class="md-nav__link">
+    misalign_girders()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.one_2_one" class="md-nav__link">
+    one_2_one()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.phase_advance" class="md-nav__link">
+    phase_advance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.random_reset" class="md-nav__link">
+    random_reset()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.save_beam" class="md-nav__link">
+    save_beam()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.save_sliced_beam" class="md-nav__link">
+    save_sliced_beam()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.scan_knob" class="md-nav__link">
+    scan_knob()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.set_callback" class="md-nav__link">
+    set_callback()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.survey_errors_set" class="md-nav__link">
+    survey_errors_set()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placetmachine.machine.Machine.track" class="md-nav__link">
+    track()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="machine-documentation">Machine documentation</h1>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 class="doc doc-heading" id="placetmachine.machine.Machine">
+<code class="highlight language-python"><span class="n">Machine</span><span class="p">(</span><span class="o">**</span><span class="n">calc_options</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents first">
+
+  
+      <p>A class used for controling the beamline in <strong>Placet</strong>.</p>
+<p>Uses Python interface to Placet (<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet"><code>Placet</code></a>) and 
+<a class="autorefs autorefs-internal" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline"><code>Beamline</code></a> class for controling the beamline.</p>
+<p>Changes the logic of using the <strong>Placet</strong> for beam tracking. By default, the number 
+of the machines is set to <strong>1</strong>. Each <code>Machine</code> instance corresponds to 1 actual beamline. 
+The beamline is described with <a class="autorefs autorefs-internal" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline"><code>Beamline</code></a> object. 
+All the corrections are applied to the current machines with the current offsets by default. 
+Though, one can overwrite that with the typical survey functions, which violates the logic 
+of this class and also has to be used carefully.</p>
+
+  <p><strong>Attributes:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>placet</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.Placet" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet">Placet</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet"><code>Placet</code></a> object, used for communicating with 
+the Placet process running in the background.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>console</code></td>
+          <td>
+                <code>rich.<span title="rich.console">console</span>.<span title="rich.console.Console">Console</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An object used for the fancy terminal output.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beamline</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="placetmachine.Beamline" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline">Beamline</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An object storing the beamline info.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beams_invoked</code></td>
+          <td>
+                <code><span title="typing.List">List</span>[<a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An object storing the beams that were created within current <code>Machine</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beamlines_invoked</code></td>
+          <td>
+                <code><span title="typing.List">List</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An object storing the names of the beamlines that were created within the current <code>Machine</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>callback_struct_</code></td>
+          <td>
+                <code>tuple(<span title="typing.Callable">Callable</span>, dict)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The function that is used as callback for the tracking along with its parameters.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>_data_folder_</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the folder where the temporary files produced by <strong>Placet</strong> are stored.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>debug_mode</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>False</code>), runs <code>self.placet</code> in debug mode.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>save_logs</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>True</code>), saves the execution logs by means of invoking 
+<a class="autorefs autorefs-internal" href="../placet/communicator/#placetmachine.placet.communicator.Communicator.save_debug_info"><code>save_debug_info</code></a> for <code>self.placet</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>send_delay</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The time delay before each data transfer to a Placet process (sometimes needed for stability).</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>console_output</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>True</code>), prints the calculations progress in the console.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>show_intro</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>True</code>), prints the welcome message of Placet at the start.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.DFS">
+<code class="highlight language-python"><span class="n">DFS</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">survey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Perform the Dispersion Free Steering or DFS.</p>
+<p>Before actually invoking the 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestMeasuredCorrection"><code>Placet.TestMeasuredCorrection()</code></a>
+function, runs <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.Zero"><code>Placet.Zero()</code></a>.</p>
+<p>If <code>bpms_realign</code> is <code>False</code> - the reference orbit will not be saved. 
+That means, that any further alignment will typically use BPMs center as 
+the best orbit solution (Eg. Rf alignment). 
+When it is <code>True</code>, runs the callback with 'BpmRealign' command. 
+After performing the DFS, sets the callback to <code>"empty"</code>.</p>
+<p>The default DFS parameters used:
+<div class="highlight"><pre><span></span><code>{
+        &#39;beam0&#39;: beam,
+        &#39;beam1&#39;: test_beam,
+        &#39;cbeam0&#39;: test_beam_2,
+        &#39;cbeam1&#39;: test_beam_3,
+        &#39;survey&#39;: &quot;from_file&quot;,
+        &#39;machines&#39;: 1,
+        &#39;wgt1&#39;: 3,
+        &#39;bin_iteration&#39;: 1000,
+        &#39;correct_full_bin&#39;: 1,
+        &#39;binlength&#39;: 36,
+        &#39;binoverlap&#39;: 18,
+        &#39;bpm_res&#39;: 0.1,
+        &#39;emitt_file&#39;: &quot;temp/emitt.dat&quot;,
+
+        &#39;timeout&#39;: 1000,
+        &#39;errors_file&#39;: alignment_file
+}
+</code></pre></div></p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>survey</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of survey to be used. So far the accepted options are:
+<div class="highlight"><pre><span></span><code>[None, &quot;None&quot;, &quot;Zero&quot;, &quot;Clic&quot;, &quot;Nlc&quot;, &quot;Atl&quot;, 
+&quot;AtlZero&quot;, &quot;Atl2&quot;, &quot;AtlZero2, &quot;Earth&quot;]
+</code></pre></div></p>
+<ul>
+<li>If survey is <code>None</code> (<strong>default</strong>) - uses the current beamline alignment from 
+<code>self.beamline</code>.</li>
+<li>The rest value are Placet built-in surveys. After it is used, the alignment
+in <code>self.beamline</code> is going to be updated with new values generated by a survey.</li>
+</ul>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>bpms_realign</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>True</code>), updates the reference orbit (bpm reading) by 
+invoking a new callback procedure with <code>BpmRealign</code> in it.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Other arguments accepted are inherited from 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestMeasuredCorrection"><code>Placet.TestMeasuredCorrection()</code></a>,
+except of <code>machines</code>, <code>survey</code>, and <code>beam</code>.</p>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The tracking summary.</p>
+<p>The comlumns of the resulting DataFrame:
+<div class="highlight"><pre><span></span><code>[&#39;correction&#39;, &#39;beam&#39;, &#39;beamline&#39;, &#39;survey&#39;, &#39;positions_file&#39;, &#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.RF_align">
+<code class="highlight language-python"><span class="n">RF_align</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">survey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Perform the accelerating structures alignment (RF alignment).</p>
+<p>Does the correction with 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestRfAlignment"><code>Placet.TestRfAlignment()</code></a>. 
+After, runs <a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.track"><code>Machine.track()</code></a> to evaluate the emittances.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>survey</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of survey to be used. So far the accepted options are:
+<div class="highlight"><pre><span></span><code>[None, &quot;None&quot;, &quot;Zero&quot;, &quot;Clic&quot;, &quot;Nlc&quot;, &quot;Atl&quot;, 
+&quot;AtlZero&quot;, &quot;Atl2&quot;, &quot;AtlZero2, &quot;Earth&quot;]
+</code></pre></div></p>
+<ul>
+<li>If survey is <code>None</code> (<strong>default</strong>) - uses the current beamline alignment from 
+<code>self.beamline</code>.</li>
+<li>The rest value are Placet built-in surveys. After it is used, the alignment
+in <code>self.beamline</code> is going to be updated with new values generated by a survey.</li>
+</ul>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Other arguments accepted are inherited from 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestRfAlignment"><code>Placet.TestRfAlignment()</code></a>,
+except of <code>machines</code>, <code>survey</code>, and <code>beam</code>.</p>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The tracking summary</p>
+<p>The comlumns of the resulting DataFrame:
+<div class="highlight"><pre><span></span><code>[&#39;correction&#39;, &#39;errors_seed&#39;, &#39;beam_seed&#39;, &#39;survey&#39;, &#39;positions_file&#39;, 
+&#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.apply_cavs_errors">
+<code class="highlight language-python"><span class="n">apply_cavs_errors</span><span class="p">(</span><span class="n">phase_error</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">grad_error</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Add the errors to the cavities' phases and gradients.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>phase_error</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Standard deviation of the phase (Absolue value).</p>
+            </div>
+          </td>
+          <td>
+                <code>0.0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>grad_error</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Standard deviation of the gradient (Absolue value).</p>
+            </div>
+          </td>
+          <td>
+                <code>0.0</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.apply_knob">
+<code class="highlight language-python"><span class="n">apply_knob</span><span class="p">(</span><span class="n">knob</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Apply the knob and update the beamline offsets.</p>
+<p>It is generaly safer to use this function instead of individual 
+<a class="autorefs autorefs-internal" href="../lattice/knob/#placetmachine.lattice.knob.Knob.apply"><code>Knob.apply()</code></a>. 
+Here, the checks are performed to ensure that all the elements involved 
+in <code>knob</code> exist in <code>self.beamline</code>.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>knob</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.lattice.Knob" href="../lattice/knob/#placetmachine.lattice.knob.Knob">Knob</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The knob to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>amplitude</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Amplitude to apply.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>strategy</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Strategy to use for calculations of the offsets when the knob has <code>step_size</code> 
+defined. Default is 'simple_memory'.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>use_global_mismatch</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default) coordinates' changes are evaluated to also compensate the possible mismatches
+caused by other knobs.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.apply_quads_errors">
+<code class="highlight language-python"><span class="n">apply_quads_errors</span><span class="p">(</span><span class="n">strength_error</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Add the relative strength errors to all the 
+<a class="autorefs autorefs-internal" href="../lattice/quadrupole/#placetmachine.lattice.quadrupole.Quadrupole"><code>Quadrupole</code></a>s in
+<code>self.beamline</code>.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>strength_error</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Standard relative deviation of the quadrupole strength.</p>
+            </div>
+          </td>
+          <td>
+                <code>0.0</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.assign_errors">
+<code class="highlight language-python"><span class="n">assign_errors</span><span class="p">(</span><span class="n">survey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Assign the alignment errors to the beamline currently used (<code>beamline</code> attribute).
+Uses provided <code>survey</code> along with the static errors given as keyword arguments.
+The <code>survey</code> acts as an instruction on how to misalign the lattice.</p>
+<p>There are several options to misalign the beamline using different built-int 
+misalignment surveys (accessed through <code>Machine.misalignment_surveys</code>):
+<div class="highlight"><pre><span></span><code>[&quot;default_clic&quot;, &quot;from_file&quot;, &quot;empty&quot;, &quot;misalign_element&quot;, &quot;misalign_elements&quot;, 
+&quot;misalign_girder&quot;, &quot;misalign_girders&quot;]
+</code></pre></div>
+These surveys are implemented as Python functions and can be called outside of the
+score of this function.</p>
+<ul>
+<li><code>"default_clic"</code> corresponds to the function 
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.default_clic"><code>Machine.default_clic()</code></a> and applies
+the misalignments according to 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.Clic"><code>Placet.Clic()</code></a> survey.</li>
+<li><code>"from_file"</code> corresponds to the function
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.from_file"><code>Machine.from_file()</code></a> and applies the
+misalignments from the file.</li>
+<li><code>"empty"</code> corresponds to the function
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.empty"><code>Machine.empty()</code></a> and does not apply any
+misalignments.</li>
+<li><code>"misalign_element"</code> corresponds to the function
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.misalign_element"><code>Machine.misalign_element()</code></a> and 
+misaligns one element in the beamline.</li>
+<li><code>"misalign_elements"</code> corresponds to the function
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.misalign_elements"><code>Machine.misalign_element()</code></a> and 
+misaligns multiple element in the beamline.</li>
+<li><code>"misalign_girder"</code> corresponds to the function
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.misalign_girder"><code>Machine.misalign_girder()</code></a> and 
+misaligns one girder in the beamline.</li>
+<li><code>"misalign_girders"</code> corresponds to the function
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.misalign_girders"><code>Machine.misalign_girders()</code></a> and 
+misaligns multiple girders in the beamline.</li>
+</ul>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>survey</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If survey is <code>None</code>, by default applying 'empty' survey.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>static_errors</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The dict containing the static errors of the lattice. This data is used when 
+invoking 
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.survey_errors_set"><code>Machine.survey_errors_set()</code></a>
+Is required when using <code>"default_clic"</code> survey.
+All the possible settings are:
+<div class="highlight"><pre><span></span><code>[&#39;quadrupole_x&#39;, &#39;quadrupole_y&#39;, &#39;quadrupole_xp&#39;, &#39;quadrupole_yp&#39;, 
+&#39;quadrupole_roll&#39;, &#39;cavity_x&#39;, &#39;cavity_realign_x&#39;, &#39;cavity_y&#39;, 
+&#39;cavity_realign_y&#39;, &#39;cavity_xp&#39;, &#39;cavity_yp&#39;, &#39;cavity_dipole_x&#39;, 
+&#39;cavity_dipole_y&#39;, &#39;piece_x&#39;, &#39;piece_xp&#39;, &#39;piece_y&#39;, &#39;piece_yp&#39;, 
+&#39;bpm_x&#39;, &#39;bpm_y&#39;, &#39;bpm_xp&#39;, &#39;bpm_yp&#39;, &#39;bpm_roll&#39;, &#39;sbend_x&#39;, 
+&#39;sbend_y&#39;, &#39;sbend_xp&#39;, &#39;sbend_yp&#39;, &#39;sbend_roll&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>errors_seed</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The seed for errors sequence.
+If not defined, the random number is used.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filename</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>When <code>"from_file"</code> survey is used, the <code>filename</code> is used to read the misalignments,
+otherwise ignored.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Other keyword arguments accepted are the parameters of the 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.InterGirderMove"><code>Placet.InterGirderMove()</code></a>.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.cavities_setup">
+<code class="highlight language-python"><span class="n">cavities_setup</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Set the main cavities parameters.</p>
+<p>It is required for the beam creation. Beams in <strong>Placet</strong> use the results from the command</p>
+<p><div class="highlight"><pre><span></span><code>% calc wake.dat
+</code></pre></div>
+to have the values for the transverse (longitudinal?) wakes.</p>
+<p>The <code>calc</code> function from the file <code>"wake_calc.tcl"</code> uses the functions from "clic_beam.tcl". 
+These functions utilize the global variable <code>structure'</code>. Thus, until these functions are
+substituted with Python alternatives, one has to call this function every time one sets the
+beamline. Moreover the macroparticles' weights are takendirectly from the file <code>"wake.dat"</code>.</p>
+<p><strong>One has to provide all the other parameters. Having zeros as default could lead to
+unexpected behaviour.</strong></p>
+<p>The variables <code>a</code>, <code>g</code>, <code>l</code>, <code>delta</code>, and <code>delta_g</code> are going to be declared in Placet in the
+form of structure by using <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.set_list"><code>Placet.set_list()</code></a>.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>a</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>g</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>l</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>delta</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>delta_g</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>phase</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Cavities phase. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>frac_lambda</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>scale</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>to check. Default is <code>1.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.create_beamline">
+<code class="highlight language-python"><span class="n">create_beamline</span><span class="p">(</span><span class="n">lattice</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Create the beamline in Placet from the input lattice file.</p>
+<p>The <code>beamline</code> attribute of <code>Machine</code> is going to be overwritten.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>lattice</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the file containing the lattice.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the beamline (By default is set to <code>"default"</code>).</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>callback</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>(default is <code>True</code>) creates the callback procedure in Placet by invoking
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.set_callback"><code>set_callback()</code></a>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cavities_setup</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The dictionary containing the parameters for <a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.cavities_setup"><code>cavities_setup()</code></a>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>parser</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of parser to be used to read the file into a <code>Beamline</code> object. 
+The possible options are described in <a class="autorefs autorefs-internal" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline"><code>Beamline</code></a></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>parser_variables</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The dict with the variables and their values that parser is going to use to parse the file. Can only be used with
+<code>"advanced"</code> parcer of <code>Beamline</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>debug_mode</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>False</code>), prints the information during the parsing processes.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>parse_for_placet</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><em>[Only if <code>"advanced"</code> parser is used]</em>. If <code>True</code> (default is <code>False</code>), feeds the parsed version 
+of the lattice saved with [<code>Beamline.to_placet()</code>] function. Otherwise, feeds the original file given in lattice.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.Beamline" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline">Beamline</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The created beamline.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.default_clic">
+<code class="highlight language-python"><span class="n">default_clic</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Apply the default Clic survey to a lattice.</p>
+<p>The function calls <code>Clic</code> func in Placet. It requires the 
+lattice misalignments to be already declared with either with
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.survey_errors_set"><code>Machine.survey_errors_set()</code></a> (preferred)
+or with 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.SurveyErrorSet"><code>self.placet.SurveyErrorSet()</code></a>.</p>
+<p><strong>Can be used inside of a <code>proc</code> in Placet.</strong></p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>additional_lineskip</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Can only take the value of '0' (default). If not given, the default values for the commands are used</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Other keyword arguments accepted are parameters of the
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.InterGirderMove"><code>self.placet.InterGirderMove()</code></a>
+function, which is invoked within <code>default_clic</code>.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.empty">
+<code class="highlight language-python"><span class="n">empty</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Apply the empty survey function.</p>
+<p>Corresponds to using <code>'None'</code> survey in Placet.</p>
+<p><strong>Can be used inside of a <code>proc</code> in Placet.</strong></p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.eval_obs">
+<code class="highlight language-python"><span class="n">eval_obs</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">observables</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluate the requested observables for the current state of <code>self.beamline</code>.</p>
+<p>The observalbles could be the following:</p>
+<ul>
+<li>For particle beam:
+<div class="highlight"><pre><span></span><code>[&#39;E&#39;, &#39;x&#39;, &#39;y&#39;, &#39;z&#39;, &#39;px&#39;, &#39;py&#39;]
+</code></pre></div></li>
+<li>For macroparticle beam:
+<div class="highlight"><pre><span></span><code>[&#39;s&#39;, &#39;weight&#39;, &#39;E&#39;, &#39;x&#39;, &#39;px&#39;, &#39;y&#39;, &#39;py&#39;, &#39;sigma_xx&#39;, &#39;sigma_xpx&#39;, 
+&#39;sigma_pxpx&#39;, &#39;sigma_yy&#39;, &#39;sigma_ypy&#39;, &#39;sigma_pypy&#39;, &#39;sigma_xy&#39;, 
+&#39;sigma_xpy&#39;, &#39;sigma_yx&#39;, &#39;sigma_ypx&#39;]
+</code></pre></div>
+Also, emittance <code>['emittx', 'emitty']</code> is evaluted in each case.</li>
+</ul>
+<p>The units for the coordinates are:
+- <code>E</code>: GeV
+- <code>s(z)</code>, <code>x</code>, <code>y</code>, <code>z</code>: micrometer
+- <code>px</code>, <code>py</code>: microrad,
+- <code>emittx</code>, <code>emitty</code>: nm</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>observables</code></td>
+          <td>
+                <code><span title="typing.Union">Union</span>[str, <span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The variables to read from the tracking data when performing the scan.
+It can consist of:
+<div class="highlight"><pre><span></span><code>[&#39;s&#39;, &#39;weight&#39;, &#39;E&#39;, &#39;x&#39;, &#39;px&#39;, &#39;y&#39;, &#39;py&#39;, &#39;sigma_xx&#39;, &#39;sigma_xpx&#39;, 
+&#39;sigma_pxpx&#39;, &#39;sigma_yy&#39;, &#39;sigma_ypy&#39;, &#39;sigma_pypy&#39;, &#39;sigma_xy&#39;, 
+&#39;sigma_xpy&#39;, &#39;sigma_yx&#39;, &#39;sigma_ypx&#39;, &#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div>
+When more than 1 observable is needed, they should be passed as a list.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>suppress_output</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>False</code>) suppresses the log message in regards of the tracking.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><span title="typing.List">List</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The values of the observables.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.eval_orbit">
+<code class="highlight language-python"><span class="n">eval_orbit</span><span class="p">(</span><span class="n">beam</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluate the beam orbit based on the BPM readings.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The orbit along the beamline.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.eval_track_results">
+<code class="highlight language-python"><span class="n">eval_track_results</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluate the beam parameters at the beamline exit.</p>
+<p>At the beginning of the run, if the calculation requires performing the tracking,
+sets the callback. Depending on the beam type, the different callback is defined. 
+For sliced beam it is 
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.save_sliced_beam"><code>Machine.save_sliced_beam()</code></a>.
+For particle beam it is 
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.save_beam"><code>Machine.save_beam()</code></a>.</p>
+<p>The structure of the data in the files for the sliced beam:
+<div class="highlight"><pre><span></span><code>1. s long position along [um]
+2. weight
+3. energy [GeV]
+4. x [um]
+5. x&#39; [um/m]
+6. y [um]
+7. y&#39; [um/m]
+8. sigma_xx
+9. sigma_xx&#39;
+10. sigma_x&#39;x&#39;
+11. sigma_yy
+12. sigma_yy&#39;
+13. sigma_y&#39;y&#39;
+14. sigma_xy (always 0)
+15. 0
+16. 0
+17. 0
+</code></pre></div></p>
+<p>The structure of the data in the files for the particle beam:
+<div class="highlight"><pre><span></span><code>1. energy [GeV]
+2. x [um]
+3. y [um]
+4. z [um]
+5. x&#39; [urad]
+6. y&#39; [urad]
+</code></pre></div></p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>keep_callback</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>False</code>), does not change the callback function 
+at the end of the run.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>tuple(DataFrame, float, float)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Returns the DataFrame with the particles' coordinates at the beamline exit 
+and final horizontal and vertical emittance.</p>
+<p>The columns of the DataFrame includes are:</p>
+<ul>
+<li>For sliced beam:
+<div class="highlight"><pre><span></span><code>[&#39;s&#39;, &#39;weight&#39;, &#39;E&#39;, &#39;x&#39;, &#39;px&#39;, &#39;y&#39;, &#39;py&#39;, &#39;sigma_xx&#39;, &#39;sigma_xpx&#39;, 
+&#39;sigma_pxpx&#39;, &#39;sigma_yy&#39;, &#39;sigma_ypy&#39;, &#39;sigma_pypy&#39;, &#39;sigma_xy&#39;, 
+&#39;sigma_xpy&#39;, &#39;sigma_yx&#39;, &#39;sigma_ypx&#39;]
+</code></pre></div></li>
+<li>For particle beam:
+<div class="highlight"><pre><span></span><code>[&#39;E&#39;, &#39;x&#39;, &#39;y&#39;, &#39;z&#39;, &#39;px&#39;, &#39;py&#39;]
+</code></pre></div></li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.eval_twiss">
+<code class="highlight language-python"><span class="n">eval_twiss</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluate the Twiss parameters along the lattice.</p>
+<p>The method uses 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TwissPlotStep"><code>Placet.TwissPlotStep()</code></a> 
+function to evaluate the Twiss. </p>
+<p><strong>(?)</strong> Apparently, it evaluates the twiss for error-free Lattice, or
+alternatively, for the current misalignments in the lattice.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>step</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Step size to be taken for the calculation. If less than 0 the 
+parameters will be plotted only in the centres of the quadrupoles.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>start</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>(?)</strong> First particle for twiss computation.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>end</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>(?)</strong> Last particle for twiss computation</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>list</code></td>
+          <td>
+                <code><span title="typing.List">List</span>[int]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Save the twiss parameters only at the selected elements.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>file_read_only</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>When the parameter is given, the function just reads the Twiss 
+from this file and does not generate it.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beamline</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beamline to be used in the calculations.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Returns a Pandas Dataframe with the Twiss data.</p>
+<p>The table contains the following columns:
+<div class="highlight"><pre><span></span><code>[&quot;id&quot;, &quot;type&quot;, &quot;s&quot;, &quot;betx&quot;, &quot;bety&quot;, &#39;alfx&#39;, &#39;alfy&#39;, &#39;Dx&#39;, &#39;Dy&#39;, &#39;E&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.from_file">
+<code class="highlight language-python"><span class="n">from_file</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Apply the survey that uses the misalignments from the file.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>file</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the file with the misalignments.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>additional_lineskip</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Can only take the value of <code>0</code>. If not given, the default values for the commands are used.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.import_beamline">
+<code class="highlight language-python"><span class="n">import_beamline</span><span class="p">(</span><span class="n">lattice</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Import the existing <code>Beamline</code> object as a beamline into Placet.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>lattice</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.Beamline" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline">Beamline</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The Beamline to import.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>callback</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code>(default is <code>True</code>) creates the callback procedure in Placet by invoking
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.set_callback"><code>set_callback()</code></a>.</p>
+<p>**!!Should be handled carefully! Some functions expect 'callback' procedure to exist. **
+Eg. <a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.eval_track_results"><code>eval_track_results()</code></a> evaluates 
+the macroparticles coordinates. To do so, 'callback' procedure is required.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cavities_setup</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A dictionary containing the parameters for <a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.cavities_setup"><code>cavities_setup()</code></a>.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.iterate_knob">
+<code class="highlight language-python"><span class="n">iterate_knob</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">knob</span><span class="p">,</span> <span class="n">observables</span><span class="p">,</span> <span class="n">knob_range</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Iterate the given knob in the given range and get the iteration summary.</p>
+<p>Saves the knob's state at the beginning of the iteration and restores it at the end.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the beam to be used.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>knob</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.lattice.Knob" href="../lattice/knob/#placetmachine.lattice.knob.Knob">Knob</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The knob to perform scan on.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>observables</code></td>
+          <td>
+                <code><span title="typing.Union">Union</span>[str, <span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The variables to read from the tracking data when performing the scan.
+It can consist of any combination of:
+<div class="highlight"><pre><span></span><code>[&#39;s&#39;, &#39;weight&#39;, &#39;E&#39;, &#39;x&#39;, &#39;px&#39;, &#39;y&#39;, &#39;py&#39;, &#39;sigma_xx&#39;, &#39;sigma_xpx&#39;, 
+&#39;sigma_pxpx&#39;, &#39;sigma_yy&#39;, &#39;sigma_ypy&#39;, &#39;sigma_pypy&#39;, &#39;sigma_xy&#39;, 
+&#39;sigma_xpy&#39;, &#39;sigma_yx&#39;, &#39;sigma_ypx&#39;, &#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div>
+When more than 1 observable is needed, they should be passed as a list.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>knob_range</code></td>
+          <td>
+                <code><span title="typing.List">List</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The list of the knob values to perform the scan.</p>
+            </div>
+          </td>
+          <td>
+                <code>[-1.0, 0.0, 1.0]</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>iteration_type</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of the knob iteration scan to perform. The possible options are 
+<div class="highlight"><pre><span></span><code>[&quot;natural&quot;, &quot;with_cache&quot;]
+</code></pre></div>
+When it is "with_cache" (default), after each value from <code>knob_range</code> is applied
+the knob is reset to the initial state. 
+When it is "natural", the elements' offsets associated with a <code>knob</code> are not reset.
+Since <code>Knob.apply()</code> is additive function, an amplitude difference between the 
+previous and current is applied.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>knob_apply_strategy</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Strategy to use for calculations of the offsets when knob has <code>step_size</code> defined. 
+Default is 'simple_memory'. Possible options are:
+<div class="highlight"><pre><span></span><code>[&quot;simple&quot;, &quot;simple_memory&quot;, &quot;min_scale&quot;, &quot;min_scale_memory&quot;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>fit</code></td>
+          <td>
+                <code><span title="typing.Callable">Callable</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Function to fit the data.
+<strong>!!</strong> Only works if the amound of observables is equaly <strong>1</strong>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>plot</code></td>
+          <td>
+                <code><span title="typing.Callable">Callable</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Function to plot the iteration data.
+<strong>!!</strong> Only works if the amound of observables is equaly <strong>1</strong>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>use_global_mismatch</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default) coordinates' changes are evaluated to also compensate the possible mismatches
+caused by other knobs. Only applicable to the strategies that memorize the mismatches, such as:
+<div class="highlight"><pre><span></span><code>[&#39;simple_memory&#39;, &#39;min_scale_memory&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The scan summary.
+The structure of the dictionary looks like this:
+<div class="highlight"><pre><span></span><code>{
+&#39;scan_log&#39;: 
+{
+&#39;knob_range&#39;: knob_range, 
+&#39;obs_data&#39;: observable_values
+}, 
+&#39;fitted_value&#39;: ..,
+&#39;best_obs&#39;: ..
+}
+</code></pre></div>
+<code>obs_data</code> follows the same format as the input variable <code>observables</code>. The data 
+stored there follows the shape:
+<div class="highlight"><pre><span></span><code>[[obs1_value1, obs2_value1, ..], [obs1_value2, obs2_value2, ..]]
+</code></pre></div>
+<code>fitted_value</code> is the best value estimated from the fit (if the fit function is given)
+and only 1 observable
+<code>best_obs</code> is the fitted function.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.make_beam_many">
+<code class="highlight language-python"><span class="n">make_beam_many</span><span class="p">(</span><span class="n">beam_name</span><span class="p">,</span> <span class="n">n_slice</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Generate the particle beam.</p>
+<p>Wraps <a class="autorefs autorefs-internal" href="../beam/beam/#placetmachine.beam.beam.Beam.make_beam_many"><code>Beam.make_beam_many()</code></a>.
+Similar to <code>make_beam_many</code> from "make_beam.tcl" in Placet but rewritten in Python.</p>
+<p>Practically could pass the whole beam_setup to the function. Keep the same structure as in Placet.
+Optional parameters (if not given, checks self.beam_parameters. If self.beam_parameters does not have them throws an Exception)</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam_name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of the beam.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n_slice</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of the slices.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of the particles per slice.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>sigma_z</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Bunch length in micrometers.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>charge</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Bunch charge.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beta_x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Horizontal beta-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beta_y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Vertical beta-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>alpha_x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Horizontal alpha-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>alpha_y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Vertical alpha-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>emitt_x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Horizontal normalized emittance.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>emitt_y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Vertical normalized emittance.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>e_spread</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Energy spread.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>e_initial</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Initial energy.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n_total</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Total number of the particles.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam name.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.make_beam_slice_energy_gradient">
+<code class="highlight language-python"><span class="n">make_beam_slice_energy_gradient</span><span class="p">(</span><span class="n">beam_name</span><span class="p">,</span> <span class="n">n_slice</span><span class="p">,</span> <span class="n">n_macroparticles</span><span class="p">,</span> <span class="n">eng</span><span class="p">,</span> <span class="n">grad</span><span class="p">,</span> <span class="n">beam_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Generate the macroparticle (sliced) beam.</p>
+<p>Wraps <a class="autorefs autorefs-internal" href="../beam/beam/#placetmachine.beam.beam.Beam.make_beam_slice_energy_gradient"><code>Beam.make_beam_slice_energy_gradient()</code></a>.
+Similar to <code>make_beam_slice_energy_gradient</code>from "make_beam.tcl" in Placet but rewritten in Python.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam_name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Name of the beam.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n_slice</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of the slices.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n_macroparticles</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Number of the macroparticles per slice.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>eng</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Initial energy offset.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>grad</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Accelerating gradient offset.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beam_seed</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[int]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The seed number of the random number distribution. If not given a random
+number in the range [1, 1000000] is taken.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>sigma_z</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Bunch length in micrometers.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>charge</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Bunch charge.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beta_x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Horizontal beta-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>beta_y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Vertical beta-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>alpha_x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Horizontal alpha-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>alpha_y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Vertical alpha-function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>emitt_x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Horizontal normalized emittance.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>emitt_y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Vertical normalized emittance.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>e_spread</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Energy spread.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>e_initial</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Initial energy.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>n_total</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> Total number of the particles.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam name.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.misalign_articulation_point">
+<code class="highlight language-python"><span class="n">misalign_articulation_point</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Offset the articulation point either between 2 girders or at the beamline start/end.</p>
+<p>The girders and elements on them are misalligned accordingly (wrt the geometry of the girder).</p>
+<p>There is an option to provide the ids of the girders to the right and to the left of the articulation point. That 
+require <code>girder_right</code> - <code>girder_left</code> to be equal 1, otherwise an exception will be raised.</p>
+<p>It is possible to provide only 1 id either of the right or the left one. This also works for the start/end of the beamline.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>girder_left</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[int]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The ID of the girder to the left of the articulation point.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>girder_right</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[int]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The ID of the girder to the right of the articulation point.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The horizontal offset in micrometers. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The vertical offset in micrometers. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filter_types</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The types of elements to apply the misalignments to.
+By default, the misalignments are applied to all the elements on the girder.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.misalign_element">
+<code class="highlight language-python"><span class="n">misalign_element</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Apply the geometrical misalignments to the element with the given ID.</p>
+<p>Duplicates 
+<a class="autorefs autorefs-internal" href="../lattice/lattice/#placetmachine.lattice.lattice.Beamline.misalign_element"><code>Beamline.misalign_element()</code></a>.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>element_index</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The id of the element in the lattice. <strong>Required</strong></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The horizontal offset in micrometers. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>xp</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The horizontal angle in micrometers/m. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The vertical offset in micrometers. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>yp</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The vertical angle in micrometers/m. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>roll</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The roll angle in microrad. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.misalign_elements">
+<code class="highlight language-python"><span class="n">misalign_elements</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Apply the geometrical misalignments to the elements in the dictionary</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>offsets_data</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> The dictionary with the elements offsets 
+in the following format:
+<div class="highlight"><pre><span></span><code>{
+&#39;element_id1&#39;: {
+&#39;x&#39;: ..
+&#39;y&#39;: ..
+..
+}
+&#39;element_id2&#39;: {
+..
+}
+..
+}
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.misalign_girder">
+<code class="highlight language-python"><span class="n">misalign_girder</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Offset the girder transversaly together with the elements on it.</p>
+<p>All the elements on the girder are equally misaligned.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>girder</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The girder ID.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filter_types</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>(str)]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The types of elements to apply the misalignments to.
+By default, the misalignments are applied to all the elements on the girder.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>x</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The horizontal offset in micrometers.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>y</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The vertical offset in micrometers.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.misalign_girder_general">
+<code class="highlight language-python"><span class="n">misalign_girder_general</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Misalign the girder by means of moving its end points.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>girder</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p><strong>[Required]</strong> The id of the girder.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>x_right</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The horizontal offset in micrometers of right end-point. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>y_right</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The vertical offset in micrometers of the right end-point. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>x_left</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The horizontal offset in micrometers of left end-point. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>y_left</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The vertical offset in micrometers of the left end-point. Default is <code>0.0</code>.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filter_types</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The types of elements to apply the misalignments to.
+By default, the misalignments are applied to all the elements on the girder.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.misalign_girders">
+<code class="highlight language-python"><span class="n">misalign_girders</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Misalign the girders according to the dictionary.</p>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>offsets_data</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The dictionary with the girders offsets in the following format:
+<div class="highlight"><pre><span></span><code>{
+&#39;girder_id1&#39;: {
+&#39;x&#39;: ..
+&#39;y&#39;: ..
+..
+}
+&#39;girder_id2&#39;:{
+..
+}
+..
+}
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filter_types</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[str]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The types of elements to apply the misalignments to.
+By default, the misalignments are applied to all the elements on the girder.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.one_2_one">
+<code class="highlight language-python"><span class="n">one_2_one</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">survey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Perform the one-to-one (1-2-1) alignment.</p>
+<p>It is a wrapped version of 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestSimpleCorrection"><code>Placet.TestSimpleCorrection()</code></a>.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>survey</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of survey to be used. So far the accepted options are:
+<div class="highlight"><pre><span></span><code>[None, &quot;None&quot;, &quot;Zero&quot;, &quot;Clic&quot;, &quot;Nlc&quot;, &quot;Atl&quot;, 
+&quot;AtlZero&quot;, &quot;Atl2&quot;, &quot;AtlZero2, &quot;Earth&quot;]
+</code></pre></div></p>
+<ul>
+<li>If survey is <code>None</code> (<strong>default</strong>) - uses the current beamline alignment from 
+<code>self.beamline</code>.</li>
+<li>The rest value are Placet built-in surveys. After it is used, the alignment
+in <code>self.beamline</code> is going to be updated with new values generated by a survey.</li>
+</ul>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Other arguments accepted are inherited from 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestSimpleCorrection"><code>Placet.TestSimpleCorrection()</code></a>,
+except of <code>machines</code>, <code>survey</code>, and <code>beam</code>.</p>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The tracking summary after the correction.</p>
+<p>The columns of the resulting DataFrame:
+<div class="highlight"><pre><span></span><code>[&#39;correction&#39;, &#39;beam&#39;, &#39;beamline&#39;, &#39;survey&#39;, &#39;positions_file&#39;, &#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.phase_advance">
+<code class="highlight language-python"><span class="n">phase_advance</span><span class="p">(</span><span class="n">start_id</span><span class="p">,</span> <span class="n">end_id</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the phase advance</p>
+<p>Does not work atm.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>start_id</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Element index of the first element</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>end_id</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Element index of the last element</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.random_reset">
+<code class="highlight language-python"><span class="n">random_reset</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Reset the random seed in Placet.</p>
+<p>Runs <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.RandomReset"><code>Placet.RandomReset()</code></a>.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.save_beam">
+<code class="highlight language-python"><span class="n">save_beam</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Save the particle beam.</p>
+<p><strong>Can be used inside of a <code>proc</code> in Placet.</strong></p>
+<p>Other keyword arguments accepted are parameters of the
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.BeamDump"><code>self.placet.BeamDump()</code></a>
+function, which is invoked within <code>save_beam</code>.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.save_sliced_beam">
+<code class="highlight language-python"><span class="n">save_sliced_beam</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Save the sliced beam.</p>
+<p>Other keyword arguments accepted are parameters of the
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.BeamSaveAll"><code>self.placet.BeamSaveAll()</code></a>
+function, which is invoked within <code>save_sliced_beam</code>.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.scan_knob">
+<code class="highlight language-python"><span class="n">scan_knob</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">knob</span><span class="p">,</span> <span class="n">observable</span><span class="p">,</span> <span class="n">knob_range</span><span class="p">,</span> <span class="n">fit_func</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Scan the given knob in the given range, apply the fit function and set the 
+knob value to the optimum.</p>
+<p>Since, the optimal value is set only in <code>self.beamline</code>, in case one needs to update
+these values in Placet immediatly, one has to call
+<code>Machine._update_lattice_misalignments()</code></p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam used for the scan.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>knob</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.lattice.Knob" href="../lattice/knob/#placetmachine.lattice.knob.Knob">Knob</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The knob to perform scan on.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>knob_range</code></td>
+          <td>
+                <code><span title="typing.List">List</span>[float]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The list of the knob values to perform the scan.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>observable</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The variables to read from the tracking data and use it for identifying
+the optimum in the scan. It can be one of:
+<div class="highlight"><pre><span></span><code>[&#39;s&#39;, &#39;weight&#39;, &#39;E&#39;, &#39;x&#39;, &#39;px&#39;, &#39;y&#39;, &#39;py&#39;, &#39;sigma_xx&#39;, &#39;sigma_xpx&#39;, 
+&#39;sigma_pxpx&#39;, &#39;sigma_yy&#39;, &#39;sigma_ypy&#39;, &#39;sigma_pypy&#39;, &#39;sigma_xy&#39;, 
+&#39;sigma_xpy&#39;, &#39;sigma_yx&#39;, &#39;sigma_ypx&#39;, &#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>fit_func</code></td>
+          <td>
+                <code><span title="typing.Callable">Callable</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The fit function for the data.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Other Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>plot</code></td>
+          <td>
+                <code><span title="typing.Callable">Callable</span>[[<span title="typing.List">List</span>[float], <span title="typing.List">List</span>[float]], None]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The function to plot the knob iteration of the format f(x, y).</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>evaluate_optimal</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default is <code>True</code>) reevaluates the emittance by running <code>track()</code>
+function.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>iteration_type</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of the knob iteration scan to perform. The possible options are 
+<div class="highlight"><pre><span></span><code>[&quot;natural&quot;, &quot;with_cache&quot;]
+</code></pre></div>
+When it is "with_cache" (default), after each value from <code>knob_range</code> is applied
+the knob is reset to the initial state. 
+When it is "natural", the elements' offsets associated with a <code>knob</code> are not reset.
+Since <code>Knob.apply()</code> is additive function, an amplitude difference between the 
+previous and current is applied.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>knob_apply_strategy</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Strategy to use for calculations of the offsets when knob has <code>step_size</code> defined. 
+Default is 'simple_memory'. Possible options are:
+<div class="highlight"><pre><span></span><code>[&quot;simple&quot;, &quot;simple_memory&quot;, &quot;min_scale&quot;, &quot;min_scale_memory&quot;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>minimization</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default) the goal of the function is the minimization of the provided
+<code>observable</code>. If <code>False</code> - maximization of <code>observable</code>. This is needed to evaluate
+the best value of <code>observable</code> in case the fitted value is not smallest/largest.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><code>use_global_mismatch</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> (default) coordinates' changes are evaluated to also compensate the possible mismatches
+caused by other knobs. Only applicable to the strategies that memorize the mismatches, such as:
+<div class="highlight"><pre><span></span><code>[&#39;simple_memory&#39;, &#39;min_scale_memory&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The scan summary. The columns of the output table are:
+<div class="highlight"><pre><span></span><code>[&#39;correction&#39;, &#39;positions_file&#39;, &#39;emittx&#39;, &#39;emitty&#39;, &#39;knob_value&#39;, &#39;scan_log&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.set_callback">
+<code class="highlight language-python"><span class="n">set_callback</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Set the callback function for the tracking.</p>
+<p>By default, when a <code>Beamline</code> is created within <code>Machine</code>, a callback procedure is
+declared with <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TclCall"><code>TclCall</code></a>. This procedure
+is going to be called every time the beam tracking through the beamline is performed. 
+The name of this procedure is set to <code>'callback'</code>. After the beamline creation the name
+of the function cannot be changed, but the actual procedure can be overwritten in Placet.
+And this is what this function does.</p>
+<p>It is primaraly used for saving the macroparticle and particle beams' distributions.
+Normally, one does not have to call it, but use the other function that set it 
+automatically.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>func</code></td>
+          <td>
+                <code><span title="typing.Callable">Callable</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Function for the callback.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p><em>Other parameters could be any keyword argument that the input <code>func</code> accepts.</em></p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.survey_errors_set">
+<code class="highlight language-python"><span class="n">survey_errors_set</span><span class="p">(</span><span class="o">**</span><span class="n">extra_params</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Set the default errors for the Placet surveys.</p>
+<p>Overwrites the <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.SurveyErrorSet"><code>Placet.SurveyErrorSet()</code></a> 
+and sets the values not provided by the user to zero by default. Original 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.SurveyErrorSet"><code>Placet.SurveyErrorSet()</code></a> only overwrites 
+the values provided by the user, not touching the rest.</p>
+<p>Other parameters are the same as for <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.SurveyErrorSet"><code>Placet.SurveyErrorSet()</code></a>.
+The full list:
+<div class="highlight"><pre><span></span><code>[&#39;quadrupole_x&#39;, &#39;quadrupole_y&#39;, &#39;quadrupole_xp&#39;, &#39;quadrupole_yp&#39;, &#39;quadrupole_roll&#39;, 
+&#39;cavity_x&#39;, &#39;cavity_realign_x&#39;, &#39;cavity_y&#39;, &#39;cavity_realign_y&#39;, &#39;cavity_xp&#39;, 
+&#39;cavity_yp&#39;, &#39;cavity_dipole_x&#39;, &#39;cavity_dipole_y&#39;, &#39;piece_x&#39;, &#39;piece_xp&#39;, &#39;piece_y&#39;, 
+&#39;piece_yp&#39;, &#39;bpm_x&#39;, &#39;bpm_y&#39;, &#39;bpm_xp&#39;, &#39;bpm_yp&#39;, &#39;bpm_roll&#39;, &#39;sbend_x&#39;, &#39;sbend_y&#39;, 
+&#39;sbend_xp&#39;, &#39;sbend_yp&#39;, &#39;sbend_roll&#39;]
+</code></pre></div>
+Refer to <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.SurveyErrorSet"><code>Placet.SurveyErrorSet()</code></a> for more
+details.</p>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="placetmachine.machine.Machine.track">
+<code class="highlight language-python"><span class="n">track</span><span class="p">(</span><span class="n">beam</span><span class="p">,</span> <span class="n">survey</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Perform the tracking without applying any corrections.</p>
+<p>It is a wrapped version of 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestNoCorrection"><code>Placet.TestNoCorrection()</code></a>.
+When <code>survey</code> parameter is not provided (<strong>Recommended</strong>), the current
+misalignments in <code>self.beamline</code> are used. This is important, because 
+<a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestNoCorrection"><code>Placet.TestNoCorrection()</code></a>
+does not offer such capabilities. It can only misalign the lattice according to some
+guidelines and ignores the misalignmenst prior to calling. </p>
+<p><code>Machine.track()</code> on the other hand relies on the data stored in <code>self.beamline</code>. 
+So, to overcome the limitation
+of <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.TestNoCorrection"><code>Placet.TestNoCorrection()</code></a>
+the default survey is set to <code>"from_file"</code> and the file used is the one produced for the
+current state of <code>self.beamline</code>.</p>
+<p><strong>[!!]</strong> Be aware that Placet internally does not generate random numbers, but rather 
+takes pseudo random numbers from the sequence, uniquely defined by a seed value. So, if
+you run your <code>Machine</code> program with a Placet built-in surveys there is alway a chance you
+are going to get the same offsets sequence. To make sure that misalignments are different
+one has to run <a class="autorefs autorefs-internal" href="../placet/placetwrap/#placetmachine.placet.placetwrap.Placet.RandomReset"><code>Placet.RandomReset</code></a>
+before the tracking with surveys. In
+<a class="autorefs autorefs-internal" href="#placetmachine.machine.Machine.assign_errors"><code>Machine.assign_errors()</code></a> for example, this
+is invoked by default (set to a random value) if the <code>error_seed</code> parameter is not declared.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>beam</code></td>
+          <td>
+                <code><a class="autorefs autorefs-internal" title="placetmachine.beam.Beam" href="../beam/beam/#placetmachine.beam.beam.Beam">Beam</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The beam to use.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>survey</code></td>
+          <td>
+                <code><span title="typing.Optional">Optional</span>[str]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The type of survey to be used. So far the accepted options are:
+<div class="highlight"><pre><span></span><code>[None, &quot;None&quot;, &quot;Zero&quot;, &quot;Clic&quot;, &quot;Nlc&quot;, &quot;Atl&quot;, 
+&quot;AtlZero&quot;, &quot;Atl2&quot;, &quot;AtlZero2, &quot;Earth&quot;]
+</code></pre></div></p>
+<ul>
+<li>If survey is <code>None</code> (<strong>default</strong>) - uses the current beamline alignment from 
+<code>self.beamline</code>.</li>
+<li>The rest value are Placet built-in surveys. After it is used, the alignment
+in <code>self.beamline</code> is going to be updated with new values generated by a survey.</li>
+</ul>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The tracking summary.</p>
+<p>The columns of the resulting DataFrame:
+<div class="highlight"><pre><span></span><code>[&#39;correction&#39;, &#39;beam&#39;, &#39;beamline&#39;, &#39;survey&#39;, &#39;positions_file&#39;, &#39;emittx&#39;, &#39;emitty&#39;]
+</code></pre></div></p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.path"], "search": "../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.dff1b7c8.min.js"></script>
+      
+    
+  </body>
+</html>
