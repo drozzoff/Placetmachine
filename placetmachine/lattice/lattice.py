@@ -640,6 +640,9 @@ class Beamline:
 			The horizontal offset in micrometers of left end-point. Default is `0.0`.
 		y_left : float
 			The vertical offset in micrometers of the left end-point. Default is `0.0`.
+		apply_angles : bool
+			If `True` (default) applies transverse offsets and angles. Otherwise, only
+			the offsets are applied.
 		filter_types : Optional[List[str]]
 			The types of elements to apply the misalignments to.
 			By default, the misalignments are applied to all the elements on the girder.
@@ -662,6 +665,9 @@ class Beamline:
 			girder_end = element.settings['s']
 
 		girder_length = girder_end - girder_start
+		
+		girder_angle_x = (extra_params.get('x_right', 0.0) - extra_params.get('x_left', 0.0)) / girder_length
+		girder_angle_y = (extra_params.get('y_right', 0.0) - extra_params.get('y_left', 0.0)) / girder_length
 
 		for element in self.get_girder(extra_params.get('girder')):
 			element_center = element.settings['s'] - element.settings['length'] / 2
@@ -676,7 +682,10 @@ class Beamline:
 			if filter_types is not None:
 				if not element.type in filter_types:
 					continue
-			self.misalign_element(element_index = element.index, x = x, y = y)
+			
+			self.misalign_element(element_index = element.index, x = x, y = y, 
+						 xp = girder_angle_x if extra_params.get('apply_angles', True) else 0.0, 
+						 yp = girder_angle_y if extra_params.get('apply_angles', True) else 0.0)
 
 	def misalign_girder(self, **extra_params):
 		"""
@@ -722,12 +731,14 @@ class Beamline:
 			The horizontal offset in micrometers. Default is `0.0`.
 		y : float
 			The vertical offset in micrometers. Default is `0.0`.
+		apply_angles : bool
+			If `True` (default) applies transverse offsets and angles. Otherwise, only
+			the offsets are applied.
 		filter_types : Optional[List[str]]
 			The types of elements to apply the misalignments to.
 			By default, the misalignments are applied to all the elements on the girder.
 		"""
-		_options = ['x', 'y']
-		filter_types = extra_params.get('filter_types', None)
+		filter_types, apply_angles = extra_params.get('filter_types', None),  extra_params.get('filter_types', True)
 		
 		N_girders = self.get_girders_number()
 
@@ -756,7 +767,8 @@ class Beamline:
 				'girder': girder_left,
 				'x_right': extra_params.get('x', 0.0),
 				'y_right': extra_params.get('y', 0.0),
-				'filter_types': filter_types
+				'filter_types': filter_types,
+				'apply_angles': apply_angles
 			})
 
 		if girder_right is not None:
@@ -764,7 +776,8 @@ class Beamline:
 				'girder': girder_right,
 				'x_left': extra_params.get('x', 0.0),
 				'y_left': extra_params.get('y', 0.0),
-				'filter_types': filter_types
+				'filter_types': filter_types,
+				'apply_angles': apply_angles
 			})
 
 	def misalign_girders(self, **extra_params):
